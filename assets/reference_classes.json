@@ -1,0 +1,293 @@
+[
+  {
+    "id": "career-job-offer-eval",
+    "category": "career",
+    "subcategory": "job offer evaluation",
+    "base_rate_description": "Across knowledge-worker job changes tracked in longitudinal surveys, ~60% of movers report they were glad they switched at the 2-year mark. Conditional on a >15% comp increase AND meaningful scope change, satisfaction rises to ~75%. Lateral comp moves trend ~50/50.",
+    "stratification_variables": ["compensation delta", "scope change", "manager quality at new role", "commute change"],
+    "sources": [
+      {"author": "BLS Employee Tenure Summary", "title": "Employee Tenure in 2024", "url": "https://www.bls.gov/news.release/tenure.nr0.htm"},
+      {"author": "Payscale", "title": "The Great Resignation Retrospective", "url": "https://www.payscale.com"}
+    ],
+    "common_criteria": ["total comp", "role scope", "manager fit", "work-life balance", "growth trajectory"],
+    "common_regret_patterns": "Movers who optimized purely on comp without scope change report the highest regret at 12 months. Those who moved primarily to escape a specific manager report high satisfaction if the new manager is a known quantity, middling if unknown.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "career-start-business",
+    "category": "career",
+    "subcategory": "starting a business",
+    "base_rate_description": "About 20% of new US businesses fail in year 1; ~50% by year 5; ~65% by year 10 (BLS BED data). Conditional on prior domain experience and >6 months runway, failure rates at 5 years drop closer to 35-40%. Self-reported founder satisfaction, separate from financial success, is higher than comparable employee cohorts even among those whose businesses fail.",
+    "stratification_variables": ["prior domain experience", "personal runway", "co-founder presence", "family financial dependents", "capital source"],
+    "sources": [
+      {"author": "BLS", "title": "Business Employment Dynamics", "url": "https://www.bls.gov/bdm/"},
+      {"author": "Kauffman Foundation", "title": "Entrepreneurship Indicators", "url": "https://www.kauffman.org"}
+    ],
+    "common_criteria": ["upside potential", "autonomy", "financial security for family", "identity/meaning", "optionality"],
+    "common_regret_patterns": "Founders with young children and no co-founder report the highest burnout-driven regret. Under-capitalized founders who took on personal debt (vs. equity) report the most acute financial regret even when businesses survive.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "career-graduate-school",
+    "category": "career",
+    "subcategory": "graduate school",
+    "base_rate_description": "Outcomes vary wildly by field. Professional degrees (medicine, law, engineering masters) have high completion rates (>85%) and typically positive lifetime earnings premiums. Humanities PhDs have attrition rates near 50% and mixed labor-market outcomes. Average MBA ROI is positive but concentrated at top-tier programs.",
+    "stratification_variables": ["field of study", "program tier", "funding (fully-funded vs. debt)", "intended career path", "age at entry"],
+    "sources": [
+      {"author": "NCES", "title": "Graduate Degree Completion Rates", "url": "https://nces.ed.gov"},
+      {"author": "Bureau of Labor Statistics", "title": "Education Pays", "url": "https://www.bls.gov/careeroutlook/"}
+    ],
+    "common_criteria": ["career pivot", "credential requirement", "earnings uplift", "intellectual interest", "identity/prestige"],
+    "common_regret_patterns": "Debt-funded humanities and arts PhDs correlate with the highest regret. Technical masters taken between 2-5 years of work experience (not straight from undergrad) report the strongest satisfaction-to-cost ratio.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "career-sabbatical",
+    "category": "career",
+    "subcategory": "career break or sabbatical",
+    "base_rate_description": "Small-sample surveys of people who took 3-12 month career breaks report high satisfaction (~70-80%) with the break itself, but mixed re-entry outcomes: ~30% accept lower-titled or lower-paid roles on return. The discount is smaller when the break is framed and documented (travel, caregiving, sabbatical) than when it reads as an unexplained gap.",
+    "stratification_variables": ["break duration", "break framing", "industry re-entry friction", "savings buffer", "family caregiving obligations"],
+    "sources": [
+      {"author": "LinkedIn Economic Graph", "title": "Career Breaks and Re-entry", "url": "https://economicgraph.linkedin.com"}
+    ],
+    "common_criteria": ["burnout recovery", "life transition", "caregiving", "travel or personal project", "re-entry risk"],
+    "common_regret_patterns": "Breaks under 3 months rarely produce the restorative effect people hope for. Breaks longer than 12 months without a structured activity (project, travel, education) correlate with higher re-entry anxiety and depression.",
+    "uncertainty_level": "high",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "relationship-marriage",
+    "category": "relationship",
+    "subcategory": "marriage",
+    "base_rate_description": "Population-level US divorce rate is ~35-40% over a lifetime, but stratifies heavily: religious practice, age at marriage, cohabitation history, and SES each move the estimate by 10-20 points.",
+    "stratification_variables": ["religious practice", "age at marriage", "pre-marital cohabitation", "SES bracket", "parental divorce history"],
+    "sources": [
+      {"author": "W. Bradford Wilcox", "title": "Get Married", "url": "https://ifstudies.org"},
+      {"author": "CDC NSFG", "title": "First Marriages in the US", "url": "https://www.cdc.gov/nchs/nsfg/"}
+    ],
+    "common_criteria": ["shared values", "communication", "family of origin fit", "financial alignment", "life vision"],
+    "common_regret_patterns": "Couples who married young (<23) without shared faith or financial stability report the highest divorce and dissatisfaction rates. Religious couples who share denomination and attend services weekly report the lowest.",
+    "uncertainty_level": "low",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "relationship-ending-relationship",
+    "category": "relationship",
+    "subcategory": "ending a long-term relationship",
+    "base_rate_description": "Longitudinal surveys of divorcees find that roughly 55-65% report the divorce was the right call 5+ years later, but ~30% report regret, particularly among those who initiated without attempting serious counseling. For unmarried long-term relationships, regret rates are less well-studied but trend similar. Children under 10 in the home shift the regret rate upward.",
+    "stratification_variables": ["attempted therapy", "children in home", "financial independence", "length of relationship", "presence of abuse or addiction"],
+    "sources": [
+      {"author": "National Marriage Project", "title": "Divorce and Post-Divorce Satisfaction", "url": "https://nationalmarriageproject.org"}
+    ],
+    "common_criteria": ["personal wellbeing", "children's stability", "financial security", "hope for repair", "safety"],
+    "common_regret_patterns": "Initiators who didn't attempt couples therapy report the highest retrospective regret. When abuse or addiction is present, regret rates drop sharply — the ending is rarely questioned.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "family-first-child",
+    "category": "family",
+    "subcategory": "having a first child",
+    "base_rate_description": "Parent satisfaction surveys consistently show 90%+ of parents report they would make the choice again. Self-reported day-to-day happiness briefly dips in the first two years (especially for mothers), then recovers. Long-term life-meaning measures are substantially higher for parents than non-parents who wanted children but did not have them.",
+    "stratification_variables": ["partner support", "financial stability", "age of parents", "health conditions", "proximity to family help"],
+    "sources": [
+      {"author": "Pew Research", "title": "Parenting in America", "url": "https://www.pewresearch.org"},
+      {"author": "Institute for Family Studies", "title": "Parenthood and Meaning", "url": "https://ifstudies.org"}
+    ],
+    "common_criteria": ["desire for parenthood", "partnership stability", "financial readiness", "career timing", "health"],
+    "common_regret_patterns": "The rare retrospective regret clusters among solo parents with minimal support and those whose partners were ambivalent. Prospective regret ('should have waited') is far more common than 'should have had a child' regret among people who did.",
+    "uncertainty_level": "low",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "family-another-child",
+    "category": "family",
+    "subcategory": "having another child",
+    "base_rate_description": "Retrospective satisfaction for each additional child remains very high (>85%) through child #3, with a modest decline thereafter. Siblings reliably provide long-term social and emotional benefit to each other into adulthood. Financial strain is the largest mediator of reduced parent satisfaction at higher parity.",
+    "stratification_variables": ["spacing between children", "household income trajectory", "housing adequacy", "parental age", "partner alignment"],
+    "sources": [
+      {"author": "General Social Survey", "title": "Family Size and Parental Happiness", "url": "https://gss.norc.org"}
+    ],
+    "common_criteria": ["sibling for existing child", "desired family size", "financial capacity", "parental energy", "partner agreement"],
+    "common_regret_patterns": "Families who had an additional child primarily from external pressure (in-laws, cultural expectations) without full partner alignment report the highest strain. Financial regret is common where housing is inadequate but rarely extends to the child themselves.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "location-relocating-for-work",
+    "category": "location",
+    "subcategory": "relocating for work",
+    "base_rate_description": "~55% of workers who relocate for a job report satisfaction with the move at 2 years, but ~70% when a partner was also excited about the destination, and ~35% when the partner was reluctant.",
+    "stratification_variables": ["partner enthusiasm", "proximity to extended family", "climate preference", "cost of living delta"],
+    "sources": [
+      {"author": "Pew Research", "title": "Americans and Geographic Mobility", "url": "https://www.pewresearch.org"}
+    ],
+    "common_criteria": ["job opportunity", "partner buy-in", "extended family distance", "climate", "cost of living"],
+    "common_regret_patterns": "Reluctant partners are the single largest predictor of regret. People who moved away from aging parents report specific regret about missed milestones.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "location-move-closer-family",
+    "category": "location",
+    "subcategory": "moving closer to family",
+    "base_rate_description": "Movers who relocate to be within an hour of extended family report high satisfaction (~70-80%) when the move is driven by positive pull (childcare help, aging-parent proximity) rather than negative push (financial necessity). Quality of the specific family relationships dominates outcome — moving near a supportive parent correlates with high satisfaction; moving near a high-conflict family does not.",
+    "stratification_variables": ["family relationship quality", "career flexibility", "cost of living in destination", "partner family ties"],
+    "sources": [
+      {"author": "Pew Research", "title": "Where Americans Live", "url": "https://www.pewresearch.org"}
+    ],
+    "common_criteria": ["childcare support", "aging parent care", "children's relationship with grandparents", "career impact", "cost of living"],
+    "common_regret_patterns": "Couples who moved toward one partner's family without an honest conversation about expectations (how often to visit, caregiving load) report higher friction at 1-2 years. Career regret is most acute for the partner whose field is thin in the new city.",
+    "uncertainty_level": "high",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "finance-buying-home",
+    "category": "finance",
+    "subcategory": "buying a home",
+    "base_rate_description": "Long-run US homeownership satisfaction is high (>80% would buy again). Financial outcomes depend heavily on purchase timing relative to local market cycles and length of ownership. Buying with a stay-horizon of <5 years significantly raises the risk of negative financial outcome after transaction costs. Buying at or near the top of a local cycle with aggressive leverage is the most consequential regret driver.",
+    "stratification_variables": ["expected tenure", "local market conditions", "down payment share", "partner alignment on location", "school considerations"],
+    "sources": [
+      {"author": "Federal Reserve", "title": "Survey of Consumer Finances", "url": "https://www.federalreserve.gov/econres/scfindex.htm"},
+      {"author": "NAR", "title": "Home Buyers and Sellers Profile", "url": "https://www.nar.realtor"}
+    ],
+    "common_criteria": ["monthly payment affordability", "location and schools", "long-term appreciation", "space for family", "commute"],
+    "common_regret_patterns": "Homes bought under time pressure (contingent on new-job start, or a 3-day offer window) correlate with higher regret. Stretching to the top of an approved mortgage correlates strongly with chronic financial stress regardless of home satisfaction.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "finance-windfall",
+    "category": "finance",
+    "subcategory": "investing or spending a windfall",
+    "base_rate_description": "Behavioral-finance research on lottery winners and inheritance recipients finds that ~70% of windfalls are depleted within 5 years when received without a plan. Recipients who allocated the windfall within 30 days of receipt (paying debt, investing a defined percentage, setting aside a specific 'fun' allocation) report dramatically higher long-term financial satisfaction than those who left it unallocated in a checking account.",
+    "stratification_variables": ["size relative to annual income", "pre-existing debt", "financial literacy", "partner alignment", "family pressure"],
+    "sources": [
+      {"author": "National Endowment for Financial Education", "title": "Sudden Money", "url": "https://www.nefe.org"}
+    ],
+    "common_criteria": ["debt paydown", "long-term security", "immediate enjoyment", "family obligations", "tax efficiency"],
+    "common_regret_patterns": "Windfalls shared with extended family under emotional pressure, without written expectations, produce the deepest relational regret. Windfalls spent on lifestyle inflation (new car, boat, upgraded house) rather than one-time experiences are the least remembered positively.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "finance-major-purchase",
+    "category": "finance",
+    "subcategory": "major discretionary purchase",
+    "base_rate_description": "Experiential purchases (travel, lessons, events) produce more durable satisfaction than material purchases of similar cost in nearly every study measuring 6+ months out. For material goods, satisfaction is highest when the item is used daily and replaces a worse version of the same thing; it is lowest for aspirational purchases bought before the matching lifestyle has materialized.",
+    "stratification_variables": ["daily use frequency", "experiential vs material", "relative to monthly income", "partner alignment", "novelty vs replacement"],
+    "sources": [
+      {"author": "Gilovich & Kumar", "title": "A wonderful life: experiential consumption", "url": "https://psycnet.apa.org"}
+    ],
+    "common_criteria": ["enjoyment", "utility", "status signaling", "family benefit", "affordability"],
+    "common_regret_patterns": "Aspirational purchases (high-end hobby gear for a hobby not yet established) have the highest regret rate. Purchases financed with revolving debt are almost never remembered positively after the debt is counted.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "health-major-medical-decision",
+    "category": "health",
+    "subcategory": "elective or major medical decision",
+    "base_rate_description": "Outcomes are so condition-specific that base rates from a generic 'medical decision' category are rarely useful. The consistent finding across fields is that patients who sought a second opinion from a different institution are more satisfied with their care decision, regardless of whether the second opinion changed the plan. Shared-decision-making research shows that patients who used a formal decision aid report lower decisional regret at 6-12 months.",
+    "stratification_variables": ["condition specifics", "second opinion obtained", "use of decision aid", "reversibility of intervention", "specialist experience"],
+    "sources": [
+      {"author": "Dartmouth Center for Shared Decision Making", "title": "Patient Decision Aids", "url": "https://decisionaid.ohri.ca"}
+    ],
+    "common_criteria": ["efficacy evidence", "side effects", "reversibility", "recovery time", "specialist trust"],
+    "common_regret_patterns": "Decisions made under acute time pressure without a second opinion produce the most retrospective regret, even when the chosen intervention was clinically correct. The feeling of having been rushed dominates the memory.",
+    "uncertainty_level": "high",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "education-school-choice",
+    "category": "education",
+    "subcategory": "choosing a school for a child",
+    "base_rate_description": "Cross-sectional research on school choice shows parents who actively chose their child's school (public-choice, charter, private, homeschool) report higher satisfaction than those who defaulted to assigned zoning, independent of the actual academic outcomes. Parental involvement and peer-group quality predict student outcomes more than which school type is selected.",
+    "stratification_variables": ["child's specific learning needs", "commute burden", "peer group quality", "parental involvement capacity", "cost"],
+    "sources": [
+      {"author": "Brookings", "title": "School Choice and Parental Satisfaction", "url": "https://www.brookings.edu"}
+    ],
+    "common_criteria": ["academic rigor", "peer group", "values alignment", "distance and logistics", "cost"],
+    "common_regret_patterns": "Private-school choices made primarily for status signaling (not fit with the child) correlate with higher switching in later grades. Homeschool choices made without a specific plan for socialization and high-school-level subjects correlate with later regret.",
+    "uncertainty_level": "high",
+    "last_updated": "2026-04-01"
+  },
+  {
+    "id": "career-into-management",
+    "category": "career",
+    "subcategory": "moving into a management role",
+    "base_rate_description": "Surveys of individual contributors promoted into people-management find roughly 50-60% are satisfied with the move at 2 years; satisfaction is markedly higher when the person enjoyed mentoring before the title and lower when they took it mainly for pay or status. A sizeable minority (~20-30%) attempt to return to an IC track within a few years, and report relief rather than failure when they do.",
+    "stratification_variables": ["prior enjoyment of mentoring", "org support for new managers", "team size inherited", "loss of hands-on craft time", "comp delta"],
+    "sources": [
+      {"author": "Gallup", "title": "State of the American Manager", "url": "https://www.gallup.com/workplace"},
+      {"author": "DDI", "title": "Frontline Leader Project", "url": "https://www.ddiworld.com"}
+    ],
+    "common_criteria": ["impact and scope", "compensation", "loss of hands-on work", "enjoyment of coaching", "career optionality"],
+    "common_regret_patterns": "ICs who took management purely as the only promotion path (no IC ladder) and missed the craft report the highest regret. Those who inherited a large or troubled team with no onboarding support burn out fastest.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-06-18"
+  },
+  {
+    "id": "relationship-moving-in-together",
+    "category": "relationship",
+    "subcategory": "moving in together",
+    "base_rate_description": "Cohabitation outcomes hinge on intent more than the act: couples who moved in together as a deliberate step toward a shared future report satisfaction comparable to engaged couples, while those who 'slid' into it for convenience or cost report higher rates of later conflict and breakup. Pre-existing agreement on marriage and children is the strongest moderator.",
+    "stratification_variables": ["explicit intent vs sliding", "agreement on long-term goals", "financial entanglement", "prior cohabitation history", "division of domestic labor"],
+    "sources": [
+      {"author": "Stanley & Rhoades", "title": "Sliding vs Deciding", "url": "https://www.thenationalmarriageproject.org"},
+      {"author": "CDC NSFG", "title": "Cohabitation and Relationship Stability", "url": "https://www.cdc.gov/nchs/nsfg/"}
+    ],
+    "common_criteria": ["relationship commitment", "financial savings", "shared future plans", "loss of independence", "logistics and convenience"],
+    "common_regret_patterns": "Couples who moved in primarily to save on rent without discussing where the relationship is headed report the most friction. Unequal domestic-labor expectations surface within the first year and predict dissatisfaction.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-06-18"
+  },
+  {
+    "id": "location-moving-abroad",
+    "category": "location",
+    "subcategory": "relocating to another country",
+    "base_rate_description": "Expatriate satisfaction studies show a common U-curve: an initial honeymoon, a trough at 6-18 months (the hard part of language, bureaucracy, and isolation), then recovery for those who stay past two years. Roughly 25-40% of voluntary expats return earlier than planned, most citing family ties and difficulty building local community rather than the job itself. Outcomes are far better when a partner or family is genuinely on board.",
+    "stratification_variables": ["language barrier", "partner and family buy-in", "local community access", "visa and legal stability", "distance from aging parents"],
+    "sources": [
+      {"author": "InterNations", "title": "Expat Insider Survey", "url": "https://www.internations.org/expat-insider/"},
+      {"author": "Journal of International Business Studies", "title": "Expatriate Adjustment", "url": "https://www.jibs.net"}
+    ],
+    "common_criteria": ["career or financial opportunity", "adventure and growth", "partner and children's wellbeing", "proximity to family back home", "long-term settlement intent"],
+    "common_regret_patterns": "Moves made for a single job without a plan to build local roots, or over a reluctant partner, drive the highest early-return regret. Underestimating the 6-18 month trough leads people to quit just before adjustment would have arrived.",
+    "uncertainty_level": "high",
+    "last_updated": "2026-06-18"
+  },
+  {
+    "id": "health-major-lifestyle-change",
+    "category": "health",
+    "subcategory": "quitting drinking, smoking, or a major habit",
+    "base_rate_description": "Most people attempting to quit a major habit relapse on early attempts — smoking quit attempts succeed perhaps 5-10% unaided per try, much higher with support and medication — but cumulative success across repeated attempts is high, and the number of prior attempts predicts eventual success rather than failure. Retrospective satisfaction among those who sustained the change for a year is very high and rarely reversed.",
+    "stratification_variables": ["use of structured support or medication", "social environment and triggers", "replacement routines in place", "number of prior attempts", "underlying mental-health load"],
+    "sources": [
+      {"author": "US Surgeon General", "title": "Smoking Cessation: A Report", "url": "https://www.hhs.gov/surgeongeneral/reports-and-publications/"},
+      {"author": "NIAAA", "title": "Alcohol Treatment and Recovery", "url": "https://www.niaaa.nih.gov"}
+    ],
+    "common_criteria": ["long-term health", "relationships and family", "self-respect and identity", "short-term discomfort", "social cost"],
+    "common_regret_patterns": "Going it alone with willpower only, with no replacement routine and unchanged social triggers, is the most common path to relapse. Treating a relapse as total failure (rather than data for the next attempt) is itself a strong predictor of giving up.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-06-18"
+  },
+  {
+    "id": "family-eldercare-arrangement",
+    "category": "family",
+    "subcategory": "caring for an aging parent",
+    "base_rate_description": "Family caregiving decisions (in-home care, moving a parent in, or assisted living) involve a well-documented tradeoff: in-home and co-residence preserve relationship closeness but carry high caregiver burnout, while quality facility care reduces caregiver strain but carries guilt that fades over time as the parent's care needs are met. Caregiver satisfaction is highest when siblings share the load explicitly and when the parent's own wishes were discussed in advance.",
+    "stratification_variables": ["parent's care-level needs", "sibling load-sharing", "caregiver's own job and family", "financial resources for paid care", "parent's stated preferences"],
+    "sources": [
+      {"author": "AARP / NAC", "title": "Caregiving in the US", "url": "https://www.aarp.org/caregiving/"},
+      {"author": "Family Caregiver Alliance", "title": "Caregiver Statistics", "url": "https://www.caregiver.org"}
+    ],
+    "common_criteria": ["parent's safety and care quality", "parent's dignity and wishes", "caregiver burnout", "financial cost", "fairness among siblings"],
+    "common_regret_patterns": "Solo caregivers who took on co-residence without sibling support or respite report the deepest burnout and resentment. Decisions made in crisis after a fall or hospitalization, with no prior family conversation, produce the most second-guessing regardless of which option was chosen.",
+    "uncertainty_level": "medium",
+    "last_updated": "2026-06-18"
+  }
+]

@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reckon · After adopting openhearth_design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── OhColors · openhearth_design/lib/src/colors.dart ─────────── */
+    :root {
+      --hearth-50:  #FDF5F3;
+      --hearth-100: #F8E8E3;
+      --hearth-200: #EDCDC5;
+      --hearth-300: #D9A99E;
+      --hearth-400: #C47B6A;
+      --hearth-500: #A85040;  /* primary interactive */
+      --hearth-600: #8B3E2F;
+      --linen-50:  #FBF8F4;
+      --linen-100: #F5EFE6;
+      --linen-200: #EAE1D4;
+      --linen-300: #D4C5B0;
+      --linen-400: #B3A08A;
+      --linen-500: #8C7B65;
+      --linen-700: #4D3E2E;
+      --linen-900: #2C1810;
+      --sage-500:  #5E9478;
+      --red-500:   #B0382A;
+
+      /* doc chrome — unchanged across files */
+      --stage:    #E7DDCE;
+      --stage-2:  #EFE5D3;
+      --ink:      #2C1810;
+      --rule:     #D4C5B0;
+      --meta:     #8C7B65;
+    }
+
+    html,body { margin:0; padding:0; background:var(--stage); color:var(--ink); }
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse at 20% -10%, var(--stage-2), transparent 40%),
+        radial-gradient(ellipse at 120% 60%, #DFD3BE 0%, transparent 45%),
+        var(--stage);
+      min-height: 100vh;
+      padding: 72px 48px 96px;
+    }
+
+    .doc { max-width: 1440px; margin: 0 auto; }
+    .doc-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 24px;
+      align-items: end;
+      padding-bottom: 22px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 56px;
+    }
+    .doc-eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      color: var(--hearth-500);
+      margin-bottom: 12px;
+    }
+    .doc-title {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 44px;
+      font-weight: 700; /* ← OhTypography.display uses weight 700 */
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+    .doc-title em {
+      font-style: italic;
+      font-weight: 500;
+      color: var(--linen-700);
+    }
+    .doc-meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--meta);
+      line-height: 1.6;
+      font-feature-settings: "tnum";
+    }
+    .doc-meta strong { color: var(--ink); display: block; font-weight: 700; font-size: 13px; }
+    .doc-lede {
+      max-width: 680px;
+      font-family: 'Lora', Georgia, serif;
+      font-size: 18px;
+      line-height: 1.55;
+      font-style: italic;
+      color: var(--linen-700);
+      margin: 0 0 56px;
+    }
+
+    .frames {
+      display: grid;
+      grid-template-columns: repeat(3, 390px);
+      gap: 48px;
+      justify-content: center;
+      align-items: start;
+    }
+    @media (max-width: 1320px) { .frames { grid-template-columns: 390px; } }
+
+    .frame-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      color: var(--meta);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .frame-label::before {
+      content: ""; width: 18px; height: 1px; background: var(--rule);
+    }
+
+    .phone {
+      width: 390px;
+      height: 794px;
+      background: var(--linen-50);
+      border-radius: 36px;
+      box-shadow:
+        0 0 0 1px var(--linen-300),
+        0 24px 48px -16px rgba(44,24,16,0.22),
+        0 2px 4px rgba(44,24,16,0.08);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      font-size: 14px;
+    }
+
+    .sb {
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px 0 28px;
+      color: var(--linen-900);
+      font-size: 14px;
+      font-weight: 600;
+      font-feature-settings: "tnum";
+    }
+    .sb-r { display:flex; align-items:center; gap:6px; font-size: 12px; }
+
+    .ab {
+      padding: 12px 20px 16px;
+      font-family: 'Nunito', sans-serif;   /* ← OhTheme puts app bar titles in Nunito SemiBold */
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--linen-900);
+      letter-spacing: -0.1px;
+    }
+
+    .body { flex: 1; padding: 4px 20px 20px; overflow: hidden; display: flex; flex-direction: column; }
+
+    /* ── OhTheme widgets ──────────────────────────────────────────── */
+
+    /* FilledButton via ElevatedButton.styleFrom — StadiumBorder */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 9999px;   /* ← OhTheme StadiumBorder */
+      background: var(--hearth-500);
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      border: 0;
+      cursor: pointer;
+    }
+    .btn--expanded { width: 100%; }
+    .btn--secondary {
+      background: transparent;
+      color: var(--hearth-500);
+      border: 1px solid var(--hearth-500);
+    }
+
+    /* Card — OhRadii.lg (12px) and linen-100 surface */
+    .card {
+      background: var(--linen-100);
+      border-radius: 12px;   /* ← OhRadii.lg */
+      padding: 16px;
+    }
+
+    /* Section header — slightly more restrained than before */
+    .section-h {
+      font-size: 12px;           /* OhTypography.labelSm size = 12 */
+      font-weight: 500;          /* labelSm weight */
+      letter-spacing: 0.4px;     /* labelSm letter-spacing */
+      text-transform: uppercase;
+      color: var(--linen-500);   /* secondary text, not hearth */
+      margin: 24px 4px 10px;
+    }
+
+    /* chat bubbles */
+    .turn {
+      max-width: 78%;
+      padding: 12px 14px;
+      border-radius: 16px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 16px;          /* OhTypography.body size */
+      line-height: 1.5;
+      color: var(--linen-900);
+      margin-bottom: 10px;
+    }
+    .turn--a { background: var(--linen-200); align-self: flex-start; border-bottom-left-radius: 4px; }
+    .turn--u { background: var(--hearth-100); align-self: flex-end; border-bottom-right-radius: 4px; color: var(--linen-900); }
+
+    .chat-list { flex: 1; display: flex; flex-direction: column; gap: 2px; overflow: hidden; padding-top: 4px; }
+
+    .input-row {
+      display: flex; gap: 10px; align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid var(--linen-200);
+    }
+    .input {
+      flex: 1;
+      background: var(--linen-100);
+      border: 1px solid var(--linen-300);
+      border-radius: 8px;   /* InputDecorationTheme uses 8px */
+      padding: 12px 16px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 16px;
+      color: var(--linen-400);
+    }
+
+    /* record */
+    .clarity { display: flex; flex-direction: column; gap: 6px; }
+    .clarity-num {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 56px;
+      font-weight: 700;        /* ← OhTypography.display weight 700 */
+      line-height: 1;
+      letter-spacing: -0.6px;
+    }
+    .clarity-sub { color: var(--linen-500); font-size: 14px; }
+
+    .stat-row {
+      display: grid;
+      grid-template-columns: 70px 1fr auto;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+    }
+    .stat-label { font-size: 14px; color: var(--linen-700); }
+    .bar-track { height: 8px; background: var(--linen-200); border-radius: 9999px; overflow: hidden; }
+    .bar-fill { height: 100%; background: var(--hearth-500); }
+    .stat-meta { font-size: 12px; color: var(--linen-500); font-feature-settings: "tnum"; text-align: right; }
+
+    .drift-num {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.3px;
+    }
+    .drift-sub { font-size: 12px; color: var(--linen-500); margin-top: 4px; }
+
+    .scorecard-card { display: flex; align-items: center; gap: 12px; padding: 14px; }
+    .scorecard-card svg { color: var(--hearth-500); }
+    .scorecard-title { font-size: 14px; font-weight: 500; color: var(--linen-900); letter-spacing: 0.2px; }
+    .scorecard-sub { font-size: 12px; color: var(--linen-500); }
+    .chevron { margin-left: auto; color: var(--linen-300); }
+
+    /* reveal */
+    .chart-wrap { background: var(--linen-100); border-radius: 12px; padding: 14px; }
+
+    .lora-italic {
+      font-family: 'Lora', Georgia, serif;
+      font-style: italic;
+      font-weight: 400;
+      font-size: 17px;
+      line-height: 1.55;
+      color: var(--linen-900);
+    }
+
+    .chip-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      padding: 7px 16px;
+      border-radius: 9999px;
+      background: var(--linen-100);
+      color: var(--linen-700);
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--linen-300);
+    }
+    .chip--selected {
+      background: var(--hearth-100);
+      color: var(--hearth-600);
+      border-color: var(--hearth-500);
+    }
+
+    /* NEW: slider spec being contributed to OhTheme */
+    .slider-demo {
+      margin-top: 14px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .slider-row {
+      display:flex; justify-content:space-between;
+      font-size: 13px; font-weight: 600; color: var(--linen-700);
+    }
+    .slider-track {
+      position: relative;
+      height: 12px;
+      background: linear-gradient(to right, var(--hearth-500) 0 72%, var(--hearth-100) 72% 100%);
+      border-radius: 9999px;
+    }
+    .slider-thumb {
+      position: absolute;
+      left: calc(72% - 14px);
+      top: -8px;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--hearth-600);
+      border: 3px solid var(--linen-50);
+      box-shadow: 0 0 0 8px rgba(168,80,64,0.15);
+    }
+    .slider-scale { display:flex; justify-content:space-between; font-size: 11px; color: var(--linen-500); font-feature-settings: "tnum"; }
+
+    .spacer { flex: 1; }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-top: 1px solid var(--linen-200);
+      padding: 8px 0 12px;
+      background: var(--linen-50);
+    }
+    .tab { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .tab-label { font-size: 11px; font-weight: 500; color: var(--linen-500); letter-spacing: 0.3px; }
+    .tab--active .tab-label { color: var(--hearth-500); }
+    .tab svg { color: var(--linen-500); }
+    .tab--active svg { color: var(--hearth-500); }
+
+    /* ── Diff ribbon ────────────────────────────────────────────── */
+    .diff {
+      margin: 0 0 32px;
+      padding: 20px 22px;
+      background: #F8E8E3;
+      border-left: 3px solid var(--hearth-500);
+      border-radius: 0 12px 12px 0;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--linen-800, var(--linen-900));
+    }
+    .diff strong { font-weight: 700; color: var(--hearth-600); }
+    .diff ul { margin: 6px 0 0; padding-left: 18px; }
+    .diff li { margin-bottom: 3px; }
+
+    /* ── Legend ──────────────────────────────────────────────────── */
+    .legend {
+      margin-top: 80px;
+      padding-top: 28px;
+      border-top: 1px solid var(--rule);
+    }
+    .legend-title {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      color: var(--meta);
+      margin-bottom: 16px;
+    }
+    .swatches { display: flex; flex-wrap: wrap; gap: 20px 32px; }
+    .sw { display: flex; align-items: center; gap: 10px; font-feature-settings: "tnum"; }
+    .sw-dot {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      border: 1px solid rgba(44,24,16,0.1);
+      flex-shrink: 0;
+    }
+    .sw-name { font-size: 12px; font-weight: 600; color: var(--ink); }
+    .sw-hex { font-size: 11px; color: var(--meta); font-family: 'Nunito', sans-serif; letter-spacing: 0.3px; }
+    .sw-good::after {
+      content: "✓"; margin-left: 6px; color: var(--sage-500); font-weight: 700;
+    }
+
+    .obs {
+      max-width: 390px;
+      margin-top: 20px;
+      padding-left: 14px;
+      border-left: 2px solid var(--hearth-500);
+      font-size: 12px; line-height: 1.55; color: var(--linen-700);
+    }
+    .obs strong { color: var(--ink); font-weight: 700; display: block; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="doc">
+
+    <header class="doc-head">
+      <div>
+        <div class="doc-eyebrow">Mockup B · openhearth_design adopted</div>
+        <h1 class="doc-title">Reckon <em>after</em> adopting<br/>openhearth_design.</h1>
+      </div>
+      <div class="doc-meta">
+        <strong>reckon +openhearth_design@0.1</strong>
+        OhTheme.light() · OhTypography · OhSpacing<br/>
+        lib/core/theme deleted · 230 LOC gone<br/>
+        2026&thinsp;—&thinsp;04&thinsp;—&thinsp;23
+      </div>
+    </header>
+
+    <div class="diff">
+      <strong>What actually changed.</strong>
+      Content identical to Mockup A — every string, every data point. Only the styling is different.
+      <ul>
+        <li>Primary buttons become <strong>StadiumBorder pills</strong> (12 px rounded rect → fully round).</li>
+        <li>Display type switches to <strong>Lora weight 700</strong> with tightened letter-spacing — assertive headings instead of soft ones.</li>
+        <li>Section headers drop from hearth to <strong>linen-500 labelSm</strong>, an Oh convention (hearth is reserved for interactive).</li>
+        <li>Six palette values align to spec (hearth-100 +→ #F8E8E3, linen-100 +→ #F5EFE6, linen-300 +→ #D4C5B0, linen-900 +→ #2C1810).</li>
+        <li>Cards land at <strong>OhRadii.lg</strong> (12&thinsp;px, from 16&thinsp;px) — tighter, less "chat app".</li>
+        <li>New <strong>sliderTheme</strong> being contributed back to OhTheme: hearth track, hearth-600 thumb, 15% hearth overlay. Rendered in the reveal card.</li>
+      </ul>
+    </div>
+
+    <p class="doc-lede">
+      Same app. Same content. Same accent. What changes is grammar — Reckon stops being
+      a warm-toned app and starts being an OpenHearth app. The delta is quiet because it
+      was designed to be; that's the point of a design&nbsp;system.
+    </p>
+
+    <div class="frames">
+
+      <!-- ── PHONE 1 · INTAKE ─────────────────────────────────────── -->
+      <div>
+        <div class="frame-label">Intake · conversational</div>
+        <div class="phone">
+          <div class="sb">
+            <span>9:41</span>
+            <span class="sb-r">
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M1 10h2v2H1zM4 7h2v5H4zM7 4h2v8H7zM10 2h2v10h-2zM13 0h2v12h-2z"/></svg>
+              <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 3.5a6 6 0 014 1.8M7 1a9 9 0 016 2.7M7 6a3 3 0 012 .8"/><circle cx="7" cy="9" r="1" fill="currentColor"/></svg>
+              <svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.1"><rect x="0.5" y="1.5" width="19" height="9" rx="2"/><rect x="20.5" y="4.5" width="2" height="3" rx="0.6" fill="currentColor"/><rect x="2" y="3" width="14" height="6" rx="1" fill="currentColor"/></svg>
+            </span>
+          </div>
+          <div class="ab">New case</div>
+          <div class="body">
+            <div class="chat-list">
+              <div class="turn turn--a">What's the decision you're trying to make?</div>
+              <div class="turn turn--u">Whether to take the startup offer in Denver, or stay at my current company.</div>
+              <div class="turn turn--a">Got it. Two quick things — how soon do you need to decide, and how big does this feel on a stakes scale: low, medium, or high?</div>
+              <div class="turn turn--u">Medium-high stakes, probably need to decide in about 3 weeks.</div>
+              <div class="turn turn--a">What criteria are you weighing most&hellip;</div>
+            </div>
+            <div class="input-row">
+              <div class="input">Type your answer&hellip;</div>
+              <button class="btn">Send</button>
+            </div>
+          </div>
+        </div>
+        <div class="obs">
+          <strong>Delta</strong>
+          Send button → pill. Input field radius → 8&thinsp;px. Bubble hearth tint softens (#F7DDD4 → #F8E8E3) — less orange, more terracotta.
+        </div>
+      </div>
+
+      <!-- ── PHONE 2 · RECORD ─────────────────────────────────────── -->
+      <div>
+        <div class="frame-label">Record · your calibration</div>
+        <div class="phone">
+          <div class="sb">
+            <span>9:41</span>
+            <span class="sb-r">
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M1 10h2v2H1zM4 7h2v5H4zM7 4h2v8H7zM10 2h2v10h-2zM13 0h2v12h-2z"/></svg>
+              <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 3.5a6 6 0 014 1.8M7 1a9 9 0 016 2.7M7 6a3 3 0 012 .8"/><circle cx="7" cy="9" r="1" fill="currentColor"/></svg>
+              <svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.1"><rect x="0.5" y="1.5" width="19" height="9" rx="2"/><rect x="20.5" y="4.5" width="2" height="3" rx="0.6" fill="currentColor"/><rect x="2" y="3" width="14" height="6" rx="1" fill="currentColor"/></svg>
+            </span>
+          </div>
+          <div class="ab">Record</div>
+          <div class="body" style="overflow-y:auto;">
+            <div class="section-h">Clarity score</div>
+            <div class="card">
+              <div class="clarity">
+                <div class="clarity-num">62</div>
+                <div class="clarity-sub">Across 14 closed cases.</div>
+              </div>
+            </div>
+
+            <div class="section-h">Calibration</div>
+            <div class="card" style="margin-bottom:10px;">
+              <div style="font-family:'Nunito';font-size:14px;font-weight:500;color:var(--linen-900);margin-bottom:10px;letter-spacing:0.2px;">Satisfaction by category</div>
+              <svg viewBox="0 0 320 140" width="100%" style="display:block">
+                <line x1="0" y1="70" x2="320" y2="70" stroke="#EAE1D4" stroke-width="1"/>
+                <text x="0" y="14" font-family="Nunito" font-size="9" fill="#8C7B65">+2</text>
+                <text x="0" y="74" font-family="Nunito" font-size="9" fill="#8C7B65">0</text>
+                <text x="0" y="134" font-family="Nunito" font-size="9" fill="#8C7B65">-2</text>
+                <rect x="46" y="28" width="48" height="42" rx="4" fill="#A85040"/>
+                <rect x="112" y="46" width="48" height="24" rx="4" fill="#A85040"/>
+                <rect x="178" y="64" width="48" height="6" rx="2" fill="#A85040"/>
+                <rect x="244" y="70" width="48" height="9" rx="2" fill="#B0382A"/>
+                <text x="70" y="128" text-anchor="middle" font-family="Nunito" font-size="10" fill="#4D3E2E">career</text>
+                <text x="136" y="128" text-anchor="middle" font-family="Nunito" font-size="10" fill="#4D3E2E">family</text>
+                <text x="202" y="128" text-anchor="middle" font-family="Nunito" font-size="10" fill="#4D3E2E">finance</text>
+                <text x="268" y="128" text-anchor="middle" font-family="Nunito" font-size="10" fill="#4D3E2E">break</text>
+              </svg>
+            </div>
+            <div class="card" style="margin-bottom:10px;">
+              <div style="font-family:'Nunito';font-size:14px;font-weight:500;color:var(--linen-900);margin-bottom:8px;letter-spacing:0.2px;">Does your confidence track satisfaction?</div>
+              <div class="stat-row">
+                <div class="stat-label">low</div>
+                <div class="bar-track"><div class="bar-fill" style="width:52%;"></div></div>
+                <div class="stat-meta">0.1&nbsp;(n=3)</div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-label">medium</div>
+                <div class="bar-track"><div class="bar-fill" style="width:70%;"></div></div>
+                <div class="stat-meta">0.8&nbsp;(n=7)</div>
+              </div>
+              <div class="stat-row">
+                <div class="stat-label">high</div>
+                <div class="bar-track"><div class="bar-fill" style="width:77%;"></div></div>
+                <div class="stat-meta">1.1&nbsp;(n=4)</div>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:8px;">
+              <div style="font-family:'Nunito';font-size:14px;font-weight:500;color:var(--linen-900);letter-spacing:0.2px;">Mean lean drift</div>
+              <div class="drift-num">34</div>
+              <div class="drift-sub">Some wobble within one camp, nothing dramatic.</div>
+            </div>
+
+            <div class="card scorecard-card" style="margin-top:8px;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 17l6-6 4 4 8-9"/><path d="M21 5v5h-5"/></svg>
+              <div>
+                <div class="scorecard-title">Model scorecard</div>
+                <div class="scorecard-sub">How well have the on-device models predicted your outcomes?</div>
+              </div>
+              <span class="chevron">›</span>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 10l9-7 9 7v11H3z"/></svg><span class="tab-label">Home</span></div>
+            <div class="tab tab--active"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14l4-4 3 3 5-6 4 4"/></svg><span class="tab-label">Record</span></div>
+            <div class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h12a2 2 0 012 2v14a2 2 0 01-2-2H4z"/><path d="M4 4v14"/></svg><span class="tab-label">Techniques</span></div>
+            <div class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span class="tab-label">Settings</span></div>
+          </div>
+        </div>
+        <div class="obs">
+          <strong>Delta</strong>
+          Clarity "62" gains Lora weight 700 — heavier, more confident. Section headers move from hearth&nbsp;500 to linen&nbsp;500 small-caps (hearth is reserved for interactive affordances in the OpenHearth grammar).
+        </div>
+      </div>
+
+      <!-- ── PHONE 3 · REVEAL ─────────────────────────────────────── -->
+      <div>
+        <div class="frame-label">Reveal · lean time series</div>
+        <div class="phone">
+          <div class="sb">
+            <span>9:41</span>
+            <span class="sb-r">
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="currentColor"><path d="M1 10h2v2H1zM4 7h2v5H4zM7 4h2v8H7zM10 2h2v10h-2zM13 0h2v12h-2z"/></svg>
+              <svg width="14" height="12" viewBox="0 0 14 12" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M7 3.5a6 6 0 014 1.8M7 1a9 9 0 016 2.7M7 6a3 3 0 012 .8"/><circle cx="7" cy="9" r="1" fill="currentColor"/></svg>
+              <svg width="24" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.1"><rect x="0.5" y="1.5" width="19" height="9" rx="2"/><rect x="20.5" y="4.5" width="2" height="3" rx="0.6" fill="currentColor"/><rect x="2" y="3" width="14" height="6" rx="1" fill="currentColor"/></svg>
+            </span>
+          </div>
+          <div class="ab">The reveal</div>
+          <div class="body">
+            <div class="chart-wrap">
+              <svg viewBox="0 0 340 200" width="100%" style="display:block">
+                <line x1="38" y1="20" x2="330" y2="20" stroke="#EAE1D4"/>
+                <line x1="38" y1="60" x2="330" y2="60" stroke="#F5EFE6"/>
+                <line x1="38" y1="100" x2="330" y2="100" stroke="#F5EFE6"/>
+                <line x1="38" y1="140" x2="330" y2="140" stroke="#F5EFE6"/>
+                <line x1="38" y1="180" x2="330" y2="180" stroke="#EAE1D4"/>
+                <text x="30" y="24" text-anchor="end" font-family="Nunito" font-size="9" fill="#8C7B65">B</text>
+                <text x="30" y="104" text-anchor="end" font-family="Nunito" font-size="9" fill="#8C7B65">50</text>
+                <text x="30" y="184" text-anchor="end" font-family="Nunito" font-size="9" fill="#8C7B65">A</text>
+                <polyline
+                  points="70,128 130,100 190,88 250,112 310,84.8"
+                  fill="none" stroke="#A85040" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="70" cy="128" r="4" fill="#A85040"/>
+                <circle cx="130" cy="100" r="4" fill="#A85040"/>
+                <circle cx="190" cy="88" r="5" fill="#A85040" stroke="#FFF8" stroke-width="2"/>
+                <circle cx="250" cy="112" r="4" fill="#A85040"/>
+                <circle cx="310" cy="84.8" r="4" fill="#A85040"/>
+                <text x="70" y="198" text-anchor="middle" font-family="Nunito" font-size="9" fill="#8C7B65">1</text>
+                <text x="130" y="198" text-anchor="middle" font-family="Nunito" font-size="9" fill="#8C7B65">2</text>
+                <text x="190" y="198" text-anchor="middle" font-family="Nunito" font-size="9" fill="#8C7B65">3</text>
+                <text x="250" y="198" text-anchor="middle" font-family="Nunito" font-size="9" fill="#8C7B65">4</text>
+                <text x="310" y="198" text-anchor="middle" font-family="Nunito" font-size="9" fill="#8C7B65">5</text>
+              </svg>
+            </div>
+
+            <!-- NEW: slider style being contributed -->
+            <div class="card" style="margin-top:10px;">
+              <div style="font-family:'Nunito';font-size:12px;font-weight:500;color:var(--linen-500);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:4px;">New · OhTheme.sliderTheme (this commit)</div>
+              <div class="slider-demo">
+                <div class="slider-row"><span>Stay at current</span><span>Take Denver offer</span></div>
+                <div class="slider-track"><div class="slider-thumb"></div></div>
+                <div class="slider-scale"><span>0</span><span>72 / 100</span><span>100</span></div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-top:10px;">
+              <p class="lora-italic" style="margin:0;">
+                Your lean drifted from 45 toward 72 over two weeks, with a dip to 55 around day 8. The recovery tracks your rationale shift from comp concerns to team quality — the real criterion revealed itself through the noise.
+              </p>
+            </div>
+            <div class="spacer"></div>
+            <div class="chip-row" style="margin-top:14px;">
+              <span class="chip">Stay at current</span>
+              <span class="chip chip--selected">Take Denver offer</span>
+            </div>
+            <button class="btn btn--expanded" style="margin-top:12px;">Set resolution date</button>
+          </div>
+        </div>
+        <div class="obs">
+          <strong>Delta</strong>
+          CTA is a pill. Observation uses Lora italic (unchanged — already matched spec). New&thinsp;→ <strong>OhTheme.sliderTheme</strong> contribution: hearth-500 active track, hearth-100 inactive, hearth-600 thumb on a linen-50 halo, 15% primary overlay on press.
+        </div>
+      </div>
+    </div>
+
+    <section class="legend">
+      <div class="legend-title">Tokens in use · openhearth_design@0.1</div>
+      <div class="swatches">
+        <div class="sw"><div class="sw-dot" style="background:#A85040"></div><div><div class="sw-name sw-good">hearth-500</div><div class="sw-hex">#A85040</div></div></div>
+        <div class="sw"><div class="sw-dot" style="background:#F8E8E3"></div><div><div class="sw-name sw-good">hearth-100</div><div class="sw-hex">#F8E8E3</div></div></div>
+        <div class="sw"><div class="sw-dot" style="background:#EDCDC5"></div><div><div class="sw-name sw-good">hearth-200</div><div class="sw-hex">#EDCDC5</div></div></div>
+        <div class="sw"><div class="sw-dot" style="background:#FBF8F4"></div><div><div class="sw-name sw-good">linen-50</div><div class="sw-hex">#FBF8F4</div></div></div>
+        <div class="sw"><div class="sw-dot" style="background:#F5EFE6"></div><div><div class="sw-name sw-good">linen-100</div><div class="sw-hex">#F5EFE6</div></div></div>
+        <div class="sw"><div class="sw-dot" style="background:#EAE1D4"></div><div><div class="sw-name sw-good">linen-200</div><div class="sw-hex">#EAE1D4</div></div></div>
+        <div class="sw"><div class="sw-dot" style="background:#D4C5B0"></div><div><div class="sw-name sw-good">linen-300</div><div class="sw-hex">#D4C5B0</div></div></div>
+        <div class="sw"><div class="sw-dot" style="background:#2C1810"></div><div><div class="sw-name sw-good">linen-900</div><div class="sw-hex">#2C1810</div></div></div>
+      </div>
+      <div style="margin-top:22px;font-size:12px;color:var(--meta);line-height:1.55;max-width:780px;">
+        <span style="display:inline-block;padding:3px 10px;border-radius:999px;background:#E0EFEA;color:#4A7B65;font-size:10px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;">8 / 8 aligned</span>
+        &nbsp; Every palette value now matches the OpenHearth spec.
+        Every typography method resolves via OhTypography. Every radius via OhRadii.
+        Reckon goes from being "warm-toned" to being <em>an OpenHearth app</em> — the invariant is shared, the accent stays Reckon's.
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reckon × OpenHearth · Design migration mockups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --hearth-500: #A85040;
+      --hearth-600: #8B3E2F;
+      --sage-500: #5E9478;
+      --linen-50:  #FBF8F4;
+      --linen-100: #F5EFE6;
+      --linen-200: #EAE1D4;
+      --linen-300: #D4C5B0;
+      --linen-500: #8C7B65;
+      --linen-700: #4D3E2E;
+      --linen-900: #2C1810;
+      --stage:    #E7DDCE;
+      --stage-2:  #EFE5D3;
+    }
+    html,body { margin:0; padding:0; background:var(--stage); color:var(--linen-900); }
+    body {
+      font-family: 'Nunito', system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse at 20% -10%, var(--stage-2), transparent 45%),
+        radial-gradient(ellipse at 120% 80%, #DFD3BE 0%, transparent 50%),
+        var(--stage);
+      min-height: 100vh;
+      padding: 96px 48px 96px;
+    }
+    .doc { max-width: 1080px; margin: 0 auto; }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2.4px;
+      text-transform: uppercase;
+      color: var(--hearth-500);
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 64px;
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.015em;
+      margin: 0 0 24px;
+      max-width: 860px;
+    }
+    h1 em { font-style: italic; font-weight: 500; color: var(--linen-700); }
+    .lede {
+      font-family: 'Lora', Georgia, serif;
+      font-style: italic;
+      font-size: 20px;
+      line-height: 1.55;
+      max-width: 680px;
+      color: var(--linen-700);
+      margin: 0 0 72px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 32px;
+    }
+    @media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+
+    a.card {
+      display: block;
+      background: var(--linen-50);
+      border: 1px solid var(--linen-300);
+      border-radius: 16px;
+      padding: 28px 28px 32px;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    a.card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 32px -12px rgba(44,24,16,0.2);
+      border-color: var(--hearth-500);
+    }
+    a.card.sage:hover { border-color: var(--sage-500); }
+
+    .card-tag {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2.2px;
+      text-transform: uppercase;
+      color: var(--linen-500);
+      margin-bottom: 16px;
+    }
+    a.card h2 {
+      font-family: 'Lora', Georgia, serif;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1.2;
+      letter-spacing: -0.3px;
+      margin: 0 0 12px;
+      color: var(--linen-900);
+    }
+    a.card p {
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--linen-700);
+      margin: 0 0 24px;
+    }
+    .card-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .pill {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: var(--linen-700);
+      background: var(--linen-200);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .pill.hearth { background: #F8E8E3; color: var(--hearth-600); }
+    .pill.sage   { background: #E0EFEA; color: #4A7B65; }
+
+    footer {
+      margin-top: 96px;
+      padding-top: 28px;
+      border-top: 1px solid var(--linen-300);
+      font-size: 12px;
+      color: var(--linen-500);
+      line-height: 1.6;
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    footer code { font-family: 'Nunito'; font-weight: 600; color: var(--linen-700); }
+  </style>
+</head>
+<body>
+  <div class="doc">
+    <div class="eyebrow">Design review · 2026 · 04 · 23</div>
+    <h1>Reckon <em>&amp;</em> the OpenHearth design system — three mockups.</h1>
+    <p class="lede">
+      The existing <code>ohStyle/openhearth_design</code> package is the source of truth.
+      Reckon is the first consumer. These three pages walk the migration: what Reckon
+      looks like now, what it looks like after the package lands, and what the next
+      app looks like once the grammar is shared.
+    </p>
+
+    <div class="cards">
+      <a class="card" href="./mockup-a-reckon-before.html">
+        <div class="card-tag">Mockup A · Baseline</div>
+        <h2>Reckon before.</h2>
+        <p>
+          Three screens — intake, record, reveal — rendered with Reckon's current
+          <code>lib/core/theme</code>. Hand-picked hearth palette that drifts from spec
+          in six values. 12 px rounded rectangles. Lora weight 500.
+        </p>
+        <div class="card-pills">
+          <span class="pill hearth">hearth accent</span>
+          <span class="pill">custom AppTheme</span>
+          <span class="pill">230 LOC</span>
+        </div>
+      </a>
+
+      <a class="card" href="./mockup-b-reckon-after.html">
+        <div class="card-tag">Mockup B · Migration</div>
+        <h2>Reckon after.</h2>
+        <p>
+          Same content, OhTheme grammar. Every palette value aligned. StadiumBorder
+          pills. Lora weight 700 for displays. New <code>sliderTheme</code>
+          contributed back to <code>openhearth_design</code>. <code>lib/core/theme</code>
+          deleted.
+        </p>
+        <div class="card-pills">
+          <span class="pill hearth">hearth accent</span>
+          <span class="pill">OhTheme.light()</span>
+          <span class="pill">−230 LOC</span>
+        </div>
+      </a>
+
+      <a class="card sage" href="./mockup-c-lullaby-after.html">
+        <div class="card-tag">Mockup C · Propagation</div>
+        <h2>Lullaby after.</h2>
+        <p>
+          A different app — baby tracker, different audience — adopts the system
+          with one constructor argument: <code>appAccent: sage500</code>. Every card,
+          type ramp, radius, and input style comes for free. Personality lives in
+          accent and content, not primitives.
+        </p>
+        <div class="card-pills">
+          <span class="pill sage">sage accent</span>
+          <span class="pill">OhTheme.light(appAccent:…)</span>
+          <span class="pill">~90 LOC</span>
+        </div>
+      </a>
+    </div>
+
+    <footer>
+      <div>
+        <code>docs/mockups/</code><br/>
+        Source of truth: <code>ohStyle/openhearth_tokens/tokens.css</code> · <code>openHearthStyleGuide.md</code>
+      </div>
+      <div style="text-align:right;">
+        Open each file directly in a browser.<br/>
+        No JS, no build step.
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

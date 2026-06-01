@@ -1,0 +1,96 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: Reckon
+
+      # The OpenHearth design system is now vendored in-repo at
+      # packages/openhearth_design — no sibling ohStyle checkout needed.
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.x'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: Reckon
+        run: flutter pub get
+
+      - name: Run code generation
+        working-directory: Reckon
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Run tests
+        working-directory: Reckon
+        run: flutter test
+
+  build-and-release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: Reckon
+
+      # The OpenHearth design system is now vendored in-repo at
+      # packages/openhearth_design — no sibling ohStyle checkout needed.
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.x'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: Reckon
+        run: flutter pub get
+
+      - name: Run code generation
+        working-directory: Reckon
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build split APKs
+        working-directory: Reckon
+        run: flutter build apk --split-per-abi --release
+
+      - name: Build AAB
+        working-directory: Reckon
+        run: flutter build appbundle --release
+
+      - name: Generate SHA256 checksums
+        working-directory: Reckon/build/app/outputs/flutter-apk
+        run: |
+          for f in *.apk; do
+            sha256sum "$f" > "${f}.sha256"
+          done
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            Reckon/build/app/outputs/flutter-apk/*.apk
+            Reckon/build/app/outputs/flutter-apk/*.sha256
+            Reckon/build/app/outputs/bundle/release/*.aab
+          generate_release_notes: true
+          draft: true
