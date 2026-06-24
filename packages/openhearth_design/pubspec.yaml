@@ -1,0 +1,20 @@
+name: openhearth_design
+description: >-
+  OpenHearth design system — tri-theme (light / hearthDark / night),
+  hearth-on-linen palette, Lora/Nunito type ramp. In-repo reconstruction of the
+  shared package so Reckon builds standalone (CI, fresh clones, this container)
+  without the sibling ../ohStyle checkout.
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+# NOTE: The Lora and Nunito font families are declared and bundled by the
+# consuming app (reckon/pubspec.yaml). This package references them by family
+# name only — it does not re-bundle the .ttf assets.

@@ -1,0 +1,114 @@
+name: reckon
+description: Personal decision journal — Reckon Phase 1
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  # flutter_gemma 0.13.x → grpc 5.x requires a recent Dart; CI builds on
+  # Flutter 3.44.x (Dart 3.9). Older SDKs fail dependency resolution.
+  sdk: '>=3.8.0 <4.0.0'
+  flutter: '>=3.32.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Routing
+  go_router: ^14.2.0
+
+  # Storage
+  # NOTE: drift_flutter was dropped in Task 2 because its transitive sqlite3 ^2.x
+  # conflicts with flutter_gemma's sqlite3 ^3.x requirement. Task 7 will wire
+  # drift directly against sqlite3_flutter_libs + path_provider.
+  drift: ^2.18.0
+  sqlite3: ^3.1.0
+  sqlite3_flutter_libs: ^0.5.24
+  flutter_secure_storage: ^9.2.2
+  path_provider: ^2.1.3
+  path: ^1.9.0
+
+  # LLM (confirmed in Task 1 spike — see tool/spike/mediapipe_check.md)
+  flutter_gemma: ^0.13.2  # Phase 1 model: Gemma 3 1B IT (ModelType.gemmaIt)
+
+  # Charts
+  fl_chart: ^0.68.0
+
+  # Notifications
+  flutter_local_notifications: ^17.1.2
+  timezone: ^0.9.4
+  permission_handler: ^11.3.1
+
+  # Misc
+  uuid: ^4.4.0
+  dio: ^5.4.3+1
+  crypto: ^3.0.3
+  cryptography: ^2.7.0 # AES-GCM for ReckonParty end-to-end encryption
+  http: ^1.2.0 # Connected/BYOK LLM calls to the Anthropic Messages API
+  intl: ^0.19.0
+  share_plus: ^10.1.2
+  qr_flutter: ^4.1.0 # render the LAN join link as a scannable QR code
+  url_launcher: ^6.3.1  # opens curated citation links in the system browser
+  nsd: ^4.1.0 # mDNS/DNS-SD advertise + browse for LAN party auto-discovery
+
+  # OpenHearth design system — tokens, typography, theme. In-repo
+  # reconstruction of the shared ../ohStyle package so Reckon builds
+  # standalone (CI, fresh clones, contributors) without the sibling checkout.
+  # Fonts are bundled by this app (assets section below).
+  openhearth_design:
+    path: packages/openhearth_design
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  # In-process relay server for the ReckonParty sync integration test.
+  reckonparty_relay:
+    path: relay
+  shelf: ^1.4.1 # serve the relay in-process for the integration test
+  build_runner: ^2.4.11
+  # NOTE: runs against sqlite3 3.x via dependency_overrides below.
+  drift_dev: ^2.18.0
+  riverpod_generator: ^2.4.0
+  custom_lint: ^0.6.4
+  riverpod_lint: ^2.3.10
+  mockito: ^5.4.4
+
+# Task 2 concern: flutter_gemma 0.13.2 depends on sqlite3 ^3.1.0 while
+# drift_dev 2.x pins sqlite3 ^2.x. Both packages use different APIs of
+# the sqlite3 Dart package but the latest 3.x is backwards-compatible for
+# drift_dev's codegen usage. Override to unblock resolution; revisit if
+# `dart run build_runner build` in Task 7 surfaces a real incompatibility.
+dependency_overrides:
+  sqlite3: ^3.1.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/reference_classes.json
+    - assets/glossary.json
+
+  fonts:
+    - family: Lora
+      fonts:
+        - asset: assets/fonts/Lora-Regular.ttf
+        - asset: assets/fonts/Lora-Italic.ttf
+          style: italic
+        - asset: assets/fonts/Lora-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Lora-Bold.ttf
+          weight: 700
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+        - asset: assets/fonts/Nunito-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Nunito-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700
