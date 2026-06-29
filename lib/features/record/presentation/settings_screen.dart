@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../core/llm/hf_token.dart';
 import '../../../core/llm/llm_providers.dart';
@@ -322,6 +323,7 @@ class _ModelCardState extends ConsumerState<_ModelCard> {
   @override
   void dispose() {
     _sub?.cancel();
+    unawaited(WakelockPlus.disable());
     super.dispose();
   }
 
@@ -346,6 +348,9 @@ class _ModelCardState extends ConsumerState<_ModelCard> {
       _downloadError = null;
       _progress = 0;
     });
+    // Hold the CPU awake while the (large) model downloads so the screen
+    // sleeping can't get Android to suspend the transfer mid-flight.
+    unawaited(WakelockPlus.enable());
     _sub = svc.download(widget.spec).listen(
       (event) {
         final (received, total) = event;
@@ -354,6 +359,7 @@ class _ModelCardState extends ConsumerState<_ModelCard> {
         }
       },
       onDone: () {
+        unawaited(WakelockPlus.disable());
         if (mounted) {
           setState(() {
             _downloading = false;
@@ -362,6 +368,7 @@ class _ModelCardState extends ConsumerState<_ModelCard> {
         }
       },
       onError: (Object e) {
+        unawaited(WakelockPlus.disable());
         if (mounted) {
           setState(() {
             _downloading = false;

@@ -54,6 +54,10 @@ dependencies:
   qr_flutter: ^4.1.0 # render the LAN join link as a scannable QR code
   url_launcher: ^6.3.1  # opens curated citation links in the system browser
   nsd: ^4.1.0 # mDNS/DNS-SD advertise + browse for LAN party auto-discovery
+  wakelock_plus: ^1.2.8 # hold the CPU awake during long on-device model
+  # downloads so Android's Doze/process-suspend can't kill an in-app transfer
+  # when the screen sleeps (the partial is now resumable, but staying awake
+  # avoids the interruption in the first place)
 
   # OpenHearth design system — tokens, typography, theme. In-repo
   # reconstruction of the shared ../ohStyle package so Reckon builds
