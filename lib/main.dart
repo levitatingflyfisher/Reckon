@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
@@ -8,6 +9,10 @@ import 'core/notifications/notification_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // flutter_gemma 0.13.x requires this one-time init before installModel /
+  // getActiveModel are used — without it, starting a case throws
+  // "Bad state: FlutterGemma not initialized!".
+  await FlutterGemma.initialize();
   runApp(const ProviderScope(child: _Bootstrap()));
 }
 
