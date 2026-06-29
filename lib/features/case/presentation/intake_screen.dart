@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/llm/llm_providers.dart';
 import '../../../core/llm/llm_service.dart';
+import '../../../core/llm/model_error.dart';
 import '../../../core/llm/model_spec.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_text_field.dart';
@@ -128,13 +129,18 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
         },
       );
     } catch (e) {
+      // Only point to Settings if the model file is actually missing; otherwise
+      // surface the real failure rather than sending the user to re-download a
+      // model they already have.
+      final downloaded = await ref
+          .read(modelDownloadServiceProvider)
+          .isDownloaded(ref.read(activeModelSpecProvider));
       if (mounted) {
         setState(() {
           _transcript.add(IntakeTurn(
             role: IntakeRole.assistant,
-            content: 'The on-device model is not available yet. '
-                'Download it from Settings before starting a case.\n\n'
-                '($e)',
+            content:
+                modelStartErrorMessage(modelDownloaded: downloaded, error: e),
           ));
           _isGenerating = false;
         });
