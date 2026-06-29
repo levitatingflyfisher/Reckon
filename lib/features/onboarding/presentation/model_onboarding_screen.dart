@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../core/llm/hf_token.dart';
 import '../../../core/llm/llm_providers.dart';
@@ -43,6 +44,7 @@ class _ModelOnboardingScreenState
   @override
   void dispose() {
     _sub?.cancel();
+    unawaited(WakelockPlus.disable());
     super.dispose();
   }
 
@@ -71,6 +73,9 @@ class _ModelOnboardingScreenState
       _error = null;
       _progress = 0;
     });
+    // Hold the CPU awake while the (large) model downloads so the screen
+    // sleeping can't get Android to suspend the transfer mid-flight.
+    unawaited(WakelockPlus.enable());
     _sub = svc.download(_selected).listen(
       (event) {
         final (received, total) = event;
@@ -79,12 +84,14 @@ class _ModelOnboardingScreenState
         }
       },
       onDone: () async {
+        unawaited(WakelockPlus.disable());
         await persistSelectedModelId(_selected.id);
         if (!mounted) return;
         ref.invalidate(selectedModelIdProvider);
         context.go('/onboarding/first-case');
       },
       onError: (Object e) {
+        unawaited(WakelockPlus.disable());
         if (mounted) {
           setState(() {
             _downloading = false;
