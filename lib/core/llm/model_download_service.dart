@@ -86,9 +86,15 @@ class ModelDownloadService {
   /// Downloads [spec] and yields `(receivedBytes, totalBytes)` progress
   /// tuples. The total may be `-1` if the server omits `Content-Length`.
   ///
+  /// Resumable: if an interrupted attempt left a `.part` on disk, this asks the
+  /// server (via an HTTP `Range` request) only for the bytes after it and
+  /// appends, instead of discarding the progress and restarting from zero —
+  /// which is what kept happening when the phone slept mid-download and Android
+  /// suspended the process. The partial is deliberately *kept* on error so the
+  /// next attempt can pick up where this one stopped.
+  ///
   /// Throws [StateError] if [spec] requires a token and none is stored.
-  /// Forwards [DioException] on network errors. Partial files are deleted
-  /// on error.
+  /// Forwards [DioException] on network errors.
   Stream<(int, int)> download(ReckonModelSpec spec) async* {
     final file = await modelFile(spec);
     final part = await _partFile(spec);
@@ -108,27 +114,51 @@ class ModelDownloadService {
       headers['Authorization'] = 'Bearer $token';
     }
 
-    // Clear stale artifacts from any previous aborted attempt so a partial
-    // `.part` can't be mistaken for fresh progress.
-    if (part.existsSync()) await part.delete();
+    Future<void> run() async {
+      final resumeFrom = part.existsSync() ? await part.length() : 0;
+      final reqHeaders = Map<String, dynamic>.from(headers);
+      if (resumeFrom > 0) reqHeaders['Range'] = 'bytes=$resumeFrom-';
 
-    unawaited(_dio
-        .download(
-      spec.downloadUrl,
-      part.path,
-      options: Options(headers: headers),
-      onReceiveProgress: (received, total) {
-        controller.add((received, total));
-      },
-      deleteOnError: true,
-    )
-        .then((_) async {
+      final response = await _dio.download(
+        spec.downloadUrl,
+        part.path,
+        options: Options(headers: reqHeaders),
+        onReceiveProgress: (received, total) {
+          // dio reports progress relative to *this* request; offset it so the
+          // UI tracks the whole file when resuming.
+          controller.add((
+            resumeFrom + received,
+            total < 0 ? -1 : resumeFrom + total,
+          ));
+        },
+        // Keep the partial on error so a later attempt can resume from it.
+        deleteOnError: false,
+        fileAccessMode:
+            resumeFrom > 0 ? FileAccessMode.append : FileAccessMode.write,
+      );
+
+      // If we asked for a range but the host ignored it (200 instead of 206),
+      // the bytes dio just appended sit on top of the stale partial — the file
+      // is now corrupt. Discard it and pull a clean copy from the start.
+      if (resumeFrom > 0 && response.statusCode == HttpStatus.ok) {
+        if (part.existsSync()) await part.delete();
+        await _dio.download(
+          spec.downloadUrl,
+          part.path,
+          options: Options(headers: headers),
+          onReceiveProgress: (received, total) =>
+              controller.add((received, total)),
+          deleteOnError: false,
+        );
+      }
+
       // Atomically promote the completed file to its final name. Only now is
       // [isDownloaded] allowed to return true.
       if (file.existsSync()) await file.delete();
       await part.rename(file.path);
-      controller.close();
-    }, onError: (Object e) {
+    }
+
+    unawaited(run().then((_) => controller.close(), onError: (Object e) {
       controller.addError(e);
       controller.close();
     }));
