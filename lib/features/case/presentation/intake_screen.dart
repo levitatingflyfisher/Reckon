@@ -180,10 +180,13 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
 
   CaseDraft _parseDraft(String jsonText) {
     final parsed = jsonDecode(jsonText) as Map<String, dynamic>;
+    // Lenient: a small model may omit a field. Default to empty and let the
+    // (editable) summary screen catch anything missing, rather than throwing
+    // and stranding the user with no way to finish.
     return CaseDraft(
-      question: parsed['question'] as String,
-      optionA: parsed['optionA'] as String,
-      optionB: parsed['optionB'] as String,
+      question: (parsed['question'] as String?) ?? '',
+      optionA: (parsed['optionA'] as String?) ?? '',
+      optionB: (parsed['optionB'] as String?) ?? '',
       stakes: _parseStakes(parsed['stakes'] as String?),
       regretHorizon: _parseHorizon(parsed['regretHorizon'] as String?),
       deadline: parsed['deadline'] == null
@@ -319,9 +322,47 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
                 ),
               ],
             ),
+            // Always-available escape hatch: once the user has said anything,
+            // they can finish and save the case themselves — they're never
+            // stranded waiting on the small model to emit a clean structured
+            // result.
+            if (_transcript.any((t) => t.role == IntakeRole.user))
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: OHButton(
+                  label: 'Build my case →',
+                  style: OHButtonStyle.secondary,
+                  expanded: true,
+                  onPressed: _isGenerating ? null : _buildCaseManually,
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  /// Builds a best-effort draft from the conversation and goes to the editable
+  /// summary, so the user can always finish — even if the on-device model never
+  /// produced a clean INTAKE_COMPLETE.
+  void _buildCaseManually() {
+    final firstUser = _transcript
+        .firstWhere(
+          (t) => t.role == IntakeRole.user,
+          orElse: () => const IntakeTurn(role: IntakeRole.user, content: ''),
+        )
+        .content
+        .trim();
+    final draft = CaseDraft(
+      question: firstUser,
+      optionA: '',
+      optionB: '',
+      stakes: Stakes.medium,
+      regretHorizon: RegretHorizon.months,
+      deadline: null,
+      statedCriteria: const [],
+      category: null,
+    );
+    context.go('/case-summary', extra: draft);
   }
 }
