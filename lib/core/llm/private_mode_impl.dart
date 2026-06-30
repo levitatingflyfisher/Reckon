@@ -40,7 +40,15 @@ class PrivateModeImpl implements LlmService {
       topK: 40,
     );
 
-    for (final turn in ctx.transcript) {
+    // Replay only the most recent turns. A small model's context is tiny, so
+    // feeding an ever-growing transcript is what made it run out of room and
+    // go silent after a couple of exchanges. The last dozen turns are plenty
+    // for a four-question intake and keep us well inside maxTokens.
+    const maxReplayTurns = 12;
+    final recent = ctx.transcript.length > maxReplayTurns
+        ? ctx.transcript.sublist(ctx.transcript.length - maxReplayTurns)
+        : ctx.transcript;
+    for (final turn in recent) {
       if (turn.content.isEmpty) continue;
       await chat.addQueryChunk(Message.text(
         text: turn.content,
