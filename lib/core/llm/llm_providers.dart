@@ -70,9 +70,13 @@ final llmServiceProvider = FutureProvider<LlmService>((ref) async {
       .fromFile(file.path)
       .install();
 
-  // Create the inference model.
+  // Create the inference model. maxTokens caps the whole context (system
+  // prompt + conversation + reply). 1024 was far too small for a multi-turn
+  // intake: the system prompt plus a couple of exchanges overran it, and the
+  // model would return empty/garbled output ("stops responding after a turn
+  // or two"). 4096 gives the small model room for the full interview.
   final model = await FlutterGemma.getActiveModel(
-    maxTokens: 1024,
+    maxTokens: 4096,
     preferredBackend: PreferredBackend.gpu,
   );
 
