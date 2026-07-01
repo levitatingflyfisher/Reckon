@@ -2,6 +2,7 @@ import '../../../case/domain/entities/case.dart';
 import '../../../case/domain/entities/poll.dart';
 import '../../../outside_view/domain/entities/outside_view.dart';
 import '../../../outside_view/domain/entities/user_profile.dart';
+import '../../../predictions/domain/entities/model_prediction.dart';
 
 class ExportBundle {
   const ExportBundle({
@@ -21,12 +22,20 @@ class CaseExport {
     required this.polls,
     this.outsideView,
     this.resolution,
+    this.predictions = const [],
   });
 
   final Case case_;
   final List<Poll> polls;
   final OutsideView? outsideView;
   final ResolutionExport? resolution;
+
+  /// The forecaster-duel prediction/track-record rows logged against this
+  /// case (`model_predictions`, kind `duelForecast` and others). Part of the
+  /// backup round-trip (W4 F1) so restore genuinely "replaces" this history
+  /// rather than silently destroying it — the confirm-dialog and
+  /// docs/privacy-model.md copy both promise a replace, not a loss.
+  final List<ModelPrediction> predictions;
 }
 
 class ResolutionExport {

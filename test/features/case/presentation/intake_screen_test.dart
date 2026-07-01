@@ -55,7 +55,7 @@ void main() {
       'has been persisted', (tester) async {
     await tester.pumpWidget(harness(
       selectedId: null,
-      downloadedIds: {ReckonModelSpec.gemma3_1b.id},
+      downloadedIds: {ReckonModelSpec.byId(null).id},
     ));
     await tester.pumpAndSettle();
 

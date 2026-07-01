@@ -1,3 +1,4 @@
+import 'package:reckon/features/case/domain/entities/case.dart';
 import 'package:drift/drift.dart';
 import '../../../core/database/app_database.dart';
 import '../domain/entities/poll.dart';
@@ -38,6 +39,16 @@ class PollRepositoryImpl implements PollRepository {
     String? rationale,
   }) {
     return _db.transaction(() async {
+      // Only an OPEN case accepts new polls (the UI offers "Re-poll" only while
+      // open). Enforce it here so a stale screen or a direct call can't add a
+      // poll to a decided/resolving/closed case.
+      final caseRow = await (_db.select(_db.cases)
+            ..where((t) => t.id.equals(caseId)))
+          .getSingleOrNull();
+      if (caseRow == null || caseRow.status != CaseStatus.open.name) {
+        throw StateError(
+            'Cannot add a poll to a case that is not open (case $caseId)');
+      }
       final max = _db.polls.pollNumber.max();
       final row = await (_db.selectOnly(_db.polls)
             ..addColumns([max])

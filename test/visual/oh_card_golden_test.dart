@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openhearth_design/openhearth_design.dart';
+import 'package:reckon/shared/theme/reckon_theme.dart';
 import 'package:reckon/shared/widgets/oh_card.dart';
 
 import 'visual_golden_helper.dart';
@@ -37,11 +37,11 @@ Widget _cardSample() {
 
 void main() {
   // OHCard pulls its surface color from the colorScheme, so it looks different
-  // in each OhTheme variant — golden each so a theme regression is visible.
+  // in each ReckonTheme variant — golden each so a theme regression is visible.
   final themes = <String, ThemeData>{
-    'light': OhTheme.light(),
-    'hearthdark': OhTheme.hearthDark(),
-    'night': OhTheme.night(),
+    'light': ReckonTheme.light(),
+    'hearthdark': ReckonTheme.hearthDark(),
+    'night': ReckonTheme.night(),
   };
 
   themes.forEach((variant, theme) {

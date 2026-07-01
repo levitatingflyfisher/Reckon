@@ -1,16 +1,114 @@
-# reckon
+# Reckon
 
-A new Flutter project.
+**A local-first personal decision journal for Android.** Reckon runs a structured
+"inner-crowd" protocol over a real decision — and then keeps the record, so your own
+track record can confront you.
 
-## Getting Started
+> **Reckon does not tell you what to decide. It shows you what you already think —
+> more clearly than you could see it alone, and across time.**
 
-This project is a starting point for a Flutter application.
+The whole loop runs **on your device**, with **no account** and a small **on-device
+LLM** — free, private, offline. See [VISION.md](VISION.md) for the north star and
+[docs/](docs/README.md) for the full documentation.
 
-A few resources to get you started if this is your first Flutter project:
+## What it does
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+You bring a real, consequential, slow decision — a career move, a big purchase, where
+to live. Reckon walks it through a protocol drawn from superforecasting practice:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. **Intake.** A conversational interview (run by the on-device model) turns your
+   dilemma into a crisp two-option case with stated criteria, stakes, and a regret
+   horizon.
+2. **Blinded re-polls.** Over the following days or weeks, Reckon asks where you lean
+   now — **without showing you your previous answers**, so anchoring can't quietly
+   pull you back to yesterday's position.
+3. **Outside view.** It pulls a base rate from a reference-class database and (with the
+   model) synthesises an outside view, stratified by your profile.
+4. **Reveal.** When you decide, it charts how your position actually drifted and offers
+   a one-line observation about it.
+5. **Resolution.** A delayed check-in asks how it turned out — and that answer feeds
+   your longitudinal record.
+6. **Record.** Your **Clarity Score**, calibration, personal base rates, insight
+   cards, and update quality, computed honestly from your closed cases.
+
+**The duel.** Forecasters can compete on your open case: personas over the on-device
+model, your own Anthropic key, any OpenAI-compatible endpoint (a llamafile on your
+LAN), and imported outside bots. Their forecasts stay **sealed** until you reveal your
+own decision, are scored individually when the case resolves, and accumulate into a
+**deference map** of earned weights — you included, on the same formula. Reckon never
+says "the model thinks you should…"; it shows you who has actually been right, and how
+often.
+
+**Ask outside bots.** A case can be exported as a de-identified
+[reckonBounty](https://github.com/levitatingflyfisher/reckonBounty) request file — the rewrite is drafted
+on-device and always passes through an editable preview before anything leaves — and
+bots' responses paste back in as sealed forecasts that earn a track record like any
+other forecaster.
+
+There is also **ReckonParty** — a group-decision mode (approval or ranked-choice
+voting) that syncs over your LAN or an optional zero-knowledge relay, no account
+required. One-shot parties stay anonymous; **persistent groups** give a household a
+named circle, attributed votes, a shared decision history, and **considered mode** —
+tallies sealed until everyone has voted, then a mutual reveal.
+
+## Quickstart
+
+Prerequisites: the [Flutter SDK](https://docs.flutter.dev/get-started/install)
+(3.32+; CI builds on 3.44.x), and an Android device or emulator (minSdk 24).
+
+```bash
+git clone git@github.com:levitatingflyfisher/Reckon.git
+cd Reckon
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs   # generate Drift/Riverpod code
+flutter run                                                 # on an attached Android device
+```
+
+On first use, pick a model in onboarding and let it download (a few hundred MB to
+~4 GB depending on the model — Wi-Fi recommended). After that, everything works
+offline. Full instructions: [docs/how-to/build-and-run.md](docs/how-to/build-and-run.md).
+
+### Encrypted backup — sibling packages
+
+Reckon's encrypted `.ohbk` backup (Settings → Encrypted Backup) is built on two shared
+packages consumed by **sibling path dependency** (`../packages/...`, same pattern as
+`eloEngine`). Clone them next to this repo so the paths resolve:
+
+```
+packages/
+  sanctuary_auth_core/     # github: levitatingflyfisher/sanctuaryAuthCore
+  sanctuary_backup_ui/     # github: levitatingflyfisher/sanctuaryBackupUi
+Reckon/                    # this repo
+```
+
+```bash
+git clone https://github.com/levitatingflyfisher/sanctuaryAuthCore packages/sanctuary_auth_core
+git clone https://github.com/levitatingflyfisher/sanctuaryBackupUi packages/sanctuary_backup_ui
+git clone git@github.com:levitatingflyfisher/Reckon.git
+cd Reckon
+flutter pub get
+```
+
+Everything else in Reckon works without them, but `flutter pub get` fails on a clone
+that's missing these two directories.
+
+## See the docs
+
+- **[VISION.md](VISION.md)** — the one idea, the design commitments, an honest
+  scorecard of what's built vs. aspirational.
+- **[docs/](docs/README.md)** — the documentation hub (Diátaxis-organised):
+  tutorials, how-to guides, reference, and explanation.
+- **[docs/concepts.md](docs/concepts.md)** — the inner-crowd protocol explained.
+- **[docs/privacy-model.md](docs/privacy-model.md)** — exactly what does and doesn't
+  leave your device.
+- **[AGENTS.md](AGENTS.md)** — if you're an agent or a contributor, read this first.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — how to file issues and open PRs.
+
+## Tech
+
+Flutter · Riverpod · Drift (SQLite) · `flutter_gemma` (MediaPipe on-device LLM) ·
+`go_router` · `flutter_local_notifications`. Clean Architecture, feature-first.
+
+## License
+
+[MIT](LICENSE).

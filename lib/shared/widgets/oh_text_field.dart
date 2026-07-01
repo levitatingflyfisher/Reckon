@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Thin adapter over [TextField] so app code stays off the raw Material
 /// surface. Styling (fill color, border radius, borders, hint color) is
-/// inherited from OhTheme's inputDecorationTheme — no overrides here.
+/// inherited from ReckonTheme's inputDecorationTheme — no overrides here.
 class OHTextField extends StatelessWidget {
   const OHTextField({
     super.key,

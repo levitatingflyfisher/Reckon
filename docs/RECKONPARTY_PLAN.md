@@ -1,10 +1,13 @@
 # ReckonParty — Workflow Implementation Plan (Phase 3)
 
-**Date:** 2026-06-12
-**Status:** Stage 1 (domain + voting math) **done**. Local-first data layer
-(Drift-backed `LocalPartyRepository`) **done** — a party now works fully
-on-device with no server. Remaining: UI (Stage 2 surfaces) and the optional
-sync relay (Stage 0, deliberately deferred).
+**Date:** 2026-06-12 (status updated 2026-07-11)
+**Status:** historical planning document — the stages below have shipped: domain +
+voting math, the local-first data layer, the UI surfaces, the encrypted-blob sync
+(client, relay server, LAN transport), and — beyond this plan — **persistent groups,
+attributed ballots, and considered mode**
+([ADR-0008](adr/0008-persistent-groups-attributed-ballots.md)). For current state see
+[reference/feature-status.md](reference/feature-status.md); for the protocol, the
+[yellow paper](spec/yellow-paper.md). Kept for the architecture rationale below.
 
 ## Architecture decision: local-first, server-optional
 

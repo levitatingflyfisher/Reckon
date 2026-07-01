@@ -40,6 +40,8 @@ class Party {
     required this.votingMethod,
     required this.createdAt,
     this.closed = false,
+    this.groupId,
+    this.considered = false,
   });
 
   final String id;
@@ -48,6 +50,15 @@ class Party {
   final VotingMethod votingMethod;
   final DateTime createdAt;
   final bool closed;
+
+  /// The persistent group this decision belongs to; null for the original
+  /// one-shot (ungrouped) parties.
+  final String? groupId;
+
+  /// Considered mode, for the where-do-we-live class of decisions: tallies
+  /// stay hidden while voting is open so nobody anchors on a running score,
+  /// and closing the vote is the mutual reveal.
+  final bool considered;
 
   /// The moment voting is intended to close: [createdAt] plus one week.
   DateTime get expiresAt => createdAt.add(kPartyLifetime);
@@ -58,6 +69,13 @@ class Party {
   /// The set of option ids defined on this party — used to validate ballots.
   Set<String> get optionIds => options.map((o) => o.id).toSet();
 
+  /// Whether the tally must stay hidden right now. True only for a considered
+  /// party that is still open — closing reveals, mutually, for everyone.
+  /// (Doc note for the yellow paper: this is a *client-side* courtesy, not a
+  /// cryptographic guarantee — every ballot-holding device can decrypt every
+  /// ballot; considered mode changes what the UI shows, not what keys unlock.)
+  bool get resultsSealed => considered && !closed;
+
   Party copyWith({bool? closed}) => Party(
         id: id,
         title: title,
@@ -65,5 +83,7 @@ class Party {
         votingMethod: votingMethod,
         createdAt: createdAt,
         closed: closed ?? this.closed,
+        groupId: groupId,
+        considered: considered,
       );
 }

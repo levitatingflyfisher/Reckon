@@ -120,23 +120,53 @@ class AnthropicLlmService implements LlmService {
   }
 
   @override
-  Future<CommunitySeed> generateCommunitySeed(Case case_) async {
+  Future<CommunitySeed> generateCommunitySeed(
+    Case case_, {
+    String? persona,
+    double? temperature,
+  }) async {
     try {
       final text = await _client.complete(
-        LlmPrompts.communitySeedBot,
-        _communitySeedPrompt(case_),
+        LlmPrompts.forecasterSeed(persona),
+        LlmPrompts.decisionBrief(case_),
+        temperature: temperature ?? 0.4,
       );
       final json = _firstJsonObject(text);
-      if (json != null) {
-        final lean = (json['lean'] as num?)?.round() ?? 50;
+      // A missing/non-numeric lean is a model hiccup, not a forecast: return
+      // the empty-rationale sentinel (matching the openai-compat and
+      // on-device backends) so RunDuel's guard drops it instead of logging a
+      // fabricated 50/50 wearing the model's prose.
+      if (json != null && json['lean'] is num) {
         return CommunitySeed(
-          lean: lean.clamp(0, 100),
+          lean: (json['lean'] as num).round().clamp(0, 100),
           rationale: json['rationale'] as String? ?? '',
         );
       }
       return const CommunitySeed(lean: 50, rationale: '');
     } catch (_) {
       return const CommunitySeed(lean: 50, rationale: '');
+    }
+  }
+
+  @override
+  Future<RedactedQuestion> redactQuestion({
+    required String title,
+    required String background,
+  }) async {
+    try {
+      final text = await _client.complete(
+        LlmPrompts.redactor,
+        'TITLE: $title\nBACKGROUND: $background',
+      );
+      final json = _firstJsonObject(text);
+      final newTitle = (json?['title'] as String?)?.trim() ?? '';
+      final newBackground = (json?['background'] as String?)?.trim() ?? '';
+      if (newTitle.isEmpty || newBackground.isEmpty) {
+        return RedactedQuestion.sentinel;
+      }
+      return RedactedQuestion(title: newTitle, background: newBackground);
+    } catch (_) {
+      return RedactedQuestion.sentinel;
     }
   }
 
@@ -194,17 +224,6 @@ class AnthropicLlmService implements LlmService {
       );
     }
     return sb.toString();
-  }
-
-  String _communitySeedPrompt(Case case_) {
-    return (StringBuffer()
-          ..writeln('DECISION')
-          ..writeln('Question: ${case_.question}')
-          ..writeln('Option A (lean 0): ${case_.optionA}')
-          ..writeln('Option B (lean 100): ${case_.optionB}')
-          ..writeln('Stakes: ${case_.stakes.name}')
-          ..writeln('Category: ${case_.category ?? "uncategorised"}'))
-        .toString();
   }
 
   Map<String, dynamic>? _firstJsonObject(String text) {

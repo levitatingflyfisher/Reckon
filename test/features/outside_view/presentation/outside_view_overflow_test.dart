@@ -140,7 +140,12 @@ class _FakeLlm implements LlmService {
   Future<RevealObservation> generateRevealObservation(CaseTimeSeries t) =>
       throw UnimplementedError();
   @override
-  Future<CommunitySeed> generateCommunitySeed(Case case_) =>
+  Future<CommunitySeed> generateCommunitySeed(Case case_,
+          {String? persona, double? temperature}) =>
+      throw UnimplementedError();
+  @override
+  Future<RedactedQuestion> redactQuestion(
+          {required String title, required String background}) =>
       throw UnimplementedError();
 }
 
@@ -152,6 +157,11 @@ class _FakePredictions implements PredictionRepository {
   @override
   Future<void> scoreForCase(String caseId,
       {required double score, required DateTime scoredAt}) async {}
+  @override
+  Future<void> scoreDuelForecasts(String caseId,
+      {required String chosenOption,
+      required int satisfaction,
+      required DateTime scoredAt}) async {}
   @override
   Future<List<ModelScorecardEntry>> scorecard() async => [];
 }

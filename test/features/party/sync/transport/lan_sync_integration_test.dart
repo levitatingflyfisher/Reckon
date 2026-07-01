@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reckon/core/database/app_database.dart';
+import 'package:reckon/features/party/data/group_repository_impl.dart';
 import 'package:reckon/features/party/data/local_party_repository.dart';
 import 'package:reckon/features/party/domain/entities/ballot.dart';
 import 'package:reckon/features/party/domain/entities/party.dart';
@@ -68,6 +69,54 @@ void main() {
     expect(result.ballotCount, 1);
     expect(result.tallies.firstWhere((t) => t.optionId == 'b').approvals, 1);
   });
+
+  test('the UI-path service sequence works end to end over the LAN', () async {
+    // This mirrors exactly what the screens call since the wiring fix:
+    // vote screen  -> submitBallot + pushBallot
+    // result screen -> pull (open/refresh/periodic)
+    // close voting -> closeSynced
+    final hostDb = AppDatabase(NativeDatabase.memory());
+    addTearDown(hostDb.close);
+    final hostRepo = LocalPartyRepository(hostDb);
+    final party = await hostRepo.createParty(
+        title: 'Movie?', options: options, votingMethod: VotingMethod.approval);
+
+    final gen = await PartyCrypto.generate();
+    final host = await LanPartyHost.start(
+      partyId: party.id,
+      partyBlob: await gen.crypto.encryptJson(PartyCodec.partyToJson(party)),
+      address: '127.0.0.1',
+    );
+    addTearDown(host.stop);
+    final link = PartyJoinLink(
+      relayBaseUrl: 'lan://127.0.0.1:${host.port}',
+      partyId: party.id,
+      keyString: gen.keyString,
+    ).toUrl();
+
+    final voter = _device();
+    addTearDown(voter.sync.dispose);
+    final joined = await voter.sync.joinParty(link);
+
+    // Vote screen path.
+    final ballot = Ballot.approval(
+        id: 'ui1', party: joined, approvedOptionIds: const ['a']);
+    await voter.repo.submitBallot(party.id, ballot);
+    await voter.sync.pushBallot(party.id, ballot);
+
+    // Result screen path on another device: pull folds the vote in.
+    final watcher = _device();
+    addTearDown(watcher.sync.dispose);
+    await watcher.sync.joinParty(link);
+    await watcher.sync.pull(party.id);
+    final tally = await watcher.repo.computeResult(party.id) as ApprovalResult;
+    expect(tally.ballotCount, 1);
+
+    // Close-voting path: the voter closes; the watcher's next pull mirrors it.
+    await voter.sync.closeSynced(party.id);
+    await watcher.sync.pull(party.id);
+    expect((await watcher.repo.getParty(party.id))!.closed, isTrue);
+  });
 }
 
 ({LocalPartyRepository repo, PartySyncService sync}) _device() {
@@ -78,6 +127,7 @@ void main() {
     local: repo,
     keys: InMemoryPartyKeyStore(),
     relayFor: lanAndCloudResolver(),
+    groups: GroupRepositoryImpl(db),
   );
   return (repo: repo, sync: sync);
 }

@@ -3,13 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../data/party_providers.dart';
 import '../domain/entities/ballot.dart';
 import '../domain/entities/party.dart';
+import '../sync/party_sync_providers.dart';
 
 /// Cast one ballot for a party. This is the pass-the-phone surface: each voter
-/// fills it in, submits, and hands the device on. Fully on-device.
+/// fills it in, submits, and hands the device on. Fully on-device — except
+/// that a vote on a shared/joined party is also pushed to its relay/host, so
+/// remote participants' ballots actually reach the tally.
 class PartyVoteScreen extends ConsumerStatefulWidget {
   const PartyVoteScreen({super.key, required this.partyId});
   final String partyId;
@@ -37,15 +41,49 @@ class _PartyVoteScreenState extends ConsumerState<PartyVoteScreen> {
   Future<void> _submit(Party party) async {
     if (_submitting || !_canSubmit(party)) return;
     setState(() => _submitting = true);
-    final id = const Uuid().v4();
-    final ballot = party.votingMethod == VotingMethod.approval
-        ? Ballot.approval(id: id, party: party, approvedOptionIds: _approved)
-        : Ballot.ranked(id: id, party: party, rankedOptionIds: _rankOrder);
 
     try {
+      final id = const Uuid().v4();
+      // Group decisions are attributed: the ballot carries this device's
+      // stable ghost account id as the member id. One-shot parties stay
+      // anonymous, exactly as before. The auth read lives INSIDE the try:
+      // secure storage can throw (keystore unavailable right after unlock),
+      // and an escape here would leave _submitting stuck true — a submit
+      // button dead until the voter leaves and re-enters the screen.
+      final memberId = party.groupId == null
+          ? null
+          : await ref.read(authRepositoryProvider).getOrCreateAccountId();
+      final ballot = party.votingMethod == VotingMethod.approval
+          ? Ballot.approval(
+              id: id,
+              party: party,
+              approvedOptionIds: _approved,
+              memberId: memberId)
+          : Ballot.ranked(
+              id: id,
+              party: party,
+              rankedOptionIds: _rankOrder,
+              memberId: memberId);
+
       await ref.read(partyRepositoryProvider).submitBallot(party.id, ballot);
+      // Synced party? Send the ballot to the relay/host too (a no-op when no
+      // sync key exists). A push failure must NOT lose the vote: the local
+      // store is the source of truth, so we save, warn, and move on.
+      var pushed = true;
+      try {
+        await ref.read(partySyncServiceProvider).pushBallot(party.id, ballot);
+      } catch (_) {
+        pushed = false;
+      }
       ref.invalidate(partyResultProvider(party.id));
       if (!mounted) return;
+      if (!pushed) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              "Saved on this device — couldn't reach the party host. Your "
+              'vote counts here; it just may not show up remotely.'),
+        ));
+      }
       context.go('/party/${party.id}/result');
     } catch (e) {
       if (!mounted) return;

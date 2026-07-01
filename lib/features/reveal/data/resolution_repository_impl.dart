@@ -60,6 +60,7 @@ class ResolutionRepositoryImpl implements ResolutionRepository {
         .map((r) => ScoredResolution(
               caseId: r.caseId,
               satisfactionScore: r.satisfactionScore!,
+              chosenOption: r.chosenOption,
             ))
         .toList();
   }
@@ -71,6 +72,10 @@ class ResolutionRepositoryImpl implements ResolutionRepository {
     String? reflection,
   }) async {
     await _db.transaction(() async {
+      final resolution = await (_db.select(_db.resolutions)
+            ..where((t) => t.caseId.equals(caseId)))
+          .getSingleOrNull();
+      final chosenOption = resolution?.chosenOption;
       await (_db.update(_db.resolutions)
             ..where((t) => t.caseId.equals(caseId)))
           .write(ResolutionsCompanion(
@@ -80,16 +85,25 @@ class ResolutionRepositoryImpl implements ResolutionRepository {
       await (_db.update(_db.cases)..where((t) => t.id.equals(caseId))).write(
         CasesCompanion(status: Value(CaseStatus.closed.name)),
       );
+      // Score the case's duel forecasts, each against what it predicted (the
+      // per-prediction alignment rule documented on scoreDuelForecasts) — the
+      // old blanket scoreForCase gave every prediction the same score, which
+      // could never tell forecasters apart. Observation kinds stay unscored.
+      // Opt-in per construction — tests that build the repo without a
+      // prediction store will skip this step.
+      //
+      // Scoring runs INSIDE the close transaction on purpose: a kill or
+      // throw between "case closed" and "scores written" once stranded every
+      // forecast on the case score-null forever, because a closed case has
+      // no re-check-in path. Close-and-score commit or roll back as one.
+      if (chosenOption != null) {
+        await _predictions?.scoreDuelForecasts(
+          caseId,
+          chosenOption: chosenOption,
+          satisfaction: satisfactionScore,
+          scoredAt: DateTime.now(),
+        );
+      }
     });
-    // Score any predictions tied to this case. Scoring rule: satisfaction
-    // is the outcome signal, normalised from -2..+2 onto -1..+1 so mean
-    // scores are comparable across cases regardless of satisfaction range.
-    // Opt-in per construction — tests that build the repo without a
-    // prediction store will skip this step.
-    await _predictions?.scoreForCase(
-      caseId,
-      score: satisfactionScore / 2.0,
-      scoredAt: DateTime.now(),
-    );
   }
 }

@@ -47,9 +47,10 @@ app.*.map.json
 # Local working artifacts — do not commit
 CLAUDE.md
 GEMINI.md
-AGENTS.md
 docs/superpowers/
 .superpowers/
 /docs/superpowers/
 test/visual/failures/
 .claude/
+
+# AGENTS.md is a SHIPPED agent+human guide — intentionally tracked.

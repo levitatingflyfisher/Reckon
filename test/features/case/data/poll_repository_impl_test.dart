@@ -44,6 +44,24 @@ void main() {
     expect(poll.pollNumber, 1);
   });
 
+  test('insertNext refuses to add a poll to a non-open case', () async {
+    // Re-poll is only offered while the case is open; enforce that invariant at
+    // the data layer so a stale screen or direct call can't poll a closed case.
+    await cases.updateStatus('c1', CaseStatus.closed);
+    expect(
+      () => polls.insertNext(
+        id: 'p1',
+        caseId: 'c1',
+        createdAt: DateTime(2026, 4, 11),
+        lean: 60,
+        confidence: Confidence.medium,
+      ),
+      throwsStateError,
+    );
+    expect(await polls.getByCaseId('c1'), isEmpty,
+        reason: 'no poll row may be written for a closed case');
+  });
+
   test('insertNext assigns sequential numbers on sequential calls', () async {
     for (var i = 0; i < 3; i++) {
       await polls.insertNext(

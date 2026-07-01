@@ -99,7 +99,12 @@ class _FakeLlm implements LlmService {
             'pinned action button off the bottom of the column.',
       );
   @override
-  Future<CommunitySeed> generateCommunitySeed(Case c) =>
+  Future<CommunitySeed> generateCommunitySeed(Case c,
+          {String? persona, double? temperature}) =>
+      throw UnimplementedError();
+  @override
+  Future<RedactedQuestion> redactQuestion(
+          {required String title, required String background}) =>
       throw UnimplementedError();
 }
 
@@ -111,6 +116,11 @@ class _FakePredictions implements PredictionRepository {
   @override
   Future<void> scoreForCase(String caseId,
       {required double score, required DateTime scoredAt}) async {}
+  @override
+  Future<void> scoreDuelForecasts(String caseId,
+      {required String chosenOption,
+      required int satisfaction,
+      required DateTime scoredAt}) async {}
   @override
   Future<List<ModelScorecardEntry>> scorecard() async => [];
 }

@@ -9,10 +9,15 @@ import '../entities/party.dart';
 /// switch on the party's [VotingMethod].
 abstract class PartyRepository {
   /// Create and persist a new party, returning the stored entity.
+  ///
+  /// [groupId] scopes the decision to a persistent group (the group must
+  /// already exist locally); [considered] seals the tally until voting closes.
   Future<Party> createParty({
     required String title,
     required List<PartyOption> options,
     required VotingMethod votingMethod,
+    String? groupId,
+    bool considered = false,
   });
 
   /// Fetch a party by id, or null if it does not exist.

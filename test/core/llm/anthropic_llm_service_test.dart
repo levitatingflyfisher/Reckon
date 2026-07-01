@@ -122,6 +122,43 @@ void main() {
     expect(seed.rationale, contains('B'));
   });
 
+  test(
+      'generateCommunitySeed with a rationale but NO lean returns the '
+      'empty-rationale sentinel — a fabricated 50 must never be logged',
+      () async {
+    final h = _service(
+        _textResponse('{"rationale": "sounds plausible either way"}'));
+    final seed = await h.service.generateCommunitySeed(_case());
+    expect(seed.lean, 50);
+    expect(seed.rationale, isEmpty,
+        reason: "RunDuel's sentinel guard keys on the empty rationale; "
+            'keeping the model prose would log a forecast it never made');
+  });
+
+  test('generateCommunitySeed honors persona and temperature', () async {
+    final h = _service(_textResponse('{"lean": 30, "rationale": "leans A"}'));
+    final seed = await h.service.generateCommunitySeed(
+      _case(),
+      persona: 'Steelmans the option the asker leans away from.',
+      temperature: 0.8,
+    );
+
+    expect(seed.lean, 30);
+    final body = jsonDecode(h.requests.single.body) as Map<String, dynamic>;
+    expect(body['system'], contains('Steelmans'));
+    expect(body['temperature'], 0.8);
+  });
+
+  test('generateCommunitySeed without a persona uses the neutral prompt',
+      () async {
+    final h = _service(_textResponse('{"lean": 55, "rationale": "close"}'));
+    await h.service.generateCommunitySeed(_case());
+
+    final body = jsonDecode(h.requests.single.body) as Map<String, dynamic>;
+    expect(body['system'], contains('"lean"'));
+    expect(body['system'], isNot(contains('stance:')));
+  });
+
   test('a non-200 response degrades gracefully, never throws', () async {
     final h = _service('rate limited', status: 429);
     final mismatch = await h.service.detectRepollSentiment(50, 'meh');
@@ -130,6 +167,36 @@ void main() {
         .conductIntake(const IntakeContext(transcript: [], userInput: 'hi'))
         .join();
     expect(intake, isEmpty); // empty stream, no crash
+  });
+
+  test('redactQuestion sends the redactor prompt and parses the rewrite',
+      () async {
+    final h = _service(_textResponse(
+        '{"title": "Buy the vacation cabin?", '
+        '"background": "Family of five, single income."}'));
+
+    final r = await h.service.redactQuestion(
+      title: 'Buy the cabin near Bear Lake?',
+      background: 'The Hansens are a family of five.',
+    );
+
+    expect(r.isSentinel, isFalse);
+    expect(r.title, 'Buy the vacation cabin?');
+    expect(r.background, 'Family of five, single income.');
+    final body = jsonDecode(h.requests.single.body) as Map<String, dynamic>;
+    expect(body['system'], contains('de-identify'));
+    final content =
+        ((body['messages'] as List).single as Map)['content'] as String;
+    expect(content, contains('Bear Lake'));
+    expect(content, contains('Hansens'));
+  });
+
+  test('redactQuestion degrades to the sentinel on HTTP failure', () async {
+    final h = _service('rate limited', status: 429);
+
+    final r = await h.service.redactQuestion(title: 't', background: 'b');
+
+    expect(r.isSentinel, isTrue);
   });
 
   test('BYOK mode points at api.anthropic.com with the user key header',

@@ -44,20 +44,35 @@ class ReckonModelSpec {
   /// One-line description shown in Settings to help the user pick.
   final String description;
 
-  /// Gemma 3 1B IT — int4 quantised, ~555 MB. Ungated community mirror.
-  /// (Size is for the progress UI only — see [approximateSizeBytes].)
-  static const gemma3_1b = ReckonModelSpec(
-    id: 'gemma-3-1b-it',
-    displayName: 'Gemma 3 1B',
-    fileName: 'gemma3-1b-it-int4.task',
+  // No Google model ships as the default: Gemma 3 is license-gated on every
+  // trusted org (ungated only via a personal mirror — a supply-chain risk),
+  // and Gemma 4 E2B's weight is a raw LiteRT/TFLite flatbuffer ("TFL3"), not
+  // the ZIP `.task` bundle MediaPipe needs — flutter_gemma 0.13.2 fails it with
+  // "unable to open zip archive". Until the runtime is bumped to a LiteRT-LM
+  // build, the trusted + ungated + actually-loadable default is Qwen 2.5.
+
+  /// Qwen 2.5 0.5B Instruct — the lightweight tier for storage- or RAM-limited
+  /// phones, filling the niche the retired 555 MB Gemma 3 1B used to occupy.
+  /// Same trusted litert-community org and same q8-ekv `.task` format as the
+  /// 1.5B below (so if that one runs, this one does); Apache-2.0, ungated.
+  static const qwen25_0_5b = ReckonModelSpec(
+    id: 'qwen-2.5-0.5b-it',
+    displayName: 'Qwen 2.5 0.5B',
+    fileName: 'qwen25-0-5b-it-q8.task',
     downloadUrl:
-        'https://huggingface.co/MiCkSoftware/Gemma3-1B-IT-LiteRT/resolve/main/gemma3-1b-it-int4.task',
-    approximateSizeBytes: 555000000,
-    modelType: 'gemmaIt',
-    description: 'Google • 1B params • fast, low memory. Default.',
+        'https://huggingface.co/litert-community/Qwen2.5-0.5B-Instruct/resolve/main/Qwen2.5-0.5B-Instruct_multi-prefill-seq_q8_ekv1280.task',
+    approximateSizeBytes: 546000000,
+    modelType: 'qwen',
+    description:
+        'Alibaba • 0.5B params • smallest + fastest, for low-end devices. '
+        'Open weights (litert-community) — no token needed.',
   );
 
-  /// Qwen 2.5 1.5B Instruct — LiteRT .task. Gated; requires HF token.
+  /// Qwen 2.5 1.5B Instruct — **the default**. A genuine MediaPipe ZIP `.task`
+  /// (magic "PK", `ModelType.qwen`) on the trusted litert-community org, so it
+  /// both loads on flutter_gemma 0.13.2 AND needs no HF token (unauthenticated
+  /// resolve → 302). Apache-2.0. The balanced pick: more capable than 0.5B,
+  /// far lighter than Phi-4.
   static const qwen25_1_5b = ReckonModelSpec(
     id: 'qwen-2.5-1.5b-it',
     displayName: 'Qwen 2.5 1.5B',
@@ -66,13 +81,13 @@ class ReckonModelSpec {
         'https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv1280.task',
     approximateSizeBytes: 1600000000,
     modelType: 'qwen',
-    requiresToken: true,
     description:
-        'Alibaba • 1.5B params • often stronger reasoning than Gemma 1B. '
-        'Gated on HuggingFace — requires a token.',
+        'Alibaba • 1.5B params • stronger reasoning than the 0.5B models. '
+        'Open weights (litert-community) — no token needed.',
   );
 
-  /// Phi-4 Mini Instruct — LiteRT .task. Gated; larger file, needs HF token.
+  /// Phi-4 Mini Instruct — LiteRT .task on the trusted litert-community org.
+  /// Open weights: an unauthenticated resolve returns 302 (no HF token needed).
   static const phi4Mini = ReckonModelSpec(
     id: 'phi-4-mini-it',
     displayName: 'Phi-4 Mini',
@@ -81,25 +96,26 @@ class ReckonModelSpec {
         'https://huggingface.co/litert-community/Phi-4-mini-instruct/resolve/main/Phi-4-mini-instruct_multi-prefill-seq_q8_ekv1280.task',
     approximateSizeBytes: 4000000000,
     modelType: 'phi',
-    requiresToken: true,
     description:
         'Microsoft • 3.8B params • strongest reasoning, heaviest. '
-        'Gated on HuggingFace — requires a token. ~4 GB.',
+        'Open weights (litert-community) — no token needed. ~4 GB.',
   );
 
-  /// The full roster exposed to the UI.
+  /// The full roster exposed to the UI, default first.
   static const List<ReckonModelSpec> availableModels = [
-    gemma3_1b,
     qwen25_1_5b,
+    qwen25_0_5b,
     phi4Mini,
   ];
 
-  /// Look up a spec by [id] with a safe fallback to [gemma3_1b].
+  /// Look up a spec by [id] with a safe fallback to the default [qwen25_1_5b]
+  /// (used when no selection has been made yet, or a persisted id no longer
+  /// matches any [availableModels] entry).
   static ReckonModelSpec byId(String? id) {
-    if (id == null) return gemma3_1b;
+    if (id == null) return qwen25_1_5b;
     for (final s in availableModels) {
       if (s.id == id) return s;
     }
-    return gemma3_1b;
+    return qwen25_1_5b;
   }
 }

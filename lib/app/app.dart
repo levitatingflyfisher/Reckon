@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctuary_backup_ui/sanctuary_backup_ui.dart';
 
 import '../core/notifications/local_notification_service.dart';
 import '../core/notifications/notification_providers.dart';
@@ -32,6 +33,15 @@ class _ReckonAppState extends ConsumerState<ReckonApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final payload = await notif.initialLaunchPayload();
       if (payload != null) _handlePayload(payload);
+    });
+
+    // Silent freshness snapshot (BACKUP_RETENTION_SPEC §3): if the newest
+    // vault snapshot is >7 days old and a key exists, take one. Post-frame
+    // + fire-and-forget — never blocks boot, never surfaces errors.
+    // ReckonApp only mounts after _Bootstrap resolves, so this runs strictly
+    // post-bootstrap.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(backupControllerProvider.notifier).runStartupMaintenance();
     });
   }
 

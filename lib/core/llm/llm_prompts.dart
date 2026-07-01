@@ -1,3 +1,5 @@
+import '../../features/case/domain/entities/case.dart';
+
 class LlmPrompts {
   LlmPrompts._();
 
@@ -89,7 +91,48 @@ Patterns worth surfacing:
 - Timing patterns
 ''';
 
-  static const communitySeedBot = '''
-[Phase 1 stub — not invoked]
+  /// System prompt for a duel forecast (the community-seed prompt, grown up).
+  /// [persona] is an optional one-sentence stance that turns the generic
+  /// forecaster into a named participant; null yields the neutral bot.
+  ///
+  /// Deliberately short: on-device the WHOLE context (system + brief + reply)
+  /// fits in 4096 tokens, and small models lose the thread under long
+  /// multi-constraint instructions.
+  static String forecasterSeed(String? persona) => '''
+You are a forecaster judging someone else's two-option decision.
+${persona == null ? '' : 'Your stance: $persona\n'}Read the decision, then reply with EXACTLY one line of compact JSON and nothing else:
+{"lean": <0-100, 0 = strongly option A, 100 = strongly option B>, "rationale": "<2-3 sentences>"}
+Never refuse. If genuinely torn, stay near 50 and say why.
 ''';
+
+  /// De-identification rewrite for the bounty export. Same output contract as
+  /// the other structured calls (one flat JSON line) so every backend's JSON
+  /// extractor can parse it. Kept short for the on-device model.
+  static const redactor = '''
+You de-identify a decision question so it can be shared with strangers.
+Rewrite the TITLE and BACKGROUND you receive, applying these rules:
+- Remove names of people, employers, schools, and specific places; replace
+  them with roles or generic terms ("my brother", "a mid-size employer",
+  "a nearby town").
+- Turn exact ages and amounts into brackets ("38" -> "late 30s",
+  "\$412,000" -> "about \$400k").
+- Keep every fact that bears on the decision: relative amounts, distances,
+  timelines, who is affected.
+- Change nothing else. No advice, no commentary.
+Reply with EXACTLY one line of compact JSON and nothing else:
+{"title": "<rewritten title>", "background": "<rewritten background>"}
+''';
+
+  /// The user-facing decision brief every forecaster receives — shared across
+  /// backends so a duel compares models, not prompt phrasings. The lean
+  /// orientation (A=0, B=100) is stated inline because the seed prompt scores
+  /// against it.
+  static String decisionBrief(Case case_) => (StringBuffer()
+        ..writeln('DECISION')
+        ..writeln('Question: ${case_.question}')
+        ..writeln('Option A (lean 0): ${case_.optionA}')
+        ..writeln('Option B (lean 100): ${case_.optionB}')
+        ..writeln('Stakes: ${case_.stakes.name}')
+        ..writeln('Category: ${case_.category ?? "uncategorised"}'))
+      .toString();
 }

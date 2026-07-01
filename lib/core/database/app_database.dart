@@ -1,9 +1,5 @@
-import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
-import 'package:sqlite3_flutter_libs/sqlite3_flutter_libs.dart';
+import 'connection/connection.dart';
 import 'converters.dart';
 import 'tables/cases_table.dart';
 import 'tables/polls_table.dart';
@@ -15,6 +11,9 @@ import 'tables/community_forecasts_table.dart';
 import 'tables/model_predictions_table.dart';
 import 'tables/parties_table.dart';
 import 'tables/party_ballots_table.dart';
+import 'tables/forecasters_table.dart';
+import 'tables/groups_table.dart';
+import 'tables/group_members_table.dart';
 
 part 'app_database.g.dart';
 
@@ -29,12 +28,15 @@ part 'app_database.g.dart';
   ModelPredictions,
   Parties,
   PartyBallots,
+  Forecasters,
+  Groups,
+  GroupMembers,
 ])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -55,6 +57,21 @@ class AppDatabase extends _$AppDatabase {
           if (from < 4) {
             await m.addColumn(outsideViews, outsideViews.citations);
           }
+          if (from < 5) {
+            // Forecaster registry + persistent groups. Tables first: the new
+            // parties.group_id column references groups.
+            await m.createTable(forecasters);
+            await m.createTable(groups);
+            await m.createTable(groupMembers);
+            if (from >= 3) {
+              // Databases older than v3 get parties/party_ballots freshly
+              // created above (from < 3) already in their v5 shape — only
+              // the v3/v4 shape needs the new columns added.
+              await m.addColumn(parties, parties.groupId);
+              await m.addColumn(parties, parties.considered);
+              await m.addColumn(partyBallots, partyBallots.memberId);
+            }
+          }
         },
         beforeOpen: (details) async {
           // Enforce referential integrity (off by default in SQLite). All
@@ -62,13 +79,4 @@ class AppDatabase extends _$AppDatabase {
           await customStatement('PRAGMA foreign_keys = ON');
         },
       );
-}
-
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'reckon.sqlite'));
-    await applyWorkaroundToOpenSqlite3OnOldAndroidVersions();
-    return NativeDatabase.createInBackground(file);
-  });
 }

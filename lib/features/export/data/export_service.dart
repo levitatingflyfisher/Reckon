@@ -5,6 +5,7 @@ import '../../case/domain/entities/poll.dart';
 import '../../outside_view/domain/entities/citation.dart';
 import '../../outside_view/domain/entities/outside_view.dart';
 import '../../outside_view/domain/entities/user_profile.dart';
+import '../../predictions/domain/entities/model_prediction.dart';
 import '../domain/entities/export_bundle.dart';
 
 /// Gathers every user-owned row from the database into an [ExportBundle].
@@ -19,6 +20,7 @@ class ExportService {
     final polls = await _db.select(_db.polls).get();
     final outsideViews = await _db.select(_db.outsideViews).get();
     final resolutions = await _db.select(_db.resolutions).get();
+    final predictions = await _db.select(_db.modelPredictions).get();
     final profileRow = await (_db.select(_db.userProfile)
           ..where((t) => t.id.equals(1)))
         .getSingleOrNull();
@@ -37,6 +39,13 @@ class ExportService {
     final resolutionByCase = {
       for (final row in resolutions) row.caseId: _toResolution(row),
     };
+    final predictionsByCase = <String, List<ModelPrediction>>{};
+    for (final row in predictions) {
+      predictionsByCase.putIfAbsent(row.caseId, () => []).add(_toPrediction(row));
+    }
+    for (final list in predictionsByCase.values) {
+      list.sort((a, b) => a.predictedAt.compareTo(b.predictedAt));
+    }
 
     final sortedCases = [...cases]
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -50,6 +59,7 @@ class ExportService {
                 polls: pollsByCase[row.id] ?? const [],
                 outsideView: outsideByCase[row.id],
                 resolution: resolutionByCase[row.id],
+                predictions: predictionsByCase[row.id] ?? const [],
               ))
           .toList(),
     );
@@ -114,6 +124,20 @@ class ExportService {
         resolutionCheckDate: row.resolutionCheckDate,
         satisfactionScore: row.satisfactionScore,
         reflection: row.reflection,
+      );
+
+  ModelPrediction _toPrediction(ModelPredictionRow row) => ModelPrediction(
+        id: row.id,
+        caseId: row.caseId,
+        modelVersion: row.modelVersion,
+        kind: PredictionKind.values.firstWhere(
+          (k) => k.name == row.kind,
+          orElse: () => PredictionKind.outsideView,
+        ),
+        predictedAt: row.predictedAt,
+        payload: row.payload,
+        score: row.score,
+        scoredAt: row.scoredAt,
       );
 
   UserProfile _toProfile(UserProfileRow? row) => UserProfile(

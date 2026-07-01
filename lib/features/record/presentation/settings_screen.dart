@@ -1,12 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:sanctuary_backup_ui/sanctuary_backup_ui.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../core/llm/hf_token.dart';
@@ -16,7 +12,9 @@ import '../../../core/theme/theme_preference.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_card.dart';
 import '../../export/data/export_providers.dart';
+import '../../export/data/share_export.dart';
 import '../../export/domain/formatters.dart';
+import '../../forecasters/presentation/forecaster_settings_section.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -50,6 +48,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
           const _HfTokenTile(),
           const SizedBox(height: 12),
+          const ForecastersSection(),
+          const SizedBox(height: 24),
           Text('Appearance', style: textTheme.titleLarge),
           const SizedBox(height: 8),
           const _ThemePicker(),
@@ -57,6 +57,9 @@ class SettingsScreen extends ConsumerWidget {
           Text('Your data', style: textTheme.titleLarge),
           const SizedBox(height: 8),
           const _ExportCard(),
+          const SizedBox(height: 12),
+          const _BackupCard(),
+          const BackupSettingsSection(),
           const SizedBox(height: 24),
           const ListTile(
             title: Text('Auth tier'),
@@ -156,18 +159,19 @@ class _ExportCardState extends ConsumerState<_ExportCard> {
           .replaceAll(':', '-')
           .split('.')
           .first;
-      final dir = await getTemporaryDirectory();
-      final file = File(p.join(dir.path, 'reckon-export-$stamp.$ext'));
-      await file.writeAsBytes(utf8.encode(content), flush: true);
-      await Share.shareXFiles(
-        [XFile(file.path)],
+      await shareExport(
+        content: content,
+        fileName: 'reckon-export-$stamp.$ext',
         subject: 'Reckon export — $stamp',
         text: 'My Reckon data (generated $stamp)',
       );
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
-      );
+      // On web, delivery isn't wired up yet and throws an UnsupportedError with
+      // a user-facing message; show that verbatim instead of "Export failed:".
+      final message = e is UnsupportedError
+          ? (e.message ?? 'Export is not available here yet.')
+          : 'Export failed: $e';
+      messenger.showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -181,9 +185,11 @@ class _ExportCardState extends ConsumerState<_ExportCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Export everything Reckon knows about you: cases, polls, '
-            'outside views, and resolutions. Stays on your device '
-            'unless you share it.',
+            'Share a plain, unencrypted copy of everything Reckon knows '
+            'about you: cases, polls, outside views, and resolutions — for '
+            'reading elsewhere, not for safekeeping. Stays on your device '
+            'unless you share it. For a restorable backup, see Encrypted '
+            'backup below.',
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -209,6 +215,31 @@ class _ExportCardState extends ConsumerState<_ExportCard> {
               ],
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Introduces the encrypted-backup controls (rendered immediately below by
+/// [BackupSettingsSection], from sanctuary_backup_ui) with copy that keeps
+/// two things distinct in the user's mind: this is a *restorable* backup
+/// unlocked by 12 recovery words, unlike the plain exports above; and those
+/// words are not a ReckonParty join-link (SANCTUARY-BRIEF §4.W2 — "clearly
+/// labeled so recovery phrases are never confused with party join-links").
+class _BackupCard extends StatelessWidget {
+  const _BackupCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return OHCard(
+      child: Text(
+        'An encrypted, restorable backup of everything above, protected by '
+        '12 recovery words only you hold — nobody else, not even this app, '
+        'can read it without them. Different from a ReckonParty join link: '
+        'those share a decision with someone else; these words recover '
+        'your data on a new device.',
+        style: textTheme.bodyMedium,
       ),
     );
   }
@@ -407,8 +438,9 @@ class _ModelCardState extends ConsumerState<_ModelCard> {
     setState(() => _isDownloaded = false);
     // If the deleted model was active, fall back to the default so the
     // LLM service doesn't try to load a missing file on next invocation.
-    if (widget.isSelected && widget.spec.id != ReckonModelSpec.gemma3_1b.id) {
-      await persistSelectedModelId(ReckonModelSpec.gemma3_1b.id);
+    final defaultId = ReckonModelSpec.byId(null).id;
+    if (widget.isSelected && widget.spec.id != defaultId) {
+      await persistSelectedModelId(defaultId);
       ref.invalidate(selectedModelIdProvider);
       ref.invalidate(llmServiceProvider);
     }

@@ -100,19 +100,19 @@ class RecordScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
           OHCard(
-            onTap: () => context.push('/model-scorecard'),
+            onTap: () => context.push('/forecasters'),
             child: Row(
               children: [
-                Icon(Icons.timeline,
+                Icon(Icons.balance,
                     color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Model scorecard', style: textTheme.labelLarge),
+                      Text('Forecasters', style: textTheme.labelLarge),
                       Text(
-                        'How well have the on-device models predicted your outcomes?',
+                        'Who has earned weight on your decisions — you included?',
                         style: textTheme.bodySmall,
                       ),
                     ],

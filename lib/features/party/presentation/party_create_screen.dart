@@ -11,8 +11,16 @@ import '../domain/entities/party.dart';
 /// Create a ReckonParty group decision. Local-first: the party is written to
 /// the on-device database and the creator is taken straight to voting (the
 /// pass-the-phone flow). No account, no network.
+///
+/// With a [groupId] the decision is scoped to a persistent group and may be
+/// marked *considered*: results stay sealed until voting closes, so the
+/// where-do-we-live class of decisions is voted blind and revealed mutually.
 class PartyCreateScreen extends ConsumerStatefulWidget {
-  const PartyCreateScreen({super.key});
+  const PartyCreateScreen({super.key, this.groupId});
+
+  /// The persistent group this decision belongs to, when started from a
+  /// group's home. Null = the original one-shot flow.
+  final String? groupId;
 
   @override
   ConsumerState<PartyCreateScreen> createState() => _PartyCreateScreenState();
@@ -25,6 +33,7 @@ class _PartyCreateScreenState extends ConsumerState<PartyCreateScreen> {
   final _title = TextEditingController();
   final _options = [TextEditingController(), TextEditingController()];
   VotingMethod _method = VotingMethod.approval;
+  bool _considered = false;
   bool _creating = false;
 
   @override
@@ -84,6 +93,8 @@ class _PartyCreateScreenState extends ConsumerState<PartyCreateScreen> {
             title: _title.text.trim(),
             options: options,
             votingMethod: _method,
+            groupId: widget.groupId,
+            considered: widget.groupId != null && _considered,
           );
       if (!mounted) return;
       context.go('/party/${party.id}/vote');
@@ -165,6 +176,18 @@ class _PartyCreateScreenState extends ConsumerState<PartyCreateScreen> {
                     'least-disliked option wins.',
             style: textTheme.bodySmall,
           ),
+          if (widget.groupId != null) ...[
+            const SectionHeader(label: 'How serious is it?'),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Serious decision'),
+              subtitle: const Text(
+                  'Results stay hidden until voting closes — everyone votes '
+                  'blind, then you reveal together.'),
+              value: _considered,
+              onChanged: (v) => setState(() => _considered = v),
+            ),
+          ],
           const SizedBox(height: 24),
           OHButton(
             label: _creating ? 'Creating…' : 'Start voting',
@@ -178,6 +201,13 @@ class _PartyCreateScreenState extends ConsumerState<PartyCreateScreen> {
             expanded: true,
             onPressed: _creating ? null : () => context.push('/party/join'),
           ),
+          if (widget.groupId == null)
+            OHButton(
+              label: 'Your groups',
+              style: OHButtonStyle.text,
+              expanded: true,
+              onPressed: _creating ? null : () => context.push('/groups'),
+            ),
         ],
       ),
     );

@@ -22,6 +22,11 @@ class PartyBallots extends Table {
 
   DateTimeColumn get submittedAt => dateTime()();
 
+  /// The voter's ghost account id for group (attributed) decisions; null for
+  /// the original anonymous ballots. Attribution rides only inside encrypted
+  /// blobs on the wire — never in relay plaintext. Added at schema v5.
+  TextColumn get memberId => text().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }

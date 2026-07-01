@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/group_providers.dart';
 import '../data/local_party_repository.dart';
 import '../data/party_providers.dart';
 import 'party_key_store.dart';
@@ -28,6 +29,7 @@ final partySyncServiceProvider = Provider<PartySyncService>((ref) {
     local: local,
     keys: ref.watch(partyKeyStoreProvider),
     relayFor: ref.watch(partyRelayResolverProvider),
+    groups: ref.watch(groupRepositoryProvider),
   );
   ref.onDispose(service.dispose);
   return service;

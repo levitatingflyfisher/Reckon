@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openhearth_design/openhearth_design.dart';
+import 'package:reckon/shared/theme/reckon_theme.dart';
 import 'package:reckon/core/llm/llm_service.dart';
 import 'package:reckon/features/case/data/case_providers.dart';
 import 'package:reckon/features/case/domain/entities/case.dart';
@@ -68,7 +68,7 @@ void main() {
     await goldenAtSizes(
       tester,
       name: 'outside_view_screen',
-      theme: OhTheme.light(),
+      theme: ReckonTheme.light(),
       home: ProviderScope(
         overrides: [
           caseByIdProvider.overrideWith((ref, id) async => _sampleCase),
@@ -159,7 +159,12 @@ class _FakeLlm implements LlmService {
       throw UnimplementedError();
 
   @override
-  Future<CommunitySeed> generateCommunitySeed(Case case_) =>
+  Future<CommunitySeed> generateCommunitySeed(Case case_,
+          {String? persona, double? temperature}) =>
+      throw UnimplementedError();
+  @override
+  Future<RedactedQuestion> redactQuestion(
+          {required String title, required String background}) =>
       throw UnimplementedError();
 }
 
@@ -174,6 +179,13 @@ class _FakePredictions implements PredictionRepository {
   Future<void> scoreForCase(
     String caseId, {
     required double score,
+    required DateTime scoredAt,
+  }) async {}
+  @override
+  Future<void> scoreDuelForecasts(
+    String caseId, {
+    required String chosenOption,
+    required int satisfaction,
     required DateTime scoredAt,
   }) async {}
 

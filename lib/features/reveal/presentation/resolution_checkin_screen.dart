@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_text_field.dart';
 import '../../case/data/case_providers.dart';
+import '../../predictions/data/prediction_providers.dart';
 import '../../record/data/record_providers.dart';
 import '../data/resolution_providers.dart';
 
@@ -37,22 +38,39 @@ class _ResolutionCheckInScreenState
   }
 
   Future<void> _save() async {
-    await ref.read(resolutionRepositoryProvider).recordSatisfaction(
-          caseId: widget.caseId,
-          satisfactionScore: _score,
-          reflection: _reflection.text.trim().isEmpty
-              ? null
-              : _reflection.text.trim(),
-        );
+    try {
+      await ref.read(resolutionRepositoryProvider).recordSatisfaction(
+            caseId: widget.caseId,
+            satisfactionScore: _score,
+            reflection: _reflection.text.trim().isEmpty
+                ? null
+                : _reflection.text.trim(),
+          );
+    } catch (e) {
+      // The close+scoring transaction rolled back: the case is still
+      // resolving, nothing was recorded, and trying again is safe. Say so
+      // instead of leaking an unhandled async error.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Couldn't save the check-in — nothing was "
+                'recorded. Please try again. ($e)')));
+      }
+      return;
+    }
 
     // The case is now closed and its outcome feeds the Record screen. Drop the
     // stale detail cache (#7) and the cached Record analytics (#6) so both
-    // reflect the new closed case without an app restart.
+    // reflect the new closed case without an app restart. Invalidating
+    // closedCaseRecordsProvider cascades to every metric that watches it
+    // (insights, calibration, base rates, forecaster weights, update quality).
     ref.invalidate(caseByIdProvider(widget.caseId));
     ref.invalidate(clarityScoreProvider);
+    ref.invalidate(closedCaseRecordsProvider);
     ref.invalidate(insightCardsProvider);
     ref.invalidate(closedCasesProvider);
     ref.invalidate(calibrationReportProvider);
+    ref.invalidate(forecasterWeightsProvider);
+    ref.invalidate(updateQualityProvider);
 
     if (mounted) context.go('/');
   }

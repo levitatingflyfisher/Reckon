@@ -18,9 +18,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clone the sibling path-dep packages
+        # Reckon depends on these by sibling path (../... relative to this
+        # checkout), matching the local monorepo layout. Checked out one
+        # level above $GITHUB_WORKSPACE, which is writable — the runner
+        # owns the whole .../work/<repo>/ tree, not just the checkout dir.
+        # sanctuary_backup_ui itself depends on sanctuary_auth_core by the
+        # same sibling path, so both must land under packages/.
+        run: |
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryAuthCore ../packages/sanctuary_auth_core
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryBackupUi ../packages/sanctuary_backup_ui
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohStyle ../ohStyle
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohFleetConformance ../packages/oh_fleet_conformance
+
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.x'
+          flutter-version: '3.38.7'
           channel: stable
           cache: true
 
@@ -33,6 +46,9 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
+      # C3: the gz-JS size budget only bites when build/web exists
+      - name: Build web (C3 budget artifact)
+        run: flutter build web --release
       - name: Test
         run: flutter test
 
@@ -43,6 +59,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clone the sibling path-dep packages
+        run: |
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryAuthCore ../packages/sanctuary_auth_core
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryBackupUi ../packages/sanctuary_backup_ui
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohStyle ../ohStyle
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohFleetConformance ../packages/oh_fleet_conformance
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -50,7 +73,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.44.x'
+          flutter-version: '3.38.7'
           channel: stable
           cache: true
 
@@ -64,6 +87,40 @@ jobs:
       # resource regressions on every push without the cost of a signed release.
       - name: Build debug APK
         run: flutter build apk --debug
+
+  build-web:
+    name: Build web release (smoke)
+    needs: analyze-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone the sibling path-dep packages
+        run: |
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryAuthCore ../packages/sanctuary_auth_core
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryBackupUi ../packages/sanctuary_backup_ui
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohStyle ../ohStyle
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohFleetConformance ../packages/oh_fleet_conformance
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.38.7'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Code generation (Drift, etc.)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # Two regressions this job exists to catch: (1) a dart:io/ffi import
+      # leaking outside the web/native conditional-import trios (discipline-
+      # only otherwise — the analyzer can't see it, only a web compile can),
+      # and (2) drift/base-href-shaped deploy breakage. Built with the same
+      # --base-href the gh-pages deploy uses (docs/how-to/build-and-run.md).
+      - name: Build web (release, deploy base-href)
+        run: flutter build web --release --base-href /Reckon/
 
   relay:
     name: Relay (analyze & test)

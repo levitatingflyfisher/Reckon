@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:openhearth_design/openhearth_design.dart';
 
-/// Small-caps section label. In the OpenHearth grammar, hearth is reserved
-/// for interactive affordances — section labels use the secondary-text
-/// ramp instead.
+import '../theme/reckon_tokens.dart';
+
+/// Small-caps section label. In the OpenHearth grammar, the accent is
+/// reserved for interactive affordances — section labels use the
+/// secondary-text ramp instead.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.label, this.trailing});
 
@@ -19,7 +20,7 @@ class SectionHeader extends StatelessWidget {
           Expanded(
             child: Text(
               label.toUpperCase(),
-              style: OhTypography.labelSm(color: OhColors.linen500),
+              style: ReckonTypography.labelSm(color: ReckonPalette.linen500),
             ),
           ),
           if (trailing != null) trailing!,

@@ -2,13 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_text_field.dart';
+import '../data/group_providers.dart';
 import '../sync/party_sync_providers.dart';
 
 /// Join a party someone shared with you. Paste the link (or the text behind a
 /// QR); it carries the relay/peer address and the decryption key, so the party
 /// is fetched, decrypted, and stored locally before you start voting.
+///
+/// A decision that belongs to a persistent group brings the group along
+/// (auto-created locally by the sync service); the first time, this screen
+/// asks for your display name so the group can put a name to your votes.
+/// Declining is fine — you still vote, just without a roster name.
 class PartyJoinScreen extends ConsumerStatefulWidget {
   const PartyJoinScreen({super.key});
 
@@ -40,6 +47,8 @@ class _PartyJoinScreenState extends ConsumerState<PartyJoinScreen> {
     try {
       final party =
           await ref.read(partySyncServiceProvider).joinParty(_link.text.trim());
+      final groupId = party.groupId;
+      if (groupId != null) await _introduceYourself(groupId);
       if (!mounted) return;
       context.go('/party/${party.id}/vote');
     } catch (e) {
@@ -49,6 +58,31 @@ class _PartyJoinScreenState extends ConsumerState<PartyJoinScreen> {
         SnackBar(content: Text("Couldn't join: $e")),
       );
     }
+  }
+
+  /// First contact with a group: ask for a display name and join its roster.
+  /// Skipped for members the roster already knows.
+  Future<void> _introduceYourself(String groupId) async {
+    final groups = ref.read(groupRepositoryProvider);
+    final accountId =
+        await ref.read(authRepositoryProvider).getOrCreateAccountId();
+    final roster = await groups.membersOf(groupId);
+    if (roster.any((m) => m.memberId == accountId)) return;
+    final group = await groups.getGroup(groupId);
+    if (group == null || !mounted) return;
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => _DisplayNameDialog(groupName: group.name),
+    );
+    if (name == null || name.trim().isEmpty) return;
+    await groups.addMember(
+      groupId: groupId,
+      memberId: accountId,
+      displayName: name.trim(),
+    );
+    ref.invalidate(groupsProvider);
+    ref.invalidate(groupMembersProvider(groupId));
   }
 
   @override
@@ -80,6 +114,56 @@ class _PartyJoinScreenState extends ConsumerState<PartyJoinScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "You've joined <group> — who are you?" One optional text field; the name
+/// stays local and travels only inside the group's encrypted ballots.
+class _DisplayNameDialog extends StatefulWidget {
+  const _DisplayNameDialog({required this.groupName});
+  final String groupName;
+
+  @override
+  State<_DisplayNameDialog> createState() => _DisplayNameDialogState();
+}
+
+class _DisplayNameDialogState extends State<_DisplayNameDialog> {
+  final _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('You joined “${widget.groupName}”'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Add your name so the group knows who voted. It stays '
+              'inside the group — never on any server.'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _name,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Your name'),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Not now'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(_name.text),
+          child: const Text('Join the group'),
+        ),
+      ],
     );
   }
 }

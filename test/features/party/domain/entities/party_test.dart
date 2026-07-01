@@ -42,6 +42,78 @@ void main() {
       expect(closed.id, p.id);
       expect(closed.expiresAt, p.expiresAt);
     });
+
+    test('is ungrouped and unconsidered by default', () {
+      final p = _party(VotingMethod.approval);
+      expect(p.groupId, isNull);
+      expect(p.considered, isFalse);
+      expect(p.resultsSealed, isFalse);
+    });
+
+    test('copyWith preserves group scope and considered mode', () {
+      final p = Party(
+        id: 'p1',
+        title: 'Where do we live?',
+        options: const [
+          PartyOption(id: 'a', label: 'City'),
+          PartyOption(id: 'b', label: 'Cabin'),
+        ],
+        votingMethod: VotingMethod.approval,
+        createdAt: DateTime.utc(2026, 7, 11),
+        groupId: 'g1',
+        considered: true,
+      );
+      final closed = p.copyWith(closed: true);
+      expect(closed.groupId, 'g1');
+      expect(closed.considered, isTrue);
+    });
+
+    test('a considered party seals results while open, reveals when closed',
+        () {
+      final p = Party(
+        id: 'p1',
+        title: 'Where do we live?',
+        options: const [
+          PartyOption(id: 'a', label: 'City'),
+          PartyOption(id: 'b', label: 'Cabin'),
+        ],
+        votingMethod: VotingMethod.approval,
+        createdAt: DateTime.utc(2026, 7, 11),
+        considered: true,
+      );
+      expect(p.resultsSealed, isTrue,
+          reason: 'blind while voting is open — nobody anchors on a tally');
+      expect(p.copyWith(closed: true).resultsSealed, isFalse,
+          reason: 'closing is the mutual reveal');
+    });
+  });
+
+  group('Ballot attribution', () {
+    test('ballots are anonymous unless a memberId is given', () {
+      final b = Ballot.approval(
+        id: 'v1',
+        party: _party(VotingMethod.approval),
+        approvedOptionIds: const ['a'],
+      );
+      expect(b.memberId, isNull);
+    });
+
+    test('approval and ranked ballots carry an optional memberId', () {
+      final a = Ballot.approval(
+        id: 'v1',
+        party: _party(VotingMethod.approval),
+        approvedOptionIds: const ['a'],
+        memberId: 'm-1',
+      );
+      final r = Ballot.ranked(
+        id: 'v2',
+        party: _party(VotingMethod.ranked),
+        rankedOptionIds: const ['b', 'a'],
+        memberId: 'm-2',
+      );
+      expect(a.memberId, 'm-1');
+      expect(r.memberId, 'm-2');
+    });
   });
 
   group('Ballot validation', () {

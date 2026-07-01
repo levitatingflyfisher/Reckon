@@ -11,7 +11,7 @@ import '../../features/reveal/domain/entities/reveal_observation.dart';
 import 'llm_prompts.dart';
 import 'llm_service.dart';
 
-/// On-device LLM implementation using flutter_gemma (Gemma 3 1B IT).
+/// On-device LLM implementation using flutter_gemma (default: Qwen 2.5 1.5B IT).
 ///
 /// Error policy: inference failures produce recoverable sentinel values
 /// (empty streams, fallback text). The app never crashes on a model hiccup.
@@ -170,26 +170,78 @@ class PrivateModeImpl implements LlmService {
   }
 
   // ---------------------------------------------------------------------------
-  // LlmService — generateCommunitySeed (Phase 3)
+  // LlmService — generateCommunitySeed (the duel entry point)
   // ---------------------------------------------------------------------------
 
   @override
-  Future<CommunitySeed> generateCommunitySeed(Case case_) =>
-      throw UnimplementedError('Community seed — Phase 3');
+  Future<CommunitySeed> generateCommunitySeed(
+    Case case_, {
+    String? persona,
+    double? temperature,
+  }) async {
+    try {
+      final text = await _generateBlocking(
+        LlmPrompts.forecasterSeed(persona),
+        LlmPrompts.decisionBrief(case_),
+        temperature: temperature,
+      );
+      final json = _firstJsonLine(text);
+      if (json != null && json['lean'] is num) {
+        return CommunitySeed(
+          lean: (json['lean'] as num).round().clamp(0, 100),
+          rationale: json['rationale'] as String? ?? '',
+        );
+      }
+      return const CommunitySeed(lean: 50, rationale: '');
+    } catch (_) {
+      return const CommunitySeed(lean: 50, rationale: '');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // LlmService — redactQuestion (the bounty export's de-identification pass)
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<RedactedQuestion> redactQuestion({
+    required String title,
+    required String background,
+  }) async {
+    try {
+      final text = await _generateBlocking(
+        LlmPrompts.redactor,
+        'TITLE: $title\nBACKGROUND: $background',
+      );
+      final json = _firstJsonLine(text);
+      final newTitle = (json?['title'] as String?)?.trim() ?? '';
+      final newBackground = (json?['background'] as String?)?.trim() ?? '';
+      // Half a rewrite is worse than none — the preview would look redacted
+      // while one field silently kept the original text.
+      if (newTitle.isEmpty || newBackground.isEmpty) {
+        return RedactedQuestion.sentinel;
+      }
+      return RedactedQuestion(title: newTitle, background: newBackground);
+    } catch (_) {
+      return RedactedQuestion.sentinel;
+    }
+  }
 
   // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
 
   /// Runs a single prompt through a fresh chat session and collects the
-  /// full response as a concatenated string.
+  /// full response as a concatenated string. The fresh-chat-per-call shape is
+  /// what makes persona forecasters possible on ONE resident model: each call
+  /// gets its own system instruction and sampling temperature.
   Future<String> _generateBlocking(
     String systemInstruction,
-    String userMessage,
-  ) async {
+    String userMessage, {
+    double? temperature,
+  }) async {
     final chat = await _model.createChat(
       systemInstruction: systemInstruction,
-      temperature: 0.4,
+      temperature: temperature ?? 0.4,
       topK: 20,
     );
 

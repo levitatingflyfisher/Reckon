@@ -23,6 +23,8 @@ class LocalPartyRepository implements PartyRepository {
     required String title,
     required List<PartyOption> options,
     required VotingMethod votingMethod,
+    String? groupId,
+    bool considered = false,
   }) async {
     final party = Party(
       id: _uuid.v4(),
@@ -30,6 +32,8 @@ class LocalPartyRepository implements PartyRepository {
       options: options,
       votingMethod: votingMethod,
       createdAt: DateTime.now(),
+      groupId: groupId,
+      considered: considered,
     );
     await _db.into(_db.parties).insert(
           PartiesCompanion.insert(
@@ -40,6 +44,8 @@ class LocalPartyRepository implements PartyRepository {
               for (final o in options) {'id': o.id, 'label': o.label},
             ],
             createdAt: party.createdAt,
+            groupId: Value(party.groupId),
+            considered: Value(party.considered),
           ),
         );
     return party;
@@ -49,7 +55,7 @@ class LocalPartyRepository implements PartyRepository {
   Future<Party?> getParty(String id) async {
     final row = await (_db.select(_db.parties)..where((t) => t.id.equals(id)))
         .getSingleOrNull();
-    return row == null ? null : _partyFromRow(row);
+    return row == null ? null : partyFromRow(row);
   }
 
   /// All locally-stored ballots for a party (validated). Used by the LAN host
@@ -63,18 +69,36 @@ class LocalPartyRepository implements PartyRepository {
   @override
   Future<void> submitBallot(String partyId, Ballot ballot) async {
     // Idempotent by ballot id so re-submits and sync-merges (see
-    // PartySyncService) can't create duplicates.
-    await _db.into(_db.partyBallots).insert(
-          PartyBallotsCompanion.insert(
-            id: ballot.id,
-            partyId: partyId,
-            method: ballot.method.name,
-            approvals: ballot.approvals.toList(),
-            ranking: ballot.ranking,
-            submittedAt: DateTime.now(),
-          ),
-          mode: InsertMode.insertOrIgnore,
-        );
+    // PartySyncService) can't create duplicates. Attributed (group)
+    // ballots additionally enforce ONE ballot per member, latest wins:
+    // every vote-screen visit mints a fresh ballot id, so without this a
+    // member could vote any number of times and every ballot would count —
+    // silently swinging a sealed considered decision. Anonymous
+    // (pass-the-phone) ballots keep accumulating: they carry no identity
+    // to dedupe on, and several voters legitimately share one device.
+    await _db.transaction(() async {
+      final memberId = ballot.memberId;
+      if (memberId != null) {
+        await (_db.delete(_db.partyBallots)
+              ..where((t) =>
+                  t.partyId.equals(partyId) &
+                  t.memberId.equals(memberId) &
+                  t.id.equals(ballot.id).not()))
+            .go();
+      }
+      await _db.into(_db.partyBallots).insert(
+            PartyBallotsCompanion.insert(
+              id: ballot.id,
+              partyId: partyId,
+              method: ballot.method.name,
+              approvals: ballot.approvals.toList(),
+              ranking: ballot.ranking,
+              submittedAt: DateTime.now(),
+              memberId: Value(ballot.memberId),
+            ),
+            mode: InsertMode.insertOrIgnore,
+          );
+    });
   }
 
   /// Insert a party that was created elsewhere and joined via a link, keeping
@@ -90,6 +114,8 @@ class LocalPartyRepository implements PartyRepository {
             ],
             createdAt: party.createdAt,
             closed: Value(party.closed),
+            groupId: Value(party.groupId),
+            considered: Value(party.considered),
           ),
           mode: InsertMode.insertOrIgnore,
         );
@@ -116,7 +142,10 @@ class LocalPartyRepository implements PartyRepository {
     }
   }
 
-  Party _partyFromRow(PartyRow row) => Party(
+  /// Rebuild the [Party] entity from its stored row. Static and public so
+  /// other party-feature repositories (e.g. group decision history) map rows
+  /// identically instead of drifting apart.
+  static Party partyFromRow(PartyRow row) => Party(
         id: row.id,
         title: row.title,
         votingMethod: _methodFromName(row.votingMethod),
@@ -129,6 +158,8 @@ class LocalPartyRepository implements PartyRepository {
         ],
         createdAt: row.createdAt,
         closed: row.closed,
+        groupId: row.groupId,
+        considered: row.considered,
       );
 
   /// Rebuild [Ballot] entities from stored rows, routing each through its
@@ -148,12 +179,14 @@ class LocalPartyRepository implements PartyRepository {
               id: r.id,
               party: party,
               approvedOptionIds: r.approvals.cast<String>(),
+              memberId: r.memberId,
             ));
           case VotingMethod.ranked:
             ballots.add(Ballot.ranked(
               id: r.id,
               party: party,
               rankedOptionIds: r.ranking.cast<String>(),
+              memberId: r.memberId,
             ));
         }
       } on ArgumentError {
@@ -163,7 +196,8 @@ class LocalPartyRepository implements PartyRepository {
     return ballots;
   }
 
-  VotingMethod _methodFromName(String name) => VotingMethod.values.firstWhere(
+  static VotingMethod _methodFromName(String name) =>
+      VotingMethod.values.firstWhere(
         (m) => m.name == name,
         orElse: () => VotingMethod.approval,
       );

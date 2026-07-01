@@ -192,7 +192,6 @@ class _CaseSummaryScreenState extends ConsumerState<CaseSummaryScreen> {
           await notif.scheduleRepoll(
             id: notificationIdFor(case_.id, i),
             caseId: case_.id,
-            caseTitle: _question.text.trim(),
             when: schedule[i],
           );
         } catch (_) {

@@ -3,6 +3,13 @@ enum PredictionKind {
   repollSentiment,
   revealObservation,
   communitySeed,
+
+  /// A forecaster's sealed lean on an open case, logged by the duel and
+  /// scored per-prediction against the user's eventual satisfaction. Payload:
+  /// `{lean, rationale, forecasterId, forecasterName}`. (Readers older than
+  /// v0.4 coerce unknown kinds to [outsideView] via the firstWhere fallback —
+  /// acceptable: they never scored or displayed duel rows anyway.)
+  duelForecast,
 }
 
 class ModelPrediction {

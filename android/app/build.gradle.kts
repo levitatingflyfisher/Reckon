@@ -43,6 +43,43 @@ android {
             )
         }
     }
+
+    packaging {
+        jniLibs {
+            // flutter_gemma 0.13.2 bundles MediaPipe/LiteRT-LM native
+            // families Reckon never calls — we do TEXT INFERENCE only.
+            // Verified against the plugin's Kotlin source (pub cache,
+            // android/src/main/kotlin/): the inference path imports only
+            // com.google.mediapipe.tasks.genai.llminference.* (loads
+            // libllm_inference_engine_jni.so) and com.google.ai.edge.
+            // litertlm.* (loads liblitertlm_jni.so); framework.image is
+            // Java-only. Everything excluded below is loaded by classes no
+            // Reckon code path can reach. KEEP: libllm_inference_engine_jni,
+            // liblitertlm_jni, libflutter, libapp, libsqlite3 (drift's
+            // SQLite — NOT the RAG vector store), libdartjni,
+            // libdatastore_shared_counter. Reversible: delete this block to
+            // re-bundle everything.
+
+            // Image generation (tasks-vision-image-generator): NO plugin
+            // Kotlin class imports the ImageGenerator task at all in
+            // 0.13.2 — the artifact is a declared-but-unreferenced dep.
+            excludes += "lib/**/libmediapipe_tasks_vision_image_generator_jni.so"
+            excludes += "lib/**/libimagegenerator_gpu.so"
+            // Vision tasks base: loaded only by BaseVisionTaskApi vision
+            // tasks (the image generator's base). The text path's
+            // LlmInference has its own JNI and never touches it; Reckon
+            // sends no images either way.
+            excludes += "lib/**/libmediapipe_tasks_vision_jni.so"
+            // RAG stack (localagents-rag): reachable only through the
+            // plugin's EmbeddingModel.kt. Reckon's Dart never calls any
+            // embedding/RAG/vector-store API (grep-verified: no
+            // createEmbedder/embedding/retrieval/vectorStore usage).
+            excludes += "lib/**/libgemma_embedding_model_jni.so"
+            excludes += "lib/**/libgecko_embedding_model_jni.so"
+            excludes += "lib/**/libtext_chunker_jni.so"
+            excludes += "lib/**/libsqlite_vector_store_jni.so"
+        }
+    }
 }
 
 flutter {

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,21 +12,82 @@ import '../data/party_providers.dart';
 import '../domain/entities/party.dart';
 import '../domain/entities/party_result.dart';
 import 'party_host_action.dart';
+import '../sync/party_sync_providers.dart';
 
 /// Live tally for a party. Recomputed on demand from on-device ballots. Offers
 /// the pass-the-phone loop (add another voter), closing voting, sharing a text
 /// summary, and handing a stuck group off into a full Reckon case.
-class PartyResultScreen extends ConsumerWidget {
+///
+/// For a shared/joined party this screen is also where remote votes arrive: it
+/// pulls from the relay when opened, every few seconds while open, and on
+/// demand via the refresh button. Pull failures are silent by design — the
+/// local tally stands until the relay is reachable again (local-first).
+class PartyResultScreen extends ConsumerStatefulWidget {
   const PartyResultScreen({super.key, required this.partyId});
   final String partyId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final partyAsync = ref.watch(partyProvider(partyId));
-    final resultAsync = ref.watch(partyResultProvider(partyId));
+  ConsumerState<PartyResultScreen> createState() => _PartyResultScreenState();
+}
+
+class _PartyResultScreenState extends ConsumerState<PartyResultScreen> {
+  static const _autoPullEvery = Duration(seconds: 5);
+  Timer? _autoPull;
+
+  @override
+  void initState() {
+    super.initState();
+    _startPullingIfSynced();
+  }
+
+  @override
+  void dispose() {
+    _autoPull?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _startPullingIfSynced() async {
+    final synced =
+        await ref.read(partySyncServiceProvider).isSynced(widget.partyId);
+    if (!synced || !mounted) return;
+    await _pull();
+    // Re-check after the await: if the user backed out while the first pull
+    // was in flight, dispose() has already run and a timer created now
+    // would tick (and burn network) forever with nobody to cancel it.
+    if (!mounted) return;
+    _autoPull = Timer.periodic(_autoPullEvery, (_) => _pull());
+  }
+
+  Future<void> _pull() async {
+    try {
+      await ref.read(partySyncServiceProvider).pull(widget.partyId);
+    } catch (_) {
+      return; // Offline or the host is gone — the local tally stands.
+    }
+    if (!mounted) return;
+    ref.invalidate(partyProvider(widget.partyId));
+    ref.invalidate(partyResultProvider(widget.partyId));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final partyAsync = ref.watch(partyProvider(widget.partyId));
+    final resultAsync = ref.watch(partyResultProvider(widget.partyId));
+    final isSynced =
+        ref.watch(partyIsSyncedProvider(widget.partyId)).valueOrNull ?? false;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Result')),
+      appBar: AppBar(
+        title: const Text('Result'),
+        actions: [
+          if (isSynced)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Check for new votes',
+              onPressed: _pull,
+            ),
+        ],
+      ),
       body: partyAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -42,7 +105,12 @@ class PartyResultScreen extends ConsumerWidget {
                 Text(party.title,
                     style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: 16),
-                if (result is ApprovalResult)
+                // Considered mode: while voting is open, nobody — host
+                // included — sees a running score. Blind first; closing is
+                // the mutual reveal.
+                if (party.resultsSealed)
+                  _SealedView(ballotCount: _ballotCount(result))
+                else if (result is ApprovalResult)
                   _ApprovalView(result: result, labels: labels)
                 else if (result is RankedResult)
                   _RankedView(result: result, labels: labels),
@@ -52,6 +120,47 @@ class PartyResultScreen extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+int _ballotCount(Object result) => switch (result) {
+      ApprovalResult r => r.ballotCount,
+      RankedResult r => r.ballotCount,
+      _ => 0,
+    };
+
+/// What a considered party shows while open: who-has-voted count only —
+/// deliberately no tallies, no per-option anything. (A client-side courtesy,
+/// not cryptography: every key holder could decrypt the ballots. The UI keeps
+/// the household honest; see Party.resultsSealed.)
+class _SealedView extends StatelessWidget {
+  const _SealedView({required this.ballotCount});
+  final int ballotCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return OHCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.lock_outline, size: 18),
+              const SizedBox(width: 8),
+              Text('Results sealed', style: textTheme.titleMedium),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$ballotCount ${ballotCount == 1 ? 'vote' : 'votes'} in. '
+            'Everyone votes blind; when the host closes voting, the result '
+            'is revealed to all of you at once.',
+            style: textTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }
@@ -231,22 +340,36 @@ class _Actions extends ConsumerWidget {
           PartyHostAction(partyId: party.id),
         ],
         const SizedBox(height: 12),
-        OHButton(
-          label: 'Share result',
-          style: OHButtonStyle.secondary,
-          expanded: true,
-          icon: Icons.share,
-          onPressed: () => Share.share(_summary()),
-        ),
-        const SizedBox(height: 12),
+        // Sharing a sealed result would leak it — the share affordance only
+        // exists once the tally is visible.
+        if (!party.resultsSealed) ...[
+          OHButton(
+            label: 'Share result',
+            style: OHButtonStyle.secondary,
+            expanded: true,
+            icon: Icons.share,
+            onPressed: () => Share.share(_summary()),
+          ),
+          const SizedBox(height: 12),
+        ],
         if (!party.closed)
           OHButton(
-            label: 'Close voting',
+            label: party.resultsSealed
+                ? 'Close voting and reveal'
+                : 'Close voting',
             style: OHButtonStyle.text,
             expanded: true,
             onPressed: () async {
-              await ref.read(partyRepositoryProvider).closeParty(party.id);
+              // closeSynced closes locally first, then mirrors the close to
+              // the relay when this party has a sync key (no-op otherwise) —
+              // so remote voters see voting end instead of a silent void.
+              try {
+                await ref.read(partySyncServiceProvider).closeSynced(party.id);
+              } catch (_) {
+                // Relay unreachable: the local close already took effect.
+              }
               ref.invalidate(partyProvider(party.id));
+              ref.invalidate(partyResultProvider(party.id));
             },
           ),
         OHButton(

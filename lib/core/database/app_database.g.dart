@@ -3470,6 +3470,273 @@ class ModelPredictionsCompanion extends UpdateCompanion<ModelPredictionRow> {
   }
 }
 
+class $GroupsTable extends Groups with TableInfo<$GroupsTable, GroupRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _archivedMeta =
+      const VerificationMeta('archived');
+  @override
+  late final GeneratedColumn<bool> archived = GeneratedColumn<bool>(
+      'archived', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("archived" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [id, name, createdAt, archived];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'groups';
+  @override
+  VerificationContext validateIntegrity(Insertable<GroupRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    if (data.containsKey('archived')) {
+      context.handle(_archivedMeta,
+          archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  GroupRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GroupRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      archived: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}archived'])!,
+    );
+  }
+
+  @override
+  $GroupsTable createAlias(String alias) {
+    return $GroupsTable(attachedDatabase, alias);
+  }
+}
+
+class GroupRow extends DataClass implements Insertable<GroupRow> {
+  final String id;
+  final String name;
+  final DateTime createdAt;
+  final bool archived;
+  const GroupRow(
+      {required this.id,
+      required this.name,
+      required this.createdAt,
+      required this.archived});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['name'] = Variable<String>(name);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['archived'] = Variable<bool>(archived);
+    return map;
+  }
+
+  GroupsCompanion toCompanion(bool nullToAbsent) {
+    return GroupsCompanion(
+      id: Value(id),
+      name: Value(name),
+      createdAt: Value(createdAt),
+      archived: Value(archived),
+    );
+  }
+
+  factory GroupRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GroupRow(
+      id: serializer.fromJson<String>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      archived: serializer.fromJson<bool>(json['archived']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'name': serializer.toJson<String>(name),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'archived': serializer.toJson<bool>(archived),
+    };
+  }
+
+  GroupRow copyWith(
+          {String? id, String? name, DateTime? createdAt, bool? archived}) =>
+      GroupRow(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        createdAt: createdAt ?? this.createdAt,
+        archived: archived ?? this.archived,
+      );
+  GroupRow copyWithCompanion(GroupsCompanion data) {
+    return GroupRow(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      archived: data.archived.present ? data.archived.value : this.archived,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupRow(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('archived: $archived')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, createdAt, archived);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GroupRow &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.createdAt == this.createdAt &&
+          other.archived == this.archived);
+}
+
+class GroupsCompanion extends UpdateCompanion<GroupRow> {
+  final Value<String> id;
+  final Value<String> name;
+  final Value<DateTime> createdAt;
+  final Value<bool> archived;
+  final Value<int> rowid;
+  const GroupsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  GroupsCompanion.insert({
+    required String id,
+    required String name,
+    required DateTime createdAt,
+    this.archived = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        name = Value(name),
+        createdAt = Value(createdAt);
+  static Insertable<GroupRow> custom({
+    Expression<String>? id,
+    Expression<String>? name,
+    Expression<DateTime>? createdAt,
+    Expression<bool>? archived,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (createdAt != null) 'created_at': createdAt,
+      if (archived != null) 'archived': archived,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  GroupsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? name,
+      Value<DateTime>? createdAt,
+      Value<bool>? archived,
+      Value<int>? rowid}) {
+    return GroupsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      createdAt: createdAt ?? this.createdAt,
+      archived: archived ?? this.archived,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (archived.present) {
+      map['archived'] = Variable<bool>(archived.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('archived: $archived, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $PartiesTable extends Parties with TableInfo<$PartiesTable, PartyRow> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -3513,9 +3780,36 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, PartyRow> {
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("closed" IN (0, 1))'),
       defaultValue: const Constant(false));
+  static const VerificationMeta _groupIdMeta =
+      const VerificationMeta('groupId');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, title, votingMethod, options, createdAt, closed];
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+      'group_id', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES "groups" (id)'));
+  static const VerificationMeta _consideredMeta =
+      const VerificationMeta('considered');
+  @override
+  late final GeneratedColumn<bool> considered = GeneratedColumn<bool>(
+      'considered', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("considered" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        title,
+        votingMethod,
+        options,
+        createdAt,
+        closed,
+        groupId,
+        considered
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3556,6 +3850,16 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, PartyRow> {
       context.handle(_closedMeta,
           closed.isAcceptableOrUnknown(data['closed']!, _closedMeta));
     }
+    if (data.containsKey('group_id')) {
+      context.handle(_groupIdMeta,
+          groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta));
+    }
+    if (data.containsKey('considered')) {
+      context.handle(
+          _consideredMeta,
+          considered.isAcceptableOrUnknown(
+              data['considered']!, _consideredMeta));
+    }
     return context;
   }
 
@@ -3578,6 +3882,10 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, PartyRow> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       closed: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}closed'])!,
+      groupId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}group_id']),
+      considered: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}considered'])!,
     );
   }
 
@@ -3601,13 +3909,23 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
   final List<dynamic> options;
   final DateTime createdAt;
   final bool closed;
+
+  /// The persistent [Groups] row this decision belongs to; null for the
+  /// original one-shot (ungrouped) parties. Added at schema v5.
+  final String? groupId;
+
+  /// Considered mode: a serious decision whose tallies stay hidden until the
+  /// host closes voting (blind, then mutual reveal). Added at schema v5.
+  final bool considered;
   const PartyRow(
       {required this.id,
       required this.title,
       required this.votingMethod,
       required this.options,
       required this.createdAt,
-      required this.closed});
+      required this.closed,
+      this.groupId,
+      required this.considered});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3620,6 +3938,10 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['closed'] = Variable<bool>(closed);
+    if (!nullToAbsent || groupId != null) {
+      map['group_id'] = Variable<String>(groupId);
+    }
+    map['considered'] = Variable<bool>(considered);
     return map;
   }
 
@@ -3631,6 +3953,10 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
       options: Value(options),
       createdAt: Value(createdAt),
       closed: Value(closed),
+      groupId: groupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(groupId),
+      considered: Value(considered),
     );
   }
 
@@ -3644,6 +3970,8 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
       options: serializer.fromJson<List<dynamic>>(json['options']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       closed: serializer.fromJson<bool>(json['closed']),
+      groupId: serializer.fromJson<String?>(json['groupId']),
+      considered: serializer.fromJson<bool>(json['considered']),
     );
   }
   @override
@@ -3656,6 +3984,8 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
       'options': serializer.toJson<List<dynamic>>(options),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'closed': serializer.toJson<bool>(closed),
+      'groupId': serializer.toJson<String?>(groupId),
+      'considered': serializer.toJson<bool>(considered),
     };
   }
 
@@ -3665,7 +3995,9 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
           String? votingMethod,
           List<dynamic>? options,
           DateTime? createdAt,
-          bool? closed}) =>
+          bool? closed,
+          Value<String?> groupId = const Value.absent(),
+          bool? considered}) =>
       PartyRow(
         id: id ?? this.id,
         title: title ?? this.title,
@@ -3673,6 +4005,8 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
         options: options ?? this.options,
         createdAt: createdAt ?? this.createdAt,
         closed: closed ?? this.closed,
+        groupId: groupId.present ? groupId.value : this.groupId,
+        considered: considered ?? this.considered,
       );
   PartyRow copyWithCompanion(PartiesCompanion data) {
     return PartyRow(
@@ -3684,6 +4018,9 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
       options: data.options.present ? data.options.value : this.options,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       closed: data.closed.present ? data.closed.value : this.closed,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      considered:
+          data.considered.present ? data.considered.value : this.considered,
     );
   }
 
@@ -3695,14 +4032,16 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
           ..write('votingMethod: $votingMethod, ')
           ..write('options: $options, ')
           ..write('createdAt: $createdAt, ')
-          ..write('closed: $closed')
+          ..write('closed: $closed, ')
+          ..write('groupId: $groupId, ')
+          ..write('considered: $considered')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, title, votingMethod, options, createdAt, closed);
+  int get hashCode => Object.hash(
+      id, title, votingMethod, options, createdAt, closed, groupId, considered);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3712,7 +4051,9 @@ class PartyRow extends DataClass implements Insertable<PartyRow> {
           other.votingMethod == this.votingMethod &&
           other.options == this.options &&
           other.createdAt == this.createdAt &&
-          other.closed == this.closed);
+          other.closed == this.closed &&
+          other.groupId == this.groupId &&
+          other.considered == this.considered);
 }
 
 class PartiesCompanion extends UpdateCompanion<PartyRow> {
@@ -3722,6 +4063,8 @@ class PartiesCompanion extends UpdateCompanion<PartyRow> {
   final Value<List<dynamic>> options;
   final Value<DateTime> createdAt;
   final Value<bool> closed;
+  final Value<String?> groupId;
+  final Value<bool> considered;
   final Value<int> rowid;
   const PartiesCompanion({
     this.id = const Value.absent(),
@@ -3730,6 +4073,8 @@ class PartiesCompanion extends UpdateCompanion<PartyRow> {
     this.options = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.closed = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.considered = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PartiesCompanion.insert({
@@ -3739,6 +4084,8 @@ class PartiesCompanion extends UpdateCompanion<PartyRow> {
     required List<dynamic> options,
     required DateTime createdAt,
     this.closed = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.considered = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         title = Value(title),
@@ -3752,6 +4099,8 @@ class PartiesCompanion extends UpdateCompanion<PartyRow> {
     Expression<String>? options,
     Expression<DateTime>? createdAt,
     Expression<bool>? closed,
+    Expression<String>? groupId,
+    Expression<bool>? considered,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3761,6 +4110,8 @@ class PartiesCompanion extends UpdateCompanion<PartyRow> {
       if (options != null) 'options': options,
       if (createdAt != null) 'created_at': createdAt,
       if (closed != null) 'closed': closed,
+      if (groupId != null) 'group_id': groupId,
+      if (considered != null) 'considered': considered,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3772,6 +4123,8 @@ class PartiesCompanion extends UpdateCompanion<PartyRow> {
       Value<List<dynamic>>? options,
       Value<DateTime>? createdAt,
       Value<bool>? closed,
+      Value<String?>? groupId,
+      Value<bool>? considered,
       Value<int>? rowid}) {
     return PartiesCompanion(
       id: id ?? this.id,
@@ -3780,6 +4133,8 @@ class PartiesCompanion extends UpdateCompanion<PartyRow> {
       options: options ?? this.options,
       createdAt: createdAt ?? this.createdAt,
       closed: closed ?? this.closed,
+      groupId: groupId ?? this.groupId,
+      considered: considered ?? this.considered,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3806,6 +4161,12 @@ class PartiesCompanion extends UpdateCompanion<PartyRow> {
     if (closed.present) {
       map['closed'] = Variable<bool>(closed.value);
     }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (considered.present) {
+      map['considered'] = Variable<bool>(considered.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3821,6 +4182,8 @@ class PartiesCompanion extends UpdateCompanion<PartyRow> {
           ..write('options: $options, ')
           ..write('createdAt: $createdAt, ')
           ..write('closed: $closed, ')
+          ..write('groupId: $groupId, ')
+          ..write('considered: $considered, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3872,9 +4235,15 @@ class $PartyBallotsTable extends PartyBallots
   late final GeneratedColumn<DateTime> submittedAt = GeneratedColumn<DateTime>(
       'submitted_at', aliasedName, false,
       type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _memberIdMeta =
+      const VerificationMeta('memberId');
+  @override
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+      'member_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, partyId, method, approvals, ranking, submittedAt];
+      [id, partyId, method, approvals, ranking, submittedAt, memberId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3912,6 +4281,10 @@ class $PartyBallotsTable extends PartyBallots
     } else if (isInserting) {
       context.missing(_submittedAtMeta);
     }
+    if (data.containsKey('member_id')) {
+      context.handle(_memberIdMeta,
+          memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta));
+    }
     return context;
   }
 
@@ -3935,6 +4308,8 @@ class $PartyBallotsTable extends PartyBallots
           .read(DriftSqlType.string, data['${effectivePrefix}ranking'])!),
       submittedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}submitted_at'])!,
+      memberId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}member_id']),
     );
   }
 
@@ -3963,13 +4338,19 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
   /// otherwise).
   final List<dynamic> ranking;
   final DateTime submittedAt;
+
+  /// The voter's ghost account id for group (attributed) decisions; null for
+  /// the original anonymous ballots. Attribution rides only inside encrypted
+  /// blobs on the wire — never in relay plaintext. Added at schema v5.
+  final String? memberId;
   const PartyBallotRow(
       {required this.id,
       required this.partyId,
       required this.method,
       required this.approvals,
       required this.ranking,
-      required this.submittedAt});
+      required this.submittedAt,
+      this.memberId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3985,6 +4366,9 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
           Variable<String>($PartyBallotsTable.$converterranking.toSql(ranking));
     }
     map['submitted_at'] = Variable<DateTime>(submittedAt);
+    if (!nullToAbsent || memberId != null) {
+      map['member_id'] = Variable<String>(memberId);
+    }
     return map;
   }
 
@@ -3996,6 +4380,9 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
       approvals: Value(approvals),
       ranking: Value(ranking),
       submittedAt: Value(submittedAt),
+      memberId: memberId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(memberId),
     );
   }
 
@@ -4009,6 +4396,7 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
       approvals: serializer.fromJson<List<dynamic>>(json['approvals']),
       ranking: serializer.fromJson<List<dynamic>>(json['ranking']),
       submittedAt: serializer.fromJson<DateTime>(json['submittedAt']),
+      memberId: serializer.fromJson<String?>(json['memberId']),
     );
   }
   @override
@@ -4021,6 +4409,7 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
       'approvals': serializer.toJson<List<dynamic>>(approvals),
       'ranking': serializer.toJson<List<dynamic>>(ranking),
       'submittedAt': serializer.toJson<DateTime>(submittedAt),
+      'memberId': serializer.toJson<String?>(memberId),
     };
   }
 
@@ -4030,7 +4419,8 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
           String? method,
           List<dynamic>? approvals,
           List<dynamic>? ranking,
-          DateTime? submittedAt}) =>
+          DateTime? submittedAt,
+          Value<String?> memberId = const Value.absent()}) =>
       PartyBallotRow(
         id: id ?? this.id,
         partyId: partyId ?? this.partyId,
@@ -4038,6 +4428,7 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
         approvals: approvals ?? this.approvals,
         ranking: ranking ?? this.ranking,
         submittedAt: submittedAt ?? this.submittedAt,
+        memberId: memberId.present ? memberId.value : this.memberId,
       );
   PartyBallotRow copyWithCompanion(PartyBallotsCompanion data) {
     return PartyBallotRow(
@@ -4048,6 +4439,7 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
       ranking: data.ranking.present ? data.ranking.value : this.ranking,
       submittedAt:
           data.submittedAt.present ? data.submittedAt.value : this.submittedAt,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
     );
   }
 
@@ -4059,14 +4451,15 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
           ..write('method: $method, ')
           ..write('approvals: $approvals, ')
           ..write('ranking: $ranking, ')
-          ..write('submittedAt: $submittedAt')
+          ..write('submittedAt: $submittedAt, ')
+          ..write('memberId: $memberId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, partyId, method, approvals, ranking, submittedAt);
+  int get hashCode => Object.hash(
+      id, partyId, method, approvals, ranking, submittedAt, memberId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4076,7 +4469,8 @@ class PartyBallotRow extends DataClass implements Insertable<PartyBallotRow> {
           other.method == this.method &&
           other.approvals == this.approvals &&
           other.ranking == this.ranking &&
-          other.submittedAt == this.submittedAt);
+          other.submittedAt == this.submittedAt &&
+          other.memberId == this.memberId);
 }
 
 class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
@@ -4086,6 +4480,7 @@ class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
   final Value<List<dynamic>> approvals;
   final Value<List<dynamic>> ranking;
   final Value<DateTime> submittedAt;
+  final Value<String?> memberId;
   final Value<int> rowid;
   const PartyBallotsCompanion({
     this.id = const Value.absent(),
@@ -4094,6 +4489,7 @@ class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
     this.approvals = const Value.absent(),
     this.ranking = const Value.absent(),
     this.submittedAt = const Value.absent(),
+    this.memberId = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   PartyBallotsCompanion.insert({
@@ -4103,6 +4499,7 @@ class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
     required List<dynamic> approvals,
     required List<dynamic> ranking,
     required DateTime submittedAt,
+    this.memberId = const Value.absent(),
     this.rowid = const Value.absent(),
   })  : id = Value(id),
         partyId = Value(partyId),
@@ -4117,6 +4514,7 @@ class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
     Expression<String>? approvals,
     Expression<String>? ranking,
     Expression<DateTime>? submittedAt,
+    Expression<String>? memberId,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4126,6 +4524,7 @@ class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
       if (approvals != null) 'approvals': approvals,
       if (ranking != null) 'ranking': ranking,
       if (submittedAt != null) 'submitted_at': submittedAt,
+      if (memberId != null) 'member_id': memberId,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4137,6 +4536,7 @@ class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
       Value<List<dynamic>>? approvals,
       Value<List<dynamic>>? ranking,
       Value<DateTime>? submittedAt,
+      Value<String?>? memberId,
       Value<int>? rowid}) {
     return PartyBallotsCompanion(
       id: id ?? this.id,
@@ -4145,6 +4545,7 @@ class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
       approvals: approvals ?? this.approvals,
       ranking: ranking ?? this.ranking,
       submittedAt: submittedAt ?? this.submittedAt,
+      memberId: memberId ?? this.memberId,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4172,6 +4573,9 @@ class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
     if (submittedAt.present) {
       map['submitted_at'] = Variable<DateTime>(submittedAt.value);
     }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4187,6 +4591,688 @@ class PartyBallotsCompanion extends UpdateCompanion<PartyBallotRow> {
           ..write('approvals: $approvals, ')
           ..write('ranking: $ranking, ')
           ..write('submittedAt: $submittedAt, ')
+          ..write('memberId: $memberId, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ForecastersTable extends Forecasters
+    with TableInfo<$ForecastersTable, ForecasterRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ForecastersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _displayNameMeta =
+      const VerificationMeta('displayName');
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+      'display_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+      'kind', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _configJsonMeta =
+      const VerificationMeta('configJson');
+  @override
+  late final GeneratedColumnWithTypeConverter<Map<String, dynamic>, String>
+      configJson = GeneratedColumn<String>('config_json', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Map<String, dynamic>>(
+              $ForecastersTable.$converterconfigJson);
+  static const VerificationMeta _enabledMeta =
+      const VerificationMeta('enabled');
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+      'enabled', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("enabled" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, displayName, kind, configJson, enabled, createdAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'forecasters';
+  @override
+  VerificationContext validateIntegrity(Insertable<ForecasterRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+          _displayNameMeta,
+          displayName.isAcceptableOrUnknown(
+              data['display_name']!, _displayNameMeta));
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+          _kindMeta, kind.isAcceptableOrUnknown(data['kind']!, _kindMeta));
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    context.handle(_configJsonMeta, const VerificationResult.success());
+    if (data.containsKey('enabled')) {
+      context.handle(_enabledMeta,
+          enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    } else if (isInserting) {
+      context.missing(_createdAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ForecasterRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ForecasterRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      displayName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
+      kind: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}kind'])!,
+      configJson: $ForecastersTable.$converterconfigJson.fromSql(
+          attachedDatabase.typeMapping.read(
+              DriftSqlType.string, data['${effectivePrefix}config_json'])!),
+      enabled: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}enabled'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+    );
+  }
+
+  @override
+  $ForecastersTable createAlias(String alias) {
+    return $ForecastersTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<Map<String, dynamic>, String> $converterconfigJson =
+      const JsonMapConverter();
+}
+
+class ForecasterRow extends DataClass implements Insertable<ForecasterRow> {
+  final String id;
+  final String displayName;
+
+  /// 'persona' | 'localModel' | 'anthropicByok' | 'openaiCompat' |
+  /// 'bountyBot' — the [ForecasterKind] name.
+  final String kind;
+
+  /// JSON map of kind-specific, non-secret configuration (e.g. a persona's
+  /// stance sentence, an endpoint's base_url + model).
+  final Map<String, dynamic> configJson;
+  final bool enabled;
+  final DateTime createdAt;
+  const ForecasterRow(
+      {required this.id,
+      required this.displayName,
+      required this.kind,
+      required this.configJson,
+      required this.enabled,
+      required this.createdAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['display_name'] = Variable<String>(displayName);
+    map['kind'] = Variable<String>(kind);
+    {
+      map['config_json'] = Variable<String>(
+          $ForecastersTable.$converterconfigJson.toSql(configJson));
+    }
+    map['enabled'] = Variable<bool>(enabled);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  ForecastersCompanion toCompanion(bool nullToAbsent) {
+    return ForecastersCompanion(
+      id: Value(id),
+      displayName: Value(displayName),
+      kind: Value(kind),
+      configJson: Value(configJson),
+      enabled: Value(enabled),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory ForecasterRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ForecasterRow(
+      id: serializer.fromJson<String>(json['id']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      kind: serializer.fromJson<String>(json['kind']),
+      configJson: serializer.fromJson<Map<String, dynamic>>(json['configJson']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'displayName': serializer.toJson<String>(displayName),
+      'kind': serializer.toJson<String>(kind),
+      'configJson': serializer.toJson<Map<String, dynamic>>(configJson),
+      'enabled': serializer.toJson<bool>(enabled),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  ForecasterRow copyWith(
+          {String? id,
+          String? displayName,
+          String? kind,
+          Map<String, dynamic>? configJson,
+          bool? enabled,
+          DateTime? createdAt}) =>
+      ForecasterRow(
+        id: id ?? this.id,
+        displayName: displayName ?? this.displayName,
+        kind: kind ?? this.kind,
+        configJson: configJson ?? this.configJson,
+        enabled: enabled ?? this.enabled,
+        createdAt: createdAt ?? this.createdAt,
+      );
+  ForecasterRow copyWithCompanion(ForecastersCompanion data) {
+    return ForecasterRow(
+      id: data.id.present ? data.id.value : this.id,
+      displayName:
+          data.displayName.present ? data.displayName.value : this.displayName,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      configJson:
+          data.configJson.present ? data.configJson.value : this.configJson,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ForecasterRow(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('kind: $kind, ')
+          ..write('configJson: $configJson, ')
+          ..write('enabled: $enabled, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, displayName, kind, configJson, enabled, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ForecasterRow &&
+          other.id == this.id &&
+          other.displayName == this.displayName &&
+          other.kind == this.kind &&
+          other.configJson == this.configJson &&
+          other.enabled == this.enabled &&
+          other.createdAt == this.createdAt);
+}
+
+class ForecastersCompanion extends UpdateCompanion<ForecasterRow> {
+  final Value<String> id;
+  final Value<String> displayName;
+  final Value<String> kind;
+  final Value<Map<String, dynamic>> configJson;
+  final Value<bool> enabled;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const ForecastersCompanion({
+    this.id = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.configJson = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ForecastersCompanion.insert({
+    required String id,
+    required String displayName,
+    required String kind,
+    required Map<String, dynamic> configJson,
+    this.enabled = const Value.absent(),
+    required DateTime createdAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        displayName = Value(displayName),
+        kind = Value(kind),
+        configJson = Value(configJson),
+        createdAt = Value(createdAt);
+  static Insertable<ForecasterRow> custom({
+    Expression<String>? id,
+    Expression<String>? displayName,
+    Expression<String>? kind,
+    Expression<String>? configJson,
+    Expression<bool>? enabled,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (displayName != null) 'display_name': displayName,
+      if (kind != null) 'kind': kind,
+      if (configJson != null) 'config_json': configJson,
+      if (enabled != null) 'enabled': enabled,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ForecastersCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? displayName,
+      Value<String>? kind,
+      Value<Map<String, dynamic>>? configJson,
+      Value<bool>? enabled,
+      Value<DateTime>? createdAt,
+      Value<int>? rowid}) {
+    return ForecastersCompanion(
+      id: id ?? this.id,
+      displayName: displayName ?? this.displayName,
+      kind: kind ?? this.kind,
+      configJson: configJson ?? this.configJson,
+      enabled: enabled ?? this.enabled,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (configJson.present) {
+      map['config_json'] = Variable<String>(
+          $ForecastersTable.$converterconfigJson.toSql(configJson.value));
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ForecastersCompanion(')
+          ..write('id: $id, ')
+          ..write('displayName: $displayName, ')
+          ..write('kind: $kind, ')
+          ..write('configJson: $configJson, ')
+          ..write('enabled: $enabled, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GroupMembersTable extends GroupMembers
+    with TableInfo<$GroupMembersTable, GroupMemberRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupMembersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _groupIdMeta =
+      const VerificationMeta('groupId');
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+      'group_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES "groups" (id)'));
+  static const VerificationMeta _memberIdMeta =
+      const VerificationMeta('memberId');
+  @override
+  late final GeneratedColumn<String> memberId = GeneratedColumn<String>(
+      'member_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _displayNameMeta =
+      const VerificationMeta('displayName');
+  @override
+  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
+      'display_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _joinedAtMeta =
+      const VerificationMeta('joinedAt');
+  @override
+  late final GeneratedColumn<DateTime> joinedAt = GeneratedColumn<DateTime>(
+      'joined_at', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, groupId, memberId, displayName, joinedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'group_members';
+  @override
+  VerificationContext validateIntegrity(Insertable<GroupMemberRow> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(_groupIdMeta,
+          groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta));
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('member_id')) {
+      context.handle(_memberIdMeta,
+          memberId.isAcceptableOrUnknown(data['member_id']!, _memberIdMeta));
+    } else if (isInserting) {
+      context.missing(_memberIdMeta);
+    }
+    if (data.containsKey('display_name')) {
+      context.handle(
+          _displayNameMeta,
+          displayName.isAcceptableOrUnknown(
+              data['display_name']!, _displayNameMeta));
+    } else if (isInserting) {
+      context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('joined_at')) {
+      context.handle(_joinedAtMeta,
+          joinedAt.isAcceptableOrUnknown(data['joined_at']!, _joinedAtMeta));
+    } else if (isInserting) {
+      context.missing(_joinedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  List<Set<GeneratedColumn>> get uniqueKeys => [
+        {groupId, memberId},
+      ];
+  @override
+  GroupMemberRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GroupMemberRow(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      groupId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}group_id'])!,
+      memberId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}member_id'])!,
+      displayName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}display_name'])!,
+      joinedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}joined_at'])!,
+    );
+  }
+
+  @override
+  $GroupMembersTable createAlias(String alias) {
+    return $GroupMembersTable(attachedDatabase, alias);
+  }
+}
+
+class GroupMemberRow extends DataClass implements Insertable<GroupMemberRow> {
+  final String id;
+  final String groupId;
+  final String memberId;
+  final String displayName;
+  final DateTime joinedAt;
+  const GroupMemberRow(
+      {required this.id,
+      required this.groupId,
+      required this.memberId,
+      required this.displayName,
+      required this.joinedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['member_id'] = Variable<String>(memberId);
+    map['display_name'] = Variable<String>(displayName);
+    map['joined_at'] = Variable<DateTime>(joinedAt);
+    return map;
+  }
+
+  GroupMembersCompanion toCompanion(bool nullToAbsent) {
+    return GroupMembersCompanion(
+      id: Value(id),
+      groupId: Value(groupId),
+      memberId: Value(memberId),
+      displayName: Value(displayName),
+      joinedAt: Value(joinedAt),
+    );
+  }
+
+  factory GroupMemberRow.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GroupMemberRow(
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      memberId: serializer.fromJson<String>(json['memberId']),
+      displayName: serializer.fromJson<String>(json['displayName']),
+      joinedAt: serializer.fromJson<DateTime>(json['joinedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'groupId': serializer.toJson<String>(groupId),
+      'memberId': serializer.toJson<String>(memberId),
+      'displayName': serializer.toJson<String>(displayName),
+      'joinedAt': serializer.toJson<DateTime>(joinedAt),
+    };
+  }
+
+  GroupMemberRow copyWith(
+          {String? id,
+          String? groupId,
+          String? memberId,
+          String? displayName,
+          DateTime? joinedAt}) =>
+      GroupMemberRow(
+        id: id ?? this.id,
+        groupId: groupId ?? this.groupId,
+        memberId: memberId ?? this.memberId,
+        displayName: displayName ?? this.displayName,
+        joinedAt: joinedAt ?? this.joinedAt,
+      );
+  GroupMemberRow copyWithCompanion(GroupMembersCompanion data) {
+    return GroupMemberRow(
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      memberId: data.memberId.present ? data.memberId.value : this.memberId,
+      displayName:
+          data.displayName.present ? data.displayName.value : this.displayName,
+      joinedAt: data.joinedAt.present ? data.joinedAt.value : this.joinedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupMemberRow(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('memberId: $memberId, ')
+          ..write('displayName: $displayName, ')
+          ..write('joinedAt: $joinedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, groupId, memberId, displayName, joinedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GroupMemberRow &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.memberId == this.memberId &&
+          other.displayName == this.displayName &&
+          other.joinedAt == this.joinedAt);
+}
+
+class GroupMembersCompanion extends UpdateCompanion<GroupMemberRow> {
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<String> memberId;
+  final Value<String> displayName;
+  final Value<DateTime> joinedAt;
+  final Value<int> rowid;
+  const GroupMembersCompanion({
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.memberId = const Value.absent(),
+    this.displayName = const Value.absent(),
+    this.joinedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  GroupMembersCompanion.insert({
+    required String id,
+    required String groupId,
+    required String memberId,
+    required String displayName,
+    required DateTime joinedAt,
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        groupId = Value(groupId),
+        memberId = Value(memberId),
+        displayName = Value(displayName),
+        joinedAt = Value(joinedAt);
+  static Insertable<GroupMemberRow> custom({
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<String>? memberId,
+    Expression<String>? displayName,
+    Expression<DateTime>? joinedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (memberId != null) 'member_id': memberId,
+      if (displayName != null) 'display_name': displayName,
+      if (joinedAt != null) 'joined_at': joinedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  GroupMembersCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? groupId,
+      Value<String>? memberId,
+      Value<String>? displayName,
+      Value<DateTime>? joinedAt,
+      Value<int>? rowid}) {
+    return GroupMembersCompanion(
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      memberId: memberId ?? this.memberId,
+      displayName: displayName ?? this.displayName,
+      joinedAt: joinedAt ?? this.joinedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (memberId.present) {
+      map['member_id'] = Variable<String>(memberId.value);
+    }
+    if (displayName.present) {
+      map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (joinedAt.present) {
+      map['joined_at'] = Variable<DateTime>(joinedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupMembersCompanion(')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('memberId: $memberId, ')
+          ..write('displayName: $displayName, ')
+          ..write('joinedAt: $joinedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4207,8 +5293,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CommunityForecastsTable(this);
   late final $ModelPredictionsTable modelPredictions =
       $ModelPredictionsTable(this);
+  late final $GroupsTable groups = $GroupsTable(this);
   late final $PartiesTable parties = $PartiesTable(this);
   late final $PartyBallotsTable partyBallots = $PartyBallotsTable(this);
+  late final $ForecastersTable forecasters = $ForecastersTable(this);
+  late final $GroupMembersTable groupMembers = $GroupMembersTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4222,8 +5311,11 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         userProfile,
         communityForecasts,
         modelPredictions,
+        groups,
         parties,
-        partyBallots
+        partyBallots,
+        forecasters,
+        groupMembers
       ];
 }
 
@@ -6653,6 +7745,312 @@ typedef $$ModelPredictionsTableProcessedTableManager = ProcessedTableManager<
     (ModelPredictionRow, $$ModelPredictionsTableReferences),
     ModelPredictionRow,
     PrefetchHooks Function({bool caseId})>;
+typedef $$GroupsTableCreateCompanionBuilder = GroupsCompanion Function({
+  required String id,
+  required String name,
+  required DateTime createdAt,
+  Value<bool> archived,
+  Value<int> rowid,
+});
+typedef $$GroupsTableUpdateCompanionBuilder = GroupsCompanion Function({
+  Value<String> id,
+  Value<String> name,
+  Value<DateTime> createdAt,
+  Value<bool> archived,
+  Value<int> rowid,
+});
+
+final class $$GroupsTableReferences
+    extends BaseReferences<_$AppDatabase, $GroupsTable, GroupRow> {
+  $$GroupsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$PartiesTable, List<PartyRow>> _partiesRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.parties,
+          aliasName: $_aliasNameGenerator(db.groups.id, db.parties.groupId));
+
+  $$PartiesTableProcessedTableManager get partiesRefs {
+    final manager = $$PartiesTableTableManager($_db, $_db.parties)
+        .filter((f) => f.groupId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_partiesRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$GroupMembersTable, List<GroupMemberRow>>
+      _groupMembersRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.groupMembers,
+              aliasName:
+                  $_aliasNameGenerator(db.groups.id, db.groupMembers.groupId));
+
+  $$GroupMembersTableProcessedTableManager get groupMembersRefs {
+    final manager = $$GroupMembersTableTableManager($_db, $_db.groupMembers)
+        .filter((f) => f.groupId.id($_item.id));
+
+    final cache = $_typedResult.readTableOrNull(_groupMembersRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$GroupsTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get archived => $composableBuilder(
+      column: $table.archived, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> partiesRefs(
+      Expression<bool> Function($$PartiesTableFilterComposer f) f) {
+    final $$PartiesTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.parties,
+        getReferencedColumn: (t) => t.groupId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PartiesTableFilterComposer(
+              $db: $db,
+              $table: $db.parties,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> groupMembersRefs(
+      Expression<bool> Function($$GroupMembersTableFilterComposer f) f) {
+    final $$GroupMembersTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.groupMembers,
+        getReferencedColumn: (t) => t.groupId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GroupMembersTableFilterComposer(
+              $db: $db,
+              $table: $db.groupMembers,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$GroupsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get name => $composableBuilder(
+      column: $table.name, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get archived => $composableBuilder(
+      column: $table.archived, builder: (column) => ColumnOrderings(column));
+}
+
+class $$GroupsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupsTable> {
+  $$GroupsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get archived =>
+      $composableBuilder(column: $table.archived, builder: (column) => column);
+
+  Expression<T> partiesRefs<T extends Object>(
+      Expression<T> Function($$PartiesTableAnnotationComposer a) f) {
+    final $$PartiesTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.parties,
+        getReferencedColumn: (t) => t.groupId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$PartiesTableAnnotationComposer(
+              $db: $db,
+              $table: $db.parties,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<T> groupMembersRefs<T extends Object>(
+      Expression<T> Function($$GroupMembersTableAnnotationComposer a) f) {
+    final $$GroupMembersTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.groupMembers,
+        getReferencedColumn: (t) => t.groupId,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GroupMembersTableAnnotationComposer(
+              $db: $db,
+              $table: $db.groupMembers,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$GroupsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GroupsTable,
+    GroupRow,
+    $$GroupsTableFilterComposer,
+    $$GroupsTableOrderingComposer,
+    $$GroupsTableAnnotationComposer,
+    $$GroupsTableCreateCompanionBuilder,
+    $$GroupsTableUpdateCompanionBuilder,
+    (GroupRow, $$GroupsTableReferences),
+    GroupRow,
+    PrefetchHooks Function({bool partiesRefs, bool groupMembersRefs})> {
+  $$GroupsTableTableManager(_$AppDatabase db, $GroupsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroupsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroupsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroupsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<bool> archived = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              GroupsCompanion(
+            id: id,
+            name: name,
+            createdAt: createdAt,
+            archived: archived,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String name,
+            required DateTime createdAt,
+            Value<bool> archived = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              GroupsCompanion.insert(
+            id: id,
+            name: name,
+            createdAt: createdAt,
+            archived: archived,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) =>
+                  (e.readTable(table), $$GroupsTableReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: (
+              {partiesRefs = false, groupMembersRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (partiesRefs) db.parties,
+                if (groupMembersRefs) db.groupMembers
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (partiesRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$GroupsTableReferences._partiesRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GroupsTableReferences(db, table, p0).partiesRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.groupId == item.id),
+                        typedResults: items),
+                  if (groupMembersRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$GroupsTableReferences._groupMembersRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$GroupsTableReferences(db, table, p0)
+                                .groupMembersRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.groupId == item.id),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GroupsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $GroupsTable,
+    GroupRow,
+    $$GroupsTableFilterComposer,
+    $$GroupsTableOrderingComposer,
+    $$GroupsTableAnnotationComposer,
+    $$GroupsTableCreateCompanionBuilder,
+    $$GroupsTableUpdateCompanionBuilder,
+    (GroupRow, $$GroupsTableReferences),
+    GroupRow,
+    PrefetchHooks Function({bool partiesRefs, bool groupMembersRefs})>;
 typedef $$PartiesTableCreateCompanionBuilder = PartiesCompanion Function({
   required String id,
   required String title,
@@ -6660,6 +8058,8 @@ typedef $$PartiesTableCreateCompanionBuilder = PartiesCompanion Function({
   required List<dynamic> options,
   required DateTime createdAt,
   Value<bool> closed,
+  Value<String?> groupId,
+  Value<bool> considered,
   Value<int> rowid,
 });
 typedef $$PartiesTableUpdateCompanionBuilder = PartiesCompanion Function({
@@ -6669,12 +8069,27 @@ typedef $$PartiesTableUpdateCompanionBuilder = PartiesCompanion Function({
   Value<List<dynamic>> options,
   Value<DateTime> createdAt,
   Value<bool> closed,
+  Value<String?> groupId,
+  Value<bool> considered,
   Value<int> rowid,
 });
 
 final class $$PartiesTableReferences
     extends BaseReferences<_$AppDatabase, $PartiesTable, PartyRow> {
   $$PartiesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $GroupsTable _groupIdTable(_$AppDatabase db) => db.groups
+      .createAlias($_aliasNameGenerator(db.parties.groupId, db.groups.id));
+
+  $$GroupsTableProcessedTableManager? get groupId {
+    if ($_item.groupId == null) return null;
+    final manager = $$GroupsTableTableManager($_db, $_db.groups)
+        .filter((f) => f.id($_item.groupId!));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
 
   static MultiTypedResultKey<$PartyBallotsTable, List<PartyBallotRow>>
       _partyBallotsRefsTable(_$AppDatabase db) =>
@@ -6720,6 +8135,29 @@ class $$PartiesTableFilterComposer
 
   ColumnFilters<bool> get closed => $composableBuilder(
       column: $table.closed, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get considered => $composableBuilder(
+      column: $table.considered, builder: (column) => ColumnFilters(column));
+
+  $$GroupsTableFilterComposer get groupId {
+    final $$GroupsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.groupId,
+        referencedTable: $db.groups,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GroupsTableFilterComposer(
+              $db: $db,
+              $table: $db.groups,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
   Expression<bool> partyBallotsRefs(
       Expression<bool> Function($$PartyBallotsTableFilterComposer f) f) {
@@ -6770,6 +8208,29 @@ class $$PartiesTableOrderingComposer
 
   ColumnOrderings<bool> get closed => $composableBuilder(
       column: $table.closed, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get considered => $composableBuilder(
+      column: $table.considered, builder: (column) => ColumnOrderings(column));
+
+  $$GroupsTableOrderingComposer get groupId {
+    final $$GroupsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.groupId,
+        referencedTable: $db.groups,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GroupsTableOrderingComposer(
+              $db: $db,
+              $table: $db.groups,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 }
 
 class $$PartiesTableAnnotationComposer
@@ -6798,6 +8259,29 @@ class $$PartiesTableAnnotationComposer
 
   GeneratedColumn<bool> get closed =>
       $composableBuilder(column: $table.closed, builder: (column) => column);
+
+  GeneratedColumn<bool> get considered => $composableBuilder(
+      column: $table.considered, builder: (column) => column);
+
+  $$GroupsTableAnnotationComposer get groupId {
+    final $$GroupsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.groupId,
+        referencedTable: $db.groups,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GroupsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.groups,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
 
   Expression<T> partyBallotsRefs<T extends Object>(
       Expression<T> Function($$PartyBallotsTableAnnotationComposer a) f) {
@@ -6832,7 +8316,7 @@ class $$PartiesTableTableManager extends RootTableManager<
     $$PartiesTableUpdateCompanionBuilder,
     (PartyRow, $$PartiesTableReferences),
     PartyRow,
-    PrefetchHooks Function({bool partyBallotsRefs})> {
+    PrefetchHooks Function({bool groupId, bool partyBallotsRefs})> {
   $$PartiesTableTableManager(_$AppDatabase db, $PartiesTable table)
       : super(TableManagerState(
           db: db,
@@ -6850,6 +8334,8 @@ class $$PartiesTableTableManager extends RootTableManager<
             Value<List<dynamic>> options = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<bool> closed = const Value.absent(),
+            Value<String?> groupId = const Value.absent(),
+            Value<bool> considered = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PartiesCompanion(
@@ -6859,6 +8345,8 @@ class $$PartiesTableTableManager extends RootTableManager<
             options: options,
             createdAt: createdAt,
             closed: closed,
+            groupId: groupId,
+            considered: considered,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -6868,6 +8356,8 @@ class $$PartiesTableTableManager extends RootTableManager<
             required List<dynamic> options,
             required DateTime createdAt,
             Value<bool> closed = const Value.absent(),
+            Value<String?> groupId = const Value.absent(),
+            Value<bool> considered = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PartiesCompanion.insert(
@@ -6877,17 +8367,43 @@ class $$PartiesTableTableManager extends RootTableManager<
             options: options,
             createdAt: createdAt,
             closed: closed,
+            groupId: groupId,
+            considered: considered,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) =>
                   (e.readTable(table), $$PartiesTableReferences(db, table, e)))
               .toList(),
-          prefetchHooksCallback: ({partyBallotsRefs = false}) {
+          prefetchHooksCallback: ({groupId = false, partyBallotsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [if (partyBallotsRefs) db.partyBallots],
-              addJoins: null,
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (groupId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.groupId,
+                    referencedTable: $$PartiesTableReferences._groupIdTable(db),
+                    referencedColumn:
+                        $$PartiesTableReferences._groupIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (partyBallotsRefs)
@@ -6920,7 +8436,7 @@ typedef $$PartiesTableProcessedTableManager = ProcessedTableManager<
     $$PartiesTableUpdateCompanionBuilder,
     (PartyRow, $$PartiesTableReferences),
     PartyRow,
-    PrefetchHooks Function({bool partyBallotsRefs})>;
+    PrefetchHooks Function({bool groupId, bool partyBallotsRefs})>;
 typedef $$PartyBallotsTableCreateCompanionBuilder = PartyBallotsCompanion
     Function({
   required String id,
@@ -6929,6 +8445,7 @@ typedef $$PartyBallotsTableCreateCompanionBuilder = PartyBallotsCompanion
   required List<dynamic> approvals,
   required List<dynamic> ranking,
   required DateTime submittedAt,
+  Value<String?> memberId,
   Value<int> rowid,
 });
 typedef $$PartyBallotsTableUpdateCompanionBuilder = PartyBallotsCompanion
@@ -6939,6 +8456,7 @@ typedef $$PartyBallotsTableUpdateCompanionBuilder = PartyBallotsCompanion
   Value<List<dynamic>> approvals,
   Value<List<dynamic>> ranking,
   Value<DateTime> submittedAt,
+  Value<String?> memberId,
   Value<int> rowid,
 });
 
@@ -6989,6 +8507,9 @@ class $$PartyBallotsTableFilterComposer
   ColumnFilters<DateTime> get submittedAt => $composableBuilder(
       column: $table.submittedAt, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<String> get memberId => $composableBuilder(
+      column: $table.memberId, builder: (column) => ColumnFilters(column));
+
   $$PartiesTableFilterComposer get partyId {
     final $$PartiesTableFilterComposer composer = $composerBuilder(
         composer: this,
@@ -7034,6 +8555,9 @@ class $$PartyBallotsTableOrderingComposer
   ColumnOrderings<DateTime> get submittedAt => $composableBuilder(
       column: $table.submittedAt, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get memberId => $composableBuilder(
+      column: $table.memberId, builder: (column) => ColumnOrderings(column));
+
   $$PartiesTableOrderingComposer get partyId {
     final $$PartiesTableOrderingComposer composer = $composerBuilder(
         composer: this,
@@ -7078,6 +8602,9 @@ class $$PartyBallotsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get submittedAt => $composableBuilder(
       column: $table.submittedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get memberId =>
+      $composableBuilder(column: $table.memberId, builder: (column) => column);
 
   $$PartiesTableAnnotationComposer get partyId {
     final $$PartiesTableAnnotationComposer composer = $composerBuilder(
@@ -7129,6 +8656,7 @@ class $$PartyBallotsTableTableManager extends RootTableManager<
             Value<List<dynamic>> approvals = const Value.absent(),
             Value<List<dynamic>> ranking = const Value.absent(),
             Value<DateTime> submittedAt = const Value.absent(),
+            Value<String?> memberId = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PartyBallotsCompanion(
@@ -7138,6 +8666,7 @@ class $$PartyBallotsTableTableManager extends RootTableManager<
             approvals: approvals,
             ranking: ranking,
             submittedAt: submittedAt,
+            memberId: memberId,
             rowid: rowid,
           ),
           createCompanionCallback: ({
@@ -7147,6 +8676,7 @@ class $$PartyBallotsTableTableManager extends RootTableManager<
             required List<dynamic> approvals,
             required List<dynamic> ranking,
             required DateTime submittedAt,
+            Value<String?> memberId = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
               PartyBallotsCompanion.insert(
@@ -7156,6 +8686,7 @@ class $$PartyBallotsTableTableManager extends RootTableManager<
             approvals: approvals,
             ranking: ranking,
             submittedAt: submittedAt,
+            memberId: memberId,
             rowid: rowid,
           ),
           withReferenceMapper: (p0) => p0
@@ -7214,6 +8745,471 @@ typedef $$PartyBallotsTableProcessedTableManager = ProcessedTableManager<
     (PartyBallotRow, $$PartyBallotsTableReferences),
     PartyBallotRow,
     PrefetchHooks Function({bool partyId})>;
+typedef $$ForecastersTableCreateCompanionBuilder = ForecastersCompanion
+    Function({
+  required String id,
+  required String displayName,
+  required String kind,
+  required Map<String, dynamic> configJson,
+  Value<bool> enabled,
+  required DateTime createdAt,
+  Value<int> rowid,
+});
+typedef $$ForecastersTableUpdateCompanionBuilder = ForecastersCompanion
+    Function({
+  Value<String> id,
+  Value<String> displayName,
+  Value<String> kind,
+  Value<Map<String, dynamic>> configJson,
+  Value<bool> enabled,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+class $$ForecastersTableFilterComposer
+    extends Composer<_$AppDatabase, $ForecastersTable> {
+  $$ForecastersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<Map<String, dynamic>, Map<String, dynamic>,
+          String>
+      get configJson => $composableBuilder(
+          column: $table.configJson,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+      column: $table.enabled, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$ForecastersTableOrderingComposer
+    extends Composer<_$AppDatabase, $ForecastersTable> {
+  $$ForecastersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+      column: $table.kind, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get configJson => $composableBuilder(
+      column: $table.configJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+      column: $table.enabled, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ForecastersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ForecastersTable> {
+  $$ForecastersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Map<String, dynamic>, String>
+      get configJson => $composableBuilder(
+          column: $table.configJson, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$ForecastersTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ForecastersTable,
+    ForecasterRow,
+    $$ForecastersTableFilterComposer,
+    $$ForecastersTableOrderingComposer,
+    $$ForecastersTableAnnotationComposer,
+    $$ForecastersTableCreateCompanionBuilder,
+    $$ForecastersTableUpdateCompanionBuilder,
+    (
+      ForecasterRow,
+      BaseReferences<_$AppDatabase, $ForecastersTable, ForecasterRow>
+    ),
+    ForecasterRow,
+    PrefetchHooks Function()> {
+  $$ForecastersTableTableManager(_$AppDatabase db, $ForecastersTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ForecastersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ForecastersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ForecastersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> displayName = const Value.absent(),
+            Value<String> kind = const Value.absent(),
+            Value<Map<String, dynamic>> configJson = const Value.absent(),
+            Value<bool> enabled = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ForecastersCompanion(
+            id: id,
+            displayName: displayName,
+            kind: kind,
+            configJson: configJson,
+            enabled: enabled,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String displayName,
+            required String kind,
+            required Map<String, dynamic> configJson,
+            Value<bool> enabled = const Value.absent(),
+            required DateTime createdAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ForecastersCompanion.insert(
+            id: id,
+            displayName: displayName,
+            kind: kind,
+            configJson: configJson,
+            enabled: enabled,
+            createdAt: createdAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ForecastersTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ForecastersTable,
+    ForecasterRow,
+    $$ForecastersTableFilterComposer,
+    $$ForecastersTableOrderingComposer,
+    $$ForecastersTableAnnotationComposer,
+    $$ForecastersTableCreateCompanionBuilder,
+    $$ForecastersTableUpdateCompanionBuilder,
+    (
+      ForecasterRow,
+      BaseReferences<_$AppDatabase, $ForecastersTable, ForecasterRow>
+    ),
+    ForecasterRow,
+    PrefetchHooks Function()>;
+typedef $$GroupMembersTableCreateCompanionBuilder = GroupMembersCompanion
+    Function({
+  required String id,
+  required String groupId,
+  required String memberId,
+  required String displayName,
+  required DateTime joinedAt,
+  Value<int> rowid,
+});
+typedef $$GroupMembersTableUpdateCompanionBuilder = GroupMembersCompanion
+    Function({
+  Value<String> id,
+  Value<String> groupId,
+  Value<String> memberId,
+  Value<String> displayName,
+  Value<DateTime> joinedAt,
+  Value<int> rowid,
+});
+
+final class $$GroupMembersTableReferences
+    extends BaseReferences<_$AppDatabase, $GroupMembersTable, GroupMemberRow> {
+  $$GroupMembersTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $GroupsTable _groupIdTable(_$AppDatabase db) => db.groups
+      .createAlias($_aliasNameGenerator(db.groupMembers.groupId, db.groups.id));
+
+  $$GroupsTableProcessedTableManager? get groupId {
+    if ($_item.groupId == null) return null;
+    final manager = $$GroupsTableTableManager($_db, $_db.groups)
+        .filter((f) => f.id($_item.groupId!));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$GroupMembersTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupMembersTable> {
+  $$GroupMembersTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get memberId => $composableBuilder(
+      column: $table.memberId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get joinedAt => $composableBuilder(
+      column: $table.joinedAt, builder: (column) => ColumnFilters(column));
+
+  $$GroupsTableFilterComposer get groupId {
+    final $$GroupsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.groupId,
+        referencedTable: $db.groups,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GroupsTableFilterComposer(
+              $db: $db,
+              $table: $db.groups,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GroupMembersTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupMembersTable> {
+  $$GroupMembersTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get memberId => $composableBuilder(
+      column: $table.memberId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get joinedAt => $composableBuilder(
+      column: $table.joinedAt, builder: (column) => ColumnOrderings(column));
+
+  $$GroupsTableOrderingComposer get groupId {
+    final $$GroupsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.groupId,
+        referencedTable: $db.groups,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GroupsTableOrderingComposer(
+              $db: $db,
+              $table: $db.groups,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GroupMembersTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupMembersTable> {
+  $$GroupMembersTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get memberId =>
+      $composableBuilder(column: $table.memberId, builder: (column) => column);
+
+  GeneratedColumn<String> get displayName => $composableBuilder(
+      column: $table.displayName, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get joinedAt =>
+      $composableBuilder(column: $table.joinedAt, builder: (column) => column);
+
+  $$GroupsTableAnnotationComposer get groupId {
+    final $$GroupsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.groupId,
+        referencedTable: $db.groups,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$GroupsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.groups,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$GroupMembersTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $GroupMembersTable,
+    GroupMemberRow,
+    $$GroupMembersTableFilterComposer,
+    $$GroupMembersTableOrderingComposer,
+    $$GroupMembersTableAnnotationComposer,
+    $$GroupMembersTableCreateCompanionBuilder,
+    $$GroupMembersTableUpdateCompanionBuilder,
+    (GroupMemberRow, $$GroupMembersTableReferences),
+    GroupMemberRow,
+    PrefetchHooks Function({bool groupId})> {
+  $$GroupMembersTableTableManager(_$AppDatabase db, $GroupMembersTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroupMembersTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroupMembersTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroupMembersTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> groupId = const Value.absent(),
+            Value<String> memberId = const Value.absent(),
+            Value<String> displayName = const Value.absent(),
+            Value<DateTime> joinedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              GroupMembersCompanion(
+            id: id,
+            groupId: groupId,
+            memberId: memberId,
+            displayName: displayName,
+            joinedAt: joinedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String groupId,
+            required String memberId,
+            required String displayName,
+            required DateTime joinedAt,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              GroupMembersCompanion.insert(
+            id: id,
+            groupId: groupId,
+            memberId: memberId,
+            displayName: displayName,
+            joinedAt: joinedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$GroupMembersTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (groupId) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.groupId,
+                    referencedTable:
+                        $$GroupMembersTableReferences._groupIdTable(db),
+                    referencedColumn:
+                        $$GroupMembersTableReferences._groupIdTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$GroupMembersTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $GroupMembersTable,
+    GroupMemberRow,
+    $$GroupMembersTableFilterComposer,
+    $$GroupMembersTableOrderingComposer,
+    $$GroupMembersTableAnnotationComposer,
+    $$GroupMembersTableCreateCompanionBuilder,
+    $$GroupMembersTableUpdateCompanionBuilder,
+    (GroupMemberRow, $$GroupMembersTableReferences),
+    GroupMemberRow,
+    PrefetchHooks Function({bool groupId})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7234,8 +9230,14 @@ class $AppDatabaseManager {
       $$CommunityForecastsTableTableManager(_db, _db.communityForecasts);
   $$ModelPredictionsTableTableManager get modelPredictions =>
       $$ModelPredictionsTableTableManager(_db, _db.modelPredictions);
+  $$GroupsTableTableManager get groups =>
+      $$GroupsTableTableManager(_db, _db.groups);
   $$PartiesTableTableManager get parties =>
       $$PartiesTableTableManager(_db, _db.parties);
   $$PartyBallotsTableTableManager get partyBallots =>
       $$PartyBallotsTableTableManager(_db, _db.partyBallots);
+  $$ForecastersTableTableManager get forecasters =>
+      $$ForecastersTableTableManager(_db, _db.forecasters);
+  $$GroupMembersTableTableManager get groupMembers =>
+      $$GroupMembersTableTableManager(_db, _db.groupMembers);
 }

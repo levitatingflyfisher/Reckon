@@ -1,7 +1,7 @@
 name: reckon
 description: Personal decision journal — Reckon Phase 1
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   # flutter_gemma 0.13.x → grpc 5.x requires a recent Dart; CI builds on
@@ -33,7 +33,10 @@ dependencies:
   path: ^1.9.0
 
   # LLM (confirmed in Task 1 spike — see tool/spike/mediapipe_check.md)
-  flutter_gemma: ^0.13.2  # Phase 1 model: Gemma 3 1B IT (ModelType.gemmaIt)
+  flutter_gemma: ^0.13.2  # default model: Qwen 2.5 1.5B IT (ModelType.qwen),
+  # a MediaPipe ZIP .task. NOTE: this pinned version's MediaPipe canNOT load
+  # LiteRT-LM "TFL3" weights (e.g. Gemma 4) — bump to a LiteRT-LM build before
+  # adding one, or it dies with "unable to open zip archive".
 
   # Charts
   fl_chart: ^0.68.0
@@ -41,7 +44,6 @@ dependencies:
   # Notifications
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.4
-  permission_handler: ^11.3.1
 
   # Misc
   uuid: ^4.4.0
@@ -49,8 +51,10 @@ dependencies:
   crypto: ^3.0.3
   cryptography: ^2.7.0 # AES-GCM for ReckonParty end-to-end encryption
   http: ^1.2.0 # Connected/BYOK LLM calls to the Anthropic Messages API
-  intl: ^0.19.0
+  # >=0.20.2 to satisfy sanctuary_backup_ui's constraint (SANCTUARY-BRIEF §4.W2).
+  intl: ^0.20.2
   share_plus: ^10.1.2
+  file_picker: ^8.0.0 # picks the .ohbk file for encrypted-backup restore
   qr_flutter: ^4.1.0 # render the LAN join link as a scannable QR code
   url_launcher: ^6.3.1  # opens curated citation links in the system browser
   nsd: ^4.1.0 # mDNS/DNS-SD advertise + browse for LAN party auto-discovery
@@ -59,17 +63,31 @@ dependencies:
   # when the screen sleeps (the partial is now resumable, but staying awake
   # avoids the interruption in the first place)
 
-  # OpenHearth design system — tokens, typography, theme. In-repo
-  # reconstruction of the shared ../ohStyle package so Reckon builds
-  # standalone (CI, fresh clones, contributors) without the sibling checkout.
+  # Encrypted backup (.ohbk) — sibling path deps (eloEngine precedent).
+  # SANCTUARY-BRIEF §3, §4.W2. Clone next to this repo; see README.
+  sanctuary_auth_core:
+    path: ../packages/sanctuary_auth_core
+  sanctuary_backup_ui:
+    path: ../packages/sanctuary_backup_ui
+
+  # OpenHearth design system — the CANONICAL shared package (sibling
+  # checkout), replacing the retired in-repo fork whose every token had
+  # silently diverged. Reckon's shipped look is blessed as app identity in
+  # lib/shared/theme/ (ReckonTheme/ReckonAccents — zero visual change,
+  # pinned by the goldens); this dependency is the declared convergence
+  # point for deliberately adopting canonical tokens in a future pass.
   # Fonts are bundled by this app (assets section below).
   openhearth_design:
-    path: packages/openhearth_design
+    path: ../ohStyle/openhearth_design
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  # The fleet's standards as tests (style/backup/budgets/permissions/
+  # harness) — sibling checkout like the other path deps; see README.
+  oh_fleet_conformance:
+    path: ../packages/oh_fleet_conformance
   # In-process relay server for the ReckonParty sync integration test.
   reckonparty_relay:
     path: relay
@@ -81,6 +99,9 @@ dev_dependencies:
   custom_lint: ^0.6.4
   riverpod_lint: ^2.3.10
   mockito: ^5.4.4
+  # Generates the launcher icon (the "scales" balance mark) into Android
+  # mipmaps + an adaptive icon + the web PWA icons from a single source.
+  flutter_launcher_icons: ^0.14.4
 
 # Task 2 concern: flutter_gemma 0.13.2 depends on sqlite3 ^3.1.0 while
 # drift_dev 2.x pins sqlite3 ^2.x. Both packages use different APIs of
@@ -116,3 +137,22 @@ flutter:
           weight: 600
         - asset: assets/fonts/Nunito-Bold.ttf
           weight: 700
+
+# The launcher / PWA icon: the slate "scales" balance mark (matching the
+# symbol used for Reckon on the OpenHearth landing page). Slate — #536B82
+# structure, #7E94A8 pans — on a pale #EAEEF1 tile, deliberately the
+# landing mark rather than the app's terracotta brand.
+#   regenerate:  dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/scales_icon.png"
+  android: true
+  ios: false
+  min_sdk_android: 24
+  adaptive_icon_background: "#EAEEF1"
+  adaptive_icon_foreground: "assets/icon/scales_foreground.png"
+  remove_alpha_ios: false
+  web:
+    generate: true
+    image_path: "assets/icon/scales_icon.png"
+    background_color: "#EAEEF1"
+    theme_color: "#536B82"

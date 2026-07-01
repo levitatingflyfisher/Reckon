@@ -17,6 +17,7 @@ class Ballot {
     required this.method,
     required this.approvals,
     required this.ranking,
+    this.memberId,
   });
 
   /// An approval ballot: the participant approves [approvedOptionIds].
@@ -27,6 +28,7 @@ class Ballot {
     required String id,
     required Party party,
     required Iterable<String> approvedOptionIds,
+    String? memberId,
   }) {
     assert(party.votingMethod == VotingMethod.approval,
         'approval ballot built for a ${party.votingMethod.name} party');
@@ -45,6 +47,7 @@ class Ballot {
       method: VotingMethod.approval,
       approvals: Set.unmodifiable(approvals),
       ranking: const [],
+      memberId: memberId,
     );
   }
 
@@ -57,6 +60,7 @@ class Ballot {
     required String id,
     required Party party,
     required List<String> rankedOptionIds,
+    String? memberId,
   }) {
     assert(party.votingMethod == VotingMethod.ranked,
         'ranked ballot built for a ${party.votingMethod.name} party');
@@ -81,11 +85,18 @@ class Ballot {
       method: VotingMethod.ranked,
       approvals: const {},
       ranking: List.unmodifiable(rankedOptionIds),
+      memberId: memberId,
     );
   }
 
   final String id;
   final VotingMethod method;
+
+  /// Who cast this ballot, for group (attributed) decisions: the member's
+  /// stable ghost account id. Null = the original anonymous ballot. Note for
+  /// the yellow paper: attribution is visible to *group members* (it rides
+  /// inside the encrypted blobs they can decrypt) but never to the relay.
+  final String? memberId;
 
   /// Approved option ids (approval ballots). Empty for ranked ballots.
   final Set<String> approvals;

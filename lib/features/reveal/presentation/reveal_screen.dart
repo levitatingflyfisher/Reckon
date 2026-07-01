@@ -5,8 +5,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_card.dart';
+import '../../../shared/widgets/section_header.dart';
 import '../../case/data/case_providers.dart';
+import '../../case/domain/entities/case.dart';
 import '../../case/domain/entities/poll.dart';
+import '../../predictions/data/prediction_providers.dart';
+import '../../predictions/domain/entities/model_prediction.dart';
 import '../data/reveal_providers.dart';
 import '../domain/entities/reveal_observation.dart';
 
@@ -28,6 +32,18 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _prepare());
+  }
+
+  /// Switch the chosen option and regenerate the observation for it — the reveal
+  /// is keyed by chosen option, so a B-chooser no longer sees the A narrative
+  /// produced from the default selection.
+  void _selectOption(String option) {
+    if (_chosenOption == option) return;
+    setState(() {
+      _chosenOption = option;
+      _loading = true;
+    });
+    _prepare();
   }
 
   /// Render the reveal observation without flipping case status. The state
@@ -134,6 +150,16 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
                             ),
                           ),
                         ],
+                        // R1/R4: the duel table renders only after the
+                        // user's own record is complete. "I've decided"
+                        // merely navigates here — while the case is still
+                        // open the user can back out, keep re-polling, and
+                        // re-run the duel, so showing leans now would let
+                        // every later poll be scored as blind when it
+                        // wasn't. The table appears once the decision has
+                        // committed (status decided/resolving/closed).
+                        if (case_ != null && case_.status != CaseStatus.open)
+                          _DuelSection(caseId: widget.caseId, case_: case_),
                         const SizedBox(height: 24),
                         if (_loading)
                           const Center(child: CircularProgressIndicator())
@@ -159,14 +185,12 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
                       ChoiceChip(
                         label: Text(case_.optionA),
                         selected: _chosenOption == 'a',
-                        onSelected: (_) =>
-                            setState(() => _chosenOption = 'a'),
+                        onSelected: (_) => _selectOption('a'),
                       ),
                       ChoiceChip(
                         label: Text(case_.optionB),
                         selected: _chosenOption == 'b',
-                        onSelected: (_) =>
-                            setState(() => _chosenOption = 'b'),
+                        onSelected: (_) => _selectOption('b'),
                       ),
                     ],
                   ),
@@ -181,6 +205,132 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// The duel table — the forecasters' sealed leans, revealed alongside the
+/// user's own poll series (they were logged before the reveal and could not
+/// have influenced it — R1). Rendered only here, and only once the case has
+/// left `open` (the build site enforces it): the reveal moment is the
+/// committed decision, not a visit to this screen.
+class _DuelSection extends ConsumerWidget {
+  const _DuelSection({required this.caseId, this.case_});
+
+  final String caseId;
+  final Case? case_;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final duels =
+        ref.watch(duelForecastsForCaseProvider(caseId)).valueOrNull ??
+            const <ModelPrediction>[];
+    if (duels.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: 24),
+        const SectionHeader(label: 'THE DUEL'),
+        for (final duel in duels)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _DuelRow(
+              prediction: duel,
+              optionA: case_?.optionA ?? 'A',
+              optionB: case_?.optionB ?? 'B',
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _DuelRow extends StatefulWidget {
+  const _DuelRow({
+    required this.prediction,
+    required this.optionA,
+    required this.optionB,
+  });
+
+  final ModelPrediction prediction;
+  final String optionA;
+  final String optionB;
+
+  @override
+  State<_DuelRow> createState() => _DuelRowState();
+}
+
+class _DuelRowState extends State<_DuelRow> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colors = Theme.of(context).colorScheme;
+    final payload = widget.prediction.payload;
+    final lean = ((payload['lean'] as num?) ?? 50).round().clamp(0, 100);
+    final name = payload['forecasterName'] as String? ??
+        widget.prediction.modelVersion;
+    final rationale = payload['rationale'] as String? ?? '';
+    final towardB = lean >= 50;
+    final toward = towardB ? widget.optionB : widget.optionA;
+
+    return OHCard(
+      onTap: rationale.isEmpty
+          ? null
+          : () => setState(() => _expanded = !_expanded),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(name,
+                    style: textTheme.labelLarge,
+                    overflow: TextOverflow.ellipsis),
+              ),
+              if (rationale.isNotEmpty)
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  size: 20,
+                  color: colors.onSurfaceVariant,
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text('A', style: textTheme.bodySmall),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: lean / 100,
+                    minHeight: 6,
+                    backgroundColor:
+                        colors.surfaceContainerHighest.withValues(alpha: 0.6),
+                    color: colors.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text('B', style: textTheme.bodySmall),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'lean $lean — toward $toward',
+            style: textTheme.bodySmall,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (_expanded && rationale.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(rationale, style: textTheme.bodyMedium),
+          ],
+        ],
       ),
     );
   }

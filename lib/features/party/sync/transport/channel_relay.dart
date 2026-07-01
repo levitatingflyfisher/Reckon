@@ -78,16 +78,25 @@ class ChannelPartyRelay implements PartyRelay {
   Future<RelaySnapshot?> fetchParty(String partyId) async {
     final res = await _request({'op': 'get', 'partyId': partyId});
     if (res['ok'] != true) return null;
-    final snap = res['snapshot'] as Map<String, dynamic>?;
-    if (snap == null) return null;
-    return RelaySnapshot(
-      party: base64.decode(snap['party'] as String),
-      closed: (snap['closed'] as bool?) ?? false,
-      ballots: {
-        for (final e in (snap['ballots'] as Map).entries)
-          e.key as String: base64.decode(e.value as String),
-      },
-    );
+    if (res['snapshot'] == null) return null;
+    // The snapshot comes from the peer device, which is untrusted: decode +
+    // shape-check under a guard so a corrupt or hostile snapshot surfaces as
+    // the flow's normal failure mode (StateError, like every peer-reported
+    // error from _check) instead of leaking a raw FormatException/TypeError.
+    // Same trust-boundary stance as HttpPartyRelay.fetchParty.
+    try {
+      final snap = res['snapshot'] as Map<String, dynamic>;
+      return RelaySnapshot(
+        party: base64.decode(snap['party'] as String),
+        closed: (snap['closed'] as bool?) ?? false,
+        ballots: {
+          for (final e in (snap['ballots'] as Map).entries)
+            e.key as String: base64.decode(e.value as String),
+        },
+      );
+    } catch (e) {
+      throw StateError('Malformed peer snapshot for party $partyId: $e');
+    }
   }
 
   @override

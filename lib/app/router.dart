@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/bounty/presentation/bounty_screen.dart';
 import '../features/case/presentation/case_detail_screen.dart';
 import '../features/case/presentation/case_summary_screen.dart';
 import '../features/case/presentation/home_screen.dart';
@@ -11,9 +12,12 @@ import '../features/glossary/presentation/glossary_screen.dart';
 import '../features/onboarding/presentation/auth_tier_screen.dart';
 import '../features/onboarding/presentation/first_case_prompt_screen.dart';
 import '../features/onboarding/presentation/model_onboarding_screen.dart';
-import '../features/predictions/presentation/model_scorecard_screen.dart';
+import '../features/predictions/presentation/forecasters_screen.dart';
 import '../features/outside_view/presentation/outside_view_screen.dart';
 import '../features/outside_view/presentation/stratification_screen.dart';
+import '../features/party/presentation/group_create_screen.dart';
+import '../features/party/presentation/group_home_screen.dart';
+import '../features/party/presentation/groups_screen.dart';
 import '../features/party/presentation/party_create_screen.dart';
 import '../features/party/presentation/party_join_screen.dart';
 import '../features/party/presentation/party_result_screen.dart';
@@ -90,6 +94,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             CaseDetailScreen(caseId: state.pathParameters['caseId']!),
       ),
       GoRoute(
+        path: '/bounty/:caseId',
+        builder: (_, state) =>
+            BountyScreen(caseId: state.pathParameters['caseId']!),
+      ),
+      GoRoute(
         path: '/repoll/:caseId',
         builder: (_, state) =>
             RepollScreen(caseId: state.pathParameters['caseId']!),
@@ -110,12 +119,34 @@ final routerProvider = Provider<GoRouter>((ref) {
             ResolutionCheckInScreen(caseId: state.pathParameters['caseId']!),
       ),
       GoRoute(
+        path: '/forecasters',
+        builder: (_, __) => const ForecastersScreen(),
+      ),
+      // The model scorecard grew into the forecasters screen; the old
+      // route survives as a redirect so bookmarks and muscle memory keep
+      // working.
+      GoRoute(
         path: '/model-scorecard',
-        builder: (_, __) => const ModelScorecardScreen(),
+        redirect: (_, __) => '/forecasters',
       ),
       GoRoute(
         path: '/party/create',
-        builder: (_, __) => const PartyCreateScreen(),
+        // ?groupId=<id> scopes the new decision to a persistent group.
+        builder: (_, state) =>
+            PartyCreateScreen(groupId: state.uri.queryParameters['groupId']),
+      ),
+      GoRoute(
+        path: '/groups',
+        builder: (_, __) => const GroupsScreen(),
+      ),
+      GoRoute(
+        path: '/groups/create',
+        builder: (_, __) => const GroupCreateScreen(),
+      ),
+      GoRoute(
+        path: '/group/:id',
+        builder: (_, state) =>
+            GroupHomeScreen(groupId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/party/join',

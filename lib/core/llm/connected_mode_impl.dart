@@ -56,6 +56,18 @@ class ConnectedModeImpl implements LlmService {
       _inner.generateRevealObservation(timeSeries);
 
   @override
-  Future<CommunitySeed> generateCommunitySeed(Case case_) =>
-      _inner.generateCommunitySeed(case_);
+  Future<CommunitySeed> generateCommunitySeed(
+    Case case_, {
+    String? persona,
+    double? temperature,
+  }) =>
+      _inner.generateCommunitySeed(case_,
+          persona: persona, temperature: temperature);
+
+  @override
+  Future<RedactedQuestion> redactQuestion({
+    required String title,
+    required String background,
+  }) =>
+      _inner.redactQuestion(title: title, background: background);
 }

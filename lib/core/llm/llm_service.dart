@@ -50,6 +50,21 @@ class CommunitySeed {
   final String rationale;
 }
 
+/// A de-identified rewrite of a decision question, produced before anything
+/// leaves the device via a bounty export. The sentinel (both fields empty)
+/// marks a failed rewrite; callers must fall back to manual redaction, never
+/// export un-checked text.
+class RedactedQuestion {
+  const RedactedQuestion({required this.title, required this.background});
+
+  static const sentinel = RedactedQuestion(title: '', background: '');
+
+  final String title;
+  final String background;
+
+  bool get isSentinel => title.isEmpty && background.isEmpty;
+}
+
 abstract class LlmService {
   /// Identifier of the active [ReckonModelSpec]. Prediction logging uses
   /// this to attribute outputs when Reckon supports multiple local models.
@@ -69,5 +84,30 @@ abstract class LlmService {
     CaseTimeSeries timeSeries,
   );
 
-  Future<CommunitySeed> generateCommunitySeed(Case case_);
+  /// One forecaster's sealed lean on [case_]. [persona] is an optional
+  /// one-sentence stance (a "forecaster" on the resident model is exactly a
+  /// persona + temperature); [temperature] overrides the structured-call
+  /// default of 0.4.
+  ///
+  /// Error policy: failures return the sentinel `CommunitySeed(50, '')` — an
+  /// EMPTY rationale marks a non-forecast. Callers that log forecasts must
+  /// skip sentinels or the track record fills with model hiccups.
+  Future<CommunitySeed> generateCommunitySeed(
+    Case case_, {
+    String? persona,
+    double? temperature,
+  });
+
+  /// Rewrites a question's [title] and [background] so a stranger could read
+  /// them without learning who wrote them (names, employers, exact places,
+  /// ages and amounts generalised). Used by the bounty export; the result is
+  /// ALWAYS routed through an editable preview — the model drafts, the user
+  /// signs off.
+  ///
+  /// Error policy: failures return [RedactedQuestion.sentinel]; callers fall
+  /// back to the original text flagged for manual redaction.
+  Future<RedactedQuestion> redactQuestion({
+    required String title,
+    required String background,
+  });
 }
