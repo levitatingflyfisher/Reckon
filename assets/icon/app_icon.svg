@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Reckon — the ◈ mark (a faceted lozenge; "a mirror for your decisions")
+       in hearth terracotta on linen. -->
+  <rect width="1024" height="1024" fill="#FBF7F0"/>
+  <!-- outer diamond outline -->
+  <path d="M 512 214 L 810 512 L 512 810 L 214 512 Z"
+        fill="none" stroke="#B85C38" stroke-width="60" stroke-linejoin="round"/>
+  <!-- inner filled diamond -->
+  <path d="M 512 400 L 624 512 L 512 624 L 400 512 Z" fill="#B85C38"/>
+</svg>
