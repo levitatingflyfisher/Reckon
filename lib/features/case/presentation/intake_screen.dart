@@ -82,6 +82,11 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
 
   Future<void> _sendUserTurn(String userText) async {
     if (_isGenerating) return;
+    // The model context is prior turns + the new message as `userInput`. Capture
+    // the transcript BEFORE appending the new turn for display — otherwise the
+    // latest message is sent twice (once in the replayed transcript, once as
+    // userInput), doubling the exact text the on-device model can least afford.
+    final priorTranscript = List.of(_transcript);
     setState(() {
       _isGenerating = true;
       _streamingBuf = '';
@@ -94,7 +99,7 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
     try {
       final svc = await ref.read(llmServiceProvider.future);
       final ctx = IntakeContext(
-        transcript: List.of(_transcript),
+        transcript: priorTranscript,
         userInput: userText,
       );
 
