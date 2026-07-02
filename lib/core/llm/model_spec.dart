@@ -57,7 +57,8 @@ class ReckonModelSpec {
     description: 'Google • 1B params • fast, low memory. Default.',
   );
 
-  /// Qwen 2.5 1.5B Instruct — LiteRT .task. Gated; requires HF token.
+  /// Qwen 2.5 1.5B Instruct — LiteRT .task on the trusted litert-community org.
+  /// Open weights: an unauthenticated resolve returns 302 (no HF token needed).
   static const qwen25_1_5b = ReckonModelSpec(
     id: 'qwen-2.5-1.5b-it',
     displayName: 'Qwen 2.5 1.5B',
@@ -66,13 +67,13 @@ class ReckonModelSpec {
         'https://huggingface.co/litert-community/Qwen2.5-1.5B-Instruct/resolve/main/Qwen2.5-1.5B-Instruct_multi-prefill-seq_q8_ekv1280.task',
     approximateSizeBytes: 1600000000,
     modelType: 'qwen',
-    requiresToken: true,
     description:
         'Alibaba • 1.5B params • often stronger reasoning than Gemma 1B. '
-        'Gated on HuggingFace — requires a token.',
+        'Open weights (litert-community) — no token needed.',
   );
 
-  /// Phi-4 Mini Instruct — LiteRT .task. Gated; larger file, needs HF token.
+  /// Phi-4 Mini Instruct — LiteRT .task on the trusted litert-community org.
+  /// Open weights: an unauthenticated resolve returns 302 (no HF token needed).
   static const phi4Mini = ReckonModelSpec(
     id: 'phi-4-mini-it',
     displayName: 'Phi-4 Mini',
@@ -81,10 +82,9 @@ class ReckonModelSpec {
         'https://huggingface.co/litert-community/Phi-4-mini-instruct/resolve/main/Phi-4-mini-instruct_multi-prefill-seq_q8_ekv1280.task',
     approximateSizeBytes: 4000000000,
     modelType: 'phi',
-    requiresToken: true,
     description:
         'Microsoft • 3.8B params • strongest reasoning, heaviest. '
-        'Gated on HuggingFace — requires a token. ~4 GB.',
+        'Open weights (litert-community) — no token needed. ~4 GB.',
   );
 
   /// The full roster exposed to the UI.
