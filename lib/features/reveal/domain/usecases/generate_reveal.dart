@@ -26,7 +26,11 @@ class GenerateReveal {
     // redundant on-device LLM run and a duplicate prediction log.
     final prior = await _predictions.forCase(case_.id);
     for (final p in prior) {
-      if (p.kind == PredictionKind.revealObservation) {
+      // Reuse only a reveal generated for the SAME chosen option — otherwise a
+      // user who explores/commits option B would be shown the option-A
+      // narrative cached from the default selection.
+      if (p.kind == PredictionKind.revealObservation &&
+          p.payload['chosenOption'] == chosenOption) {
         final text = p.payload['text'];
         if (text is String && text.isNotEmpty) {
           return RevealObservation(text: text);

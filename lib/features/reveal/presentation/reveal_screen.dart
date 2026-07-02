@@ -30,6 +30,18 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _prepare());
   }
 
+  /// Switch the chosen option and regenerate the observation for it — the reveal
+  /// is keyed by chosen option, so a B-chooser no longer sees the A narrative
+  /// produced from the default selection.
+  void _selectOption(String option) {
+    if (_chosenOption == option) return;
+    setState(() {
+      _chosenOption = option;
+      _loading = true;
+    });
+    _prepare();
+  }
+
   /// Render the reveal observation without flipping case status. The state
   /// transition (open → decided, plus poll reveal) happens only when the
   /// user commits via "Set resolution date", so backing out of this screen
@@ -159,14 +171,12 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
                       ChoiceChip(
                         label: Text(case_.optionA),
                         selected: _chosenOption == 'a',
-                        onSelected: (_) =>
-                            setState(() => _chosenOption = 'a'),
+                        onSelected: (_) => _selectOption('a'),
                       ),
                       ChoiceChip(
                         label: Text(case_.optionB),
                         selected: _chosenOption == 'b',
-                        onSelected: (_) =>
-                            setState(() => _chosenOption = 'b'),
+                        onSelected: (_) => _selectOption('b'),
                       ),
                     ],
                   ),
