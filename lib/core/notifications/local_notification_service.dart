@@ -82,13 +82,15 @@ class LocalNotificationService {
   Future<void> scheduleRepoll({
     required int id,
     required String caseId,
-    required String caseTitle,
     required DateTime when,
   }) async {
+    // Generic title/body only — a case title is the user's private decision
+    // question and must never surface on the lockscreen or in OS notification
+    // history. The tap routes by caseId via the payload, not the text.
     await _plugin.zonedSchedule(
       id,
-      caseTitle,
       'Time to check in',
+      'One of your open cases is ready for a re-poll.',
       _absolute(when),
       const NotificationDetails(
         android: AndroidNotificationDetails(
@@ -112,14 +114,14 @@ class LocalNotificationService {
   Future<void> scheduleResolutionCheckIn({
     required int id,
     required String caseId,
-    required String caseTitle,
-    required String chosenOption,
     required DateTime when,
   }) async {
+    // Generic title/body — never the case question or the chosen option (both
+    // are sensitive). The tap routes by caseId via the payload.
     await _plugin.zonedSchedule(
       id,
-      caseTitle,
-      'You decided $chosenOption. How do you feel about it?',
+      'How did it turn out?',
+      'A decision you made is ready for a follow-up.',
       _absolute(when),
       const NotificationDetails(
         android: AndroidNotificationDetails(

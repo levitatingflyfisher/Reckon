@@ -44,16 +44,11 @@ class _ResolutionDateScreenState extends ConsumerState<ResolutionDateScreen> {
       resolutionCheckDate: _date!,
     );
 
-    final case_ = await ref.read(caseByIdProvider(widget.caseId).future);
     final notif = ref.read(localNotificationServiceProvider);
     try {
       await notif.scheduleResolutionCheckIn(
         id: notificationIdFor(widget.caseId, resolutionSlot),
         caseId: widget.caseId,
-        caseTitle: case_?.question ?? 'Your decision',
-        chosenOption: chosen == 'a'
-            ? (case_?.optionA ?? 'A')
-            : (case_?.optionB ?? 'B'),
         when: _date!,
       );
     } catch (_) {
