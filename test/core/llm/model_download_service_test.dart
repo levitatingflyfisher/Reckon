@@ -43,6 +43,11 @@ class _FakeAdapter implements HttpClientAdapter {
     final headers = <String, List<String>>{};
     if (!ignoreRange && range != null && range.startsWith('bytes=')) {
       start = int.parse(range.substring('bytes='.length).split('-').first);
+      if (start > payload.length) {
+        // Range beyond the resource — a real CDN answers 416.
+        return ResponseBody.fromBytes(
+            Uint8List(0), HttpStatus.requestedRangeNotSatisfiable);
+      }
       status = HttpStatus.partialContent; // 206
       headers[HttpHeaders.contentRangeHeader] = [
         'bytes $start-${payload.length - 1}/${payload.length}'
@@ -175,6 +180,19 @@ void main() {
       expect(modelOf().existsSync(), isTrue);
       expect(await modelOf().readAsBytes(), payload,
           reason: 'resumed file must equal the full payload byte-for-byte');
+    });
+
+    test('an oversized .part is discarded and re-downloaded from zero', () async {
+      // A corrupt/oversized partial makes the resume Range unsatisfiable (416).
+      // Recovery must discard it and download from byte 0 — not loop on 416.
+      await partOf().writeAsBytes(Uint8List(payload.length + 1024 * 1024));
+      final h = build();
+
+      await h.svc.download(testSpec).toList();
+
+      expect(modelOf().existsSync(), isTrue);
+      expect(await modelOf().readAsBytes(), payload,
+          reason: 'oversized partial must be recovered from zero');
     });
 
     test('a failed attempt keeps the partial .part so the next can resume',

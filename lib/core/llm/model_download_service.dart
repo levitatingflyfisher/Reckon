@@ -119,28 +119,54 @@ class ModelDownloadService {
       final reqHeaders = Map<String, dynamic>.from(headers);
       if (resumeFrom > 0) reqHeaders['Range'] = 'bytes=$resumeFrom-';
 
-      final response = await _dio.download(
-        spec.downloadUrl,
-        part.path,
-        options: Options(headers: reqHeaders),
-        onReceiveProgress: (received, total) {
-          // dio reports progress relative to *this* request; offset it so the
-          // UI tracks the whole file when resuming.
-          controller.add((
-            resumeFrom + received,
-            total < 0 ? -1 : resumeFrom + total,
-          ));
-        },
-        // Keep the partial on error so a later attempt can resume from it.
-        deleteOnError: false,
-        fileAccessMode:
-            resumeFrom > 0 ? FileAccessMode.append : FileAccessMode.write,
-      );
+      Response<dynamic> response;
+      var restarted = false;
+      try {
+        response = await _dio.download(
+          spec.downloadUrl,
+          part.path,
+          options: Options(headers: reqHeaders),
+          onReceiveProgress: (received, total) {
+            // dio reports progress relative to *this* request; offset it so the
+            // UI tracks the whole file when resuming.
+            controller.add((
+              resumeFrom + received,
+              total < 0 ? -1 : resumeFrom + total,
+            ));
+          },
+          // Keep the partial on error so a later attempt can resume from it.
+          deleteOnError: false,
+          fileAccessMode:
+              resumeFrom > 0 ? FileAccessMode.append : FileAccessMode.write,
+        );
+      } on DioException catch (err) {
+        // A partial larger than the resource makes the resume Range
+        // unsatisfiable (416). Discard it and restart from byte 0 instead of
+        // looping on the error every retry.
+        if (resumeFrom > 0 &&
+            err.response?.statusCode ==
+                HttpStatus.requestedRangeNotSatisfiable) {
+          if (part.existsSync()) await part.delete();
+          response = await _dio.download(
+            spec.downloadUrl,
+            part.path,
+            options: Options(headers: headers),
+            onReceiveProgress: (received, total) =>
+                controller.add((received, total)),
+            deleteOnError: false,
+          );
+          restarted = true;
+        } else {
+          rethrow;
+        }
+      }
 
       // If we asked for a range but the host ignored it (200 instead of 206),
       // the bytes dio just appended sit on top of the stale partial — the file
       // is now corrupt. Discard it and pull a clean copy from the start.
-      if (resumeFrom > 0 && response.statusCode == HttpStatus.ok) {
+      if (!restarted &&
+          resumeFrom > 0 &&
+          response.statusCode == HttpStatus.ok) {
         if (part.existsSync()) await part.delete();
         await _dio.download(
           spec.downloadUrl,
