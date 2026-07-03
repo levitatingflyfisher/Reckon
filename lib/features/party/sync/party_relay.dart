@@ -36,6 +36,10 @@ class HttpPartyRelay implements PartyRelay {
   final String _base;
   final Dio _dio;
 
+  /// Cap on a relay response body — the relay stores small encrypted blobs, so
+  /// anything larger is a hostile/oversized response, not a real party.
+  static const int _maxResponseBytes = 1024 * 1024; // 1 MB
+
   static final _bytes = Options(
     responseType: ResponseType.bytes,
     headers: {'content-type': 'application/octet-stream'},
@@ -50,11 +54,24 @@ class HttpPartyRelay implements PartyRelay {
   @override
   Future<RelaySnapshot?> fetchParty(String partyId) async {
     try {
-      final res = await _dio.get<String>(
+      // Stream the body under a hard cap. The join link controls the relay
+      // host, so its response is untrusted — a hostile/oversized body (with a
+      // missing or lying Content-Length) must not be buffered into memory.
+      final res = await _dio.get<ResponseBody>(
         '$_base/parties/$partyId',
-        options: Options(responseType: ResponseType.plain),
+        options: Options(responseType: ResponseType.stream),
       );
-      final json = jsonDecode(res.data!) as Map<String, dynamic>;
+      final bytes = <int>[];
+      await for (final chunk in res.data!.stream) {
+        bytes.addAll(chunk);
+        if (bytes.length > _maxResponseBytes) {
+          throw DioException(
+            requestOptions: res.requestOptions,
+            message: 'Relay response exceeds the $_maxResponseBytes-byte cap',
+          );
+        }
+      }
+      final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
       return RelaySnapshot(
         party: base64.decode(json['party'] as String),
         closed: (json['closed'] as bool?) ?? false,
