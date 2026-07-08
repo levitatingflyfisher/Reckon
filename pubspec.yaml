@@ -33,7 +33,9 @@ dependencies:
   path: ^1.9.0
 
   # LLM (confirmed in Task 1 spike — see tool/spike/mediapipe_check.md)
-  flutter_gemma: ^0.13.2  # Phase 1 model: Gemma 3 1B IT (ModelType.gemmaIt)
+  flutter_gemma: ^0.13.2  # default model: Gemma 4 E2B IT (ModelType.gemmaIt).
+  # NOTE: verify this pinned version's MediaPipe runtime actually loads the
+  # Gemma-4/3n .task on-device before shipping; bump if a newer build is needed.
 
   # Charts
   fl_chart: ^0.68.0

@@ -407,8 +407,9 @@ class _ModelCardState extends ConsumerState<_ModelCard> {
     setState(() => _isDownloaded = false);
     // If the deleted model was active, fall back to the default so the
     // LLM service doesn't try to load a missing file on next invocation.
-    if (widget.isSelected && widget.spec.id != ReckonModelSpec.gemma3_1b.id) {
-      await persistSelectedModelId(ReckonModelSpec.gemma3_1b.id);
+    final defaultId = ReckonModelSpec.byId(null).id;
+    if (widget.isSelected && widget.spec.id != defaultId) {
+      await persistSelectedModelId(defaultId);
       ref.invalidate(selectedModelIdProvider);
       ref.invalidate(llmServiceProvider);
     }

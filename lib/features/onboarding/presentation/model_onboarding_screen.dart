@@ -28,7 +28,7 @@ class ModelOnboardingScreen extends ConsumerStatefulWidget {
 
 class _ModelOnboardingScreenState
     extends ConsumerState<ModelOnboardingScreen> {
-  ReckonModelSpec _selected = ReckonModelSpec.gemma3_1b;
+  ReckonModelSpec _selected = ReckonModelSpec.gemma4E2B;
   bool _downloading = false;
   double _progress = 0;
   String? _error;

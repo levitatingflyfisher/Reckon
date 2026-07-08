@@ -11,7 +11,7 @@ import '../../features/reveal/domain/entities/reveal_observation.dart';
 import 'llm_prompts.dart';
 import 'llm_service.dart';
 
-/// On-device LLM implementation using flutter_gemma (Gemma 3 1B IT).
+/// On-device LLM implementation using flutter_gemma (default: Gemma 4 E2B IT).
 ///
 /// Error policy: inference failures produce recoverable sentinel values
 /// (empty streams, fallback text). The app never crashes on a model hiccup.
