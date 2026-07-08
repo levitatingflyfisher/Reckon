@@ -75,7 +75,7 @@ void main() {
     if (tempDir.existsSync()) await tempDir.delete(recursive: true);
   });
 
-  const spec = ReckonModelSpec.gemma4E2B;
+  const spec = ReckonModelSpec.qwen25_1_5b;
 
   File finalFile() => File('${tempDir.path}/${spec.fileName}');
 

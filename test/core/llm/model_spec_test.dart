@@ -31,16 +31,34 @@ void main() {
       }
     });
 
-    test('the default (no selection) is Google Gemma 4 E2B from the trusted org',
-        () {
+    test('the default (no selection) is a MediaPipe-loadable .task on the '
+        'trusted org', () {
+      // Gemma 4 E2B was briefly the default, but its weight is a raw LiteRT/
+      // TFLite flatbuffer (magic "TFL3"), not the ZIP bundle MediaPipe's .task
+      // loader needs — flutter_gemma 0.13.2 dies with "unable to open zip
+      // archive". Qwen 2.5 1.5B ships a genuine ZIP .task (ModelType.qwen), so
+      // it both loads AND stays on the trusted, ungated org.
       final def = ReckonModelSpec.byId(null);
-      expect(def.id, 'gemma-4-e2b-it');
-      expect(def.downloadUrl, contains('litert-community/gemma-4-E2B'));
+      expect(def.id, 'qwen-2.5-1.5b-it');
+      expect(def.downloadUrl, contains('litert-community/Qwen2.5-1.5B'));
+      expect(def.modelType, 'qwen');
       expect(def.requiresToken, isFalse);
     });
 
     test('an unknown id also falls back to the trusted default', () {
-      expect(ReckonModelSpec.byId('no-such-model').id, 'gemma-4-e2b-it');
+      expect(ReckonModelSpec.byId('no-such-model').id, 'qwen-2.5-1.5b-it');
+    });
+
+    test('no model is sourced from a LiteRT-LM repo (TFL3, not a MediaPipe zip)',
+        () {
+      // The `-litert-lm` orgs host raw TFLite flatbuffers that the pinned
+      // flutter_gemma's MediaPipe cannot open as a .task. Guard against
+      // re-adding one until the runtime is bumped to a LiteRT-LM-aware build.
+      for (final spec in ReckonModelSpec.availableModels) {
+        expect(spec.downloadUrl.toLowerCase(), isNot(contains('litert-lm')),
+            reason: '${spec.id} points at a LiteRT-LM (TFL3) weight that '
+                'MediaPipe 0.13.2 cannot load');
+      }
     });
 
     test('a small (<800MB) trusted option exists for storage-limited phones',

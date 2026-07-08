@@ -44,26 +44,12 @@ class ReckonModelSpec {
   /// One-line description shown in Settings to help the user pick.
   final String description;
 
-  /// Gemma 4 E2B IT — the default. Google's own build on the trusted
-  /// **litert-community** org; an unauthenticated resolve returns 302, so no
-  /// HF token (and no account) is needed. This replaces the retired Gemma 3 1B,
-  /// which had *no* ungated build on any trusted org and so could only be
-  /// pulled from a personal mirror (a supply-chain risk). "E2B" is the ~2B
-  /// *effective*-parameter elastic build — noticeably more capable than the old
-  /// 1B while staying phone-runnable. The `-web` `.task` is the portable
-  /// MediaPipe bundle (the device-specific `.litertlm` builds are NPU variants).
-  /// (Size is for the progress UI only — see [approximateSizeBytes].)
-  static const gemma4E2B = ReckonModelSpec(
-    id: 'gemma-4-e2b-it',
-    displayName: 'Gemma 4 (E2B)',
-    fileName: 'gemma-4-E2B-it-web.task',
-    downloadUrl:
-        'https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it-web.task',
-    approximateSizeBytes: 2003000000,
-    modelType: 'gemmaIt',
-    description: 'Google • ~2B effective • balanced default. '
-        'Open weights (litert-community) — no token needed.',
-  );
+  // No Google model ships as the default: Gemma 3 is license-gated on every
+  // trusted org (ungated only via a personal mirror — a supply-chain risk),
+  // and Gemma 4 E2B's weight is a raw LiteRT/TFLite flatbuffer ("TFL3"), not
+  // the ZIP `.task` bundle MediaPipe needs — flutter_gemma 0.13.2 fails it with
+  // "unable to open zip archive". Until the runtime is bumped to a LiteRT-LM
+  // build, the trusted + ungated + actually-loadable default is Qwen 2.5.
 
   /// Qwen 2.5 0.5B Instruct — the lightweight tier for storage- or RAM-limited
   /// phones, filling the niche the retired 555 MB Gemma 3 1B used to occupy.
@@ -82,8 +68,11 @@ class ReckonModelSpec {
         'Open weights (litert-community) — no token needed.',
   );
 
-  /// Qwen 2.5 1.5B Instruct — LiteRT .task on the trusted litert-community org.
-  /// Open weights: an unauthenticated resolve returns 302 (no HF token needed).
+  /// Qwen 2.5 1.5B Instruct — **the default**. A genuine MediaPipe ZIP `.task`
+  /// (magic "PK", `ModelType.qwen`) on the trusted litert-community org, so it
+  /// both loads on flutter_gemma 0.13.2 AND needs no HF token (unauthenticated
+  /// resolve → 302). Apache-2.0. The balanced pick: more capable than 0.5B,
+  /// far lighter than Phi-4.
   static const qwen25_1_5b = ReckonModelSpec(
     id: 'qwen-2.5-1.5b-it',
     displayName: 'Qwen 2.5 1.5B',
@@ -114,20 +103,19 @@ class ReckonModelSpec {
 
   /// The full roster exposed to the UI, default first.
   static const List<ReckonModelSpec> availableModels = [
-    gemma4E2B,
-    qwen25_0_5b,
     qwen25_1_5b,
+    qwen25_0_5b,
     phi4Mini,
   ];
 
-  /// Look up a spec by [id] with a safe fallback to the default [gemma4E2B]
+  /// Look up a spec by [id] with a safe fallback to the default [qwen25_1_5b]
   /// (used when no selection has been made yet, or a persisted id no longer
   /// matches any [availableModels] entry).
   static ReckonModelSpec byId(String? id) {
-    if (id == null) return gemma4E2B;
+    if (id == null) return qwen25_1_5b;
     for (final s in availableModels) {
       if (s.id == id) return s;
     }
-    return gemma4E2B;
+    return qwen25_1_5b;
   }
 }

@@ -49,7 +49,7 @@ void main() {
 
   testWidgets('returns true for an ungated spec without prompting',
       (tester) async {
-    final ok = await run(tester, _FakeSvc(), ReckonModelSpec.gemma4E2B);
+    final ok = await run(tester, _FakeSvc(), ReckonModelSpec.qwen25_1_5b);
     expect(ok, isTrue);
     expect(find.text('HuggingFace token'), findsNothing);
   });

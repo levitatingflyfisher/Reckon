@@ -33,9 +33,10 @@ dependencies:
   path: ^1.9.0
 
   # LLM (confirmed in Task 1 spike — see tool/spike/mediapipe_check.md)
-  flutter_gemma: ^0.13.2  # default model: Gemma 4 E2B IT (ModelType.gemmaIt).
-  # NOTE: verify this pinned version's MediaPipe runtime actually loads the
-  # Gemma-4/3n .task on-device before shipping; bump if a newer build is needed.
+  flutter_gemma: ^0.13.2  # default model: Qwen 2.5 1.5B IT (ModelType.qwen),
+  # a MediaPipe ZIP .task. NOTE: this pinned version's MediaPipe canNOT load
+  # LiteRT-LM "TFL3" weights (e.g. Gemma 4) — bump to a LiteRT-LM build before
+  # adding one, or it dies with "unable to open zip archive".
 
   # Charts
   fl_chart: ^0.68.0

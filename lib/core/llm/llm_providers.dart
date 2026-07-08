@@ -15,7 +15,7 @@ final modelDownloadServiceProvider = Provider<ModelDownloadService>((ref) {
 const _selectedModelKey = 'reckon.selected_model_id';
 
 /// The user's chosen model id, persisted in secure storage. Null until the
-/// first selection is made (falls back to the default [ReckonModelSpec.gemma4E2B]).
+/// first selection is made (falls back to the default [ReckonModelSpec.qwen25_1_5b]).
 final selectedModelIdProvider = FutureProvider<String?>((ref) async {
   const storage = FlutterSecureStorage();
   return storage.read(key: _selectedModelKey);
@@ -30,7 +30,7 @@ Future<void> persistSelectedModelId(String id) async {
 }
 
 /// Which model the LLM service should load. Derived from the persisted
-/// selection; falls back to the default Gemma 4 E2B when no selection exists
+/// selection; falls back to the default Qwen 2.5 1.5B when no selection exists
 /// or the persisted id no longer matches any [ReckonModelSpec.availableModels].
 final activeModelSpecProvider = Provider<ReckonModelSpec>((ref) {
   final selected = ref.watch(selectedModelIdProvider).valueOrNull;
