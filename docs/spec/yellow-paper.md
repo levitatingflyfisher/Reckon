@@ -9,9 +9,11 @@ was authored by an AI assistant — treat this spec as the intended contract and
 code against it**, not the other way round. Where code and spec disagree, that is a bug in
 one of them; the tests are the tie-breaker, then reality.
 
-This paper specifies the two parts of Reckon with genuine formal content: the **ReckonParty
-sync protocol** (§2–§5) and the **record-integrity invariants** (§6). The rest of the app
-is described in prose in [concepts.md](../concepts.md) and the [reference docs](../reference/).
+This paper specifies the parts of Reckon with genuine formal content: the **ReckonParty
+sync protocol** (§2–§5, including the group extension in §5.1), the **record-integrity
+invariants** (§6, which now cover the forecaster duel), and Reckon's reading of the
+**reckonBounty wire boundary** (§7). The rest of the app is described in prose in
+[concepts.md](../concepts.md) and the [reference docs](../reference/).
 
 ## 1. Notation
 
@@ -26,8 +28,8 @@ is described in prose in [concepts.md](../concepts.md) and the [reference docs](
 | Object | Definition |
 |---|---|
 | `K` | a 256-bit symmetric key (AES-GCM-256) |
-| `Party` | a client-side decision object (question, options, method); serialised to JSON |
-| `Ballot` | a client-side vote (approval set or ranking); serialised to JSON |
+| `Party` | a client-side decision object (question, options, method; optionally a group manifest and a `considered` flag — §5.1); serialised to JSON |
+| `Ballot` | a client-side vote (approval set or ranking; optionally attributed to a group member — §5.1); serialised to JSON |
 | `E(K, m)` | the authenticated-encryption envelope of §3 |
 | `pid`, `bid` | client-chosen party id and ballot id (strings) |
 | relay state `S[pid]` | `(party: blob ∪ {⊥}, closed: bool, ballots: bid → blob)` |
@@ -74,7 +76,7 @@ URI/HTTP standard, conformant clients never transmit the fragment to the server.
 
 **Corollary (access model).** Possession of the link *is* the capability: anyone with
 `(base, pid, K)` can read and write the party. There is no additional per-voter
-authentication (see §8).
+authentication (see §9).
 
 ## 5. The relay protocol
 
@@ -112,22 +114,74 @@ its responses. By construction, the view is a function of only:
 and **contains no plaintext and no key** (K1). Hence an adversary in full possession of the
 relay learns nothing about the question, the options, or any voter's choice beyond the
 *count* and *sizes* of ballots and coarse timing. "Zero-knowledge by construction" is exactly
-this statement — it is not a proof about the AEAD, which is assumed sound (§8).
+this statement — it is not a proof about the AEAD, which is assumed sound (§9).
+
+### 5.1 Groups, attribution, and the considered reveal
+
+Persistent groups ([ADR-0008](../adr/0008-persistent-groups-attributed-ballots.md)) are a
+**client-side container over the unchanged per-party protocol**. The relay gained no
+operation, the transition table above is exactly as before, and I1–I3 hold verbatim — in
+particular I2 still has no reopen transition. Everything below happens *inside* `E(K, ·)`.
+
+**Wire-shape deltas (all optional; pre-group blobs decode unchanged).**
+
+```
+party  JSON +=  considered : bool                (⊥ reads as false)
+                group      : { id, name }        (the manifest a joiner uses to
+                                                  create the group locally)
+ballot JSON +=  member     : { id, displayName? }
+```
+
+The codec never invents a manifest: `group` is encoded only when the sender explicitly
+supplies one (the sync service looks the roster up; an unknown group is shared ungrouped).
+On join, the group row is created *before* the party row (`parties.group_id` is an enforced
+foreign key).
+
+**Z is unchanged.** Group names, member ids, and display names travel only inside encrypted
+blobs; a test pins that none of them appear in relay bytes. The relay's view is the same
+function of ciphertext, ids, the closed bit, sizes, and timing as before.
+
+**The anonymity model changed — peer-facing, not relay-facing.** Originally every ballot was
+anonymous even to other voters. That claim is now **scoped to ungrouped parties**: a group
+decision's ballots are attributed *by design* — a household deciding together wants names on
+votes. `member.id` is the sender's ghost `account_id` (stable per install, never leaves the
+device except inside encrypted ballots); the display name is user-entered and optional.
+Member ids are **self-asserted**, not authenticated (§9).
+
+**Roster gossip.** Attributed ballots double as roster propagation: on merge,
+`{memberId, displayName}` is upserted idempotently (first display name wins). There is no
+roster blob and therefore no roster-reconciliation protocol to specify.
+
+**Considered mode is UI gating, not cryptography.** A party with `considered = true` is
+*sealed* while open: `resultsSealed = considered ∧ ¬closed`, and a sealed party's client
+shows only the who-has-voted count — no tallies, no share affordance. Closing the vote is
+the mutual reveal. Formally, every holder of `K` can decrypt every ballot the moment it
+lands; sealing constrains what a conforming client *displays*, not what keys unlock. It is
+a client-side courtesy against peeking, not a commitment scheme (§9).
 
 ## 6. Record-integrity invariants
 
 These govern the personal Reckon loop and are the app's honesty guarantees
-([ADR-0006](../adr/0006-honest-record-blinded-repolls.md)).
+([ADR-0006](../adr/0006-honest-record-blinded-repolls.md),
+[ADR-0007](../adr/0007-forecaster-duel-alignment-scoring.md)). Lean orientation throughout:
+`lean ∈ [0, 100]`, `0` = fully **optionA**, `100` = fully **optionB** (the `LeanSlider` and
+reveal-chart orientation).
 
-**R1 (blinded re-poll).** Let `polls(c)` be the polls of case `c` and `p*` the in-progress
-re-poll. The re-poll elicitation UI's inputs are **independent of**
+**R1 (blinded elicitation).** Let `polls(c)` be the polls of case `c` and `p*` the
+in-progress re-poll. The re-poll elicitation UI's inputs are **independent of**
 `{ p ∈ polls(c) : p.pollNumber < p*.pollNumber }`. Prior leans are not shown, defaulted from,
 or otherwise leaked before the user answers. The full series becomes visible **only** at the
-reveal.
+reveal. R1 extends to the duel (R4): a logged forecast is **sealed** — while a case is open
+the UI may show *that* and *how many* forecasts exist, never a lean or a rationale. The duel
+table renders only at the reveal, after the user's own record is complete.
 
 **R2 (computed-on-query record).** The record metrics are pure functions of the set of
-*closed* case records `Ω = { (case, polls, satisfaction) }`, recomputed on read and **never
-persisted** as ground-truth. Given satisfaction scores `s_i ∈ {−2,…,+2}`:
+*closed* case records `Ω = { (case, polls, chosenOption, satisfaction) }`, recomputed on
+read and **never persisted** as ground-truth. Exactly one persisted score exists by design:
+`ModelPredictions.score` — the per-forecast alignment score of R4, written once at
+resolution. It is a *log entry about a specific forecast* (an input to computed-on-read
+aggregates), never a user-record metric; the user's own entry in the deference map is
+recomputed on read per R5. Given satisfaction scores `s_i ∈ {−2,…,+2}`:
 
 ```
 ClarityScore(Ω).value      = 0                                   if Ω = ∅
@@ -151,7 +205,97 @@ masquerade as a track record.
 All four are deterministic in `Ω`: change the inputs and the numbers move; there is no
 stored value to inflate.
 
-## 7. Fail-safe behaviour
+**R4 (duel alignment scoring).** When a case resolves with chosen option `χ ∈ {a, b}` and
+satisfaction `s ∈ {−2,…,+2}`, every `duelForecast` prediction on it is scored individually
+(`scoreDuelForecasts` in `prediction_repository_impl.dart`). For a forecast with payload
+lean `ℓ ∈ [0, 100]` (a missing or malformed lean reads as `50`):
+
+```
+p_chosen = ℓ / 100          if χ = b
+         = 1 − ℓ / 100      if χ = a
+score    = (2·p_chosen − 1) · (s / 2)        ∈ [−1, +1]
+```
+
+A forecast aligned with the option the user ended up glad about scores positive; aligned
+with the regretted one, negative; neutral satisfaction (`s = 0`) carries no signal either
+way. Two consequences worth stating:
+
+- *Degenerate case = the historical rule.* A maximally confident correct forecast
+  (`p_chosen = 1`) scores exactly `s / 2` — the formula the old blanket scoring applied to
+  every row — so pre-duel scores remain on the same scale and stay interpretable.
+- *No-signal safety.* The missing-lean default of `50` gives alignment `0`, so a malformed
+  payload can never gain or lose ground.
+
+Only forecasts are scored. Observation kinds (`outsideView`, `revealObservation`) are
+records of what the model *said*, not predictions of the outcome, and receive no score
+([ADR-0007](../adr/0007-forecaster-duel-alignment-scoring.md)). Sentinel outputs (empty
+rationale) are never logged at all, so they cannot be scored.
+
+**R5 (deference weights, computed on read).** The deference map
+(`ComputeForecasterWeights`) is a pure function of the scored `duelForecast` rows and `Ω`,
+recomputed on read. Its entries are each forecaster `f` (rows grouped by
+`payload.forecasterId`) **and the user**, whose samples are the *final pre-decision poll*
+of each closed case scored on read with the *same* R4 formula — the ensemble includes you,
+on equal terms, without persisting a single user metric (R2). With `mean_f` the mean score
+and `n_f` the sample count:
+
+```
+raw(f)    = max(0, (mean_f + 1) / 2)
+weight_f  = raw(f) / Σ_{g : n_g ≥ 5} raw(g)      defined only where n_f ≥ 5
+```
+
+Entries with `n_f < 5` are listed but carry **no weight** and are comparison-suppressed. If
+every eligible mean sits at the floor (`−1`), the normaliser is `0` and every weight is `0`
+— no division by zero, no invented ranking. Sample counts are always reported alongside
+weights, in the same register as R2's `caseCount`.
+
+**R6 (update quality).** For each closed case with a recorded choice and `|polls| ≥ 2`
+(`ComputeUpdateQuality`):
+
+```
+q_case = clamp₋₁⁺¹( (p_chosen(last poll) − p_chosen(first poll)) · s )
+```
+
+with `s` **raw** in `−2…+2` (not halved: a two-step swing toward a clearly-right choice
+deserves the full clamp range, and the clamp bounds `q_case` in `[−1, +1]` regardless).
+Movement toward the option the user ended up glad about scores positive; only the first and
+last polls matter — intermediate wobble is neither rewarded nor punished. The aggregate is
+the plain mean over qualifying cases, reported with its sample count.
+
+## 7. The bounty boundary (reckonBounty v0.1)
+
+Reckon is a client of the **reckonBounty** protocol — an open, file-transported format for
+buying probabilistic advice on personal decisions. The wire format's normative text lives
+in the reckonBounty protocol spec (its own repository); this section states only Reckon's
+mapping onto it ([ADR-0009](../adr/0009-bounty-client-paste-import.md)).
+
+**Export.** A request is built from an open case: `question.type = "multi"` with
+`options = [optionA, optionB]`, `id` = the case id, `reply_by` = the case deadline,
+`privacy.tier = "redacted"` with `redaction ∈ {local-llm, manual}`. The de-identified text
+is drafted on-device and **always** passes through an editable preview before the file
+exists; the app transmits nothing — the user's share sheet or clipboard is the transport.
+
+**Import (the lean↔p mapping).** A response's forecast maps onto the R4 lean scale as
+`ℓ = clamp₀¹⁰⁰(round(100 · p(optionB)))`, where:
+
+- a **binary** `p` is read as `p(optionB)` — a Reckon request always lists its options as
+  `[optionA, optionB]`, making B the affirmative/second option, matching the spec's worked
+  example;
+- a **multi** `distribution` is matched by option *text* (trimmed, case-insensitive): a key
+  matching `optionB` gives `p(optionB)` directly; failing that, a key matching `optionA`
+  gives its complement; matching neither rejects the response — a forecast about different
+  options must never enter this case's record.
+
+**Import gates.** One response per bot per request (latest `created_at` wins within a
+paste); a `request_id` naming a different request is rejected; a response created after
+`reply_by` sits out the scored comparison; re-pasting a file never duplicates a forecast
+(idempotence on `(case, forecaster)`).
+
+Accepted responses become `duelForecast` rows attributed to a `bounty:<bot.name>`
+forecaster and are thereafter indistinguishable in treatment from resident forecasters:
+sealed under R1, scored at resolution under R4, weighted under R5.
+
+## 8. Fail-safe behaviour
 
 The system fails toward *reject / restart clean*, never toward silent corruption:
 
@@ -165,15 +309,35 @@ The system fails toward *reject / restart clean*, never toward silent corruption
   corrupting (`model_download_service.dart`).
 - **LLM failure:** every `LlmService` call returns a recoverable sentinel (empty stream /
   fallback text) rather than propagating an exception to the UI.
+- **Sentinel forecasts are never logged (R4):** the duel treats a `CommunitySeed` with an
+  empty rationale as a model hiccup, counts it failed, and writes nothing — a track record
+  must not fill with 50/50 noise.
+- **Redaction fails to manual (§7):** if the on-device rewrite is unavailable or returns
+  its sentinel, the export preview starts from the *original* text flagged
+  `redaction: manual` — silently exporting unredacted text labelled "redacted by a model"
+  would be a lie in the wire format. The editable preview is mandatory in every path.
 
-## 8. What this does *not* establish
+## 9. What this does *not* establish
 
 - **Not a cryptographic proof.** §3/§5 assume the underlying AES-GCM-256 implementation
   (`package:cryptography`) is correct and that E1 holds. This paper proves nothing about the
   primitive; it specifies how Reckon *uses* it.
 - **No per-voter authentication.** Access is capability-by-link (K1 corollary). A leaked
-  join link (with its fragment) leaks read/write access to that party. There is no identity
-  layer and no defence against a participant submitting multiple `bid`s.
+  join link (with its fragment) leaks read/write access to that party. Ungrouped parties
+  have no identity layer at all; grouped parties (§5.1) attach **self-asserted** member ids
+  — nothing stops a key holder from claiming another member's id or submitting multiple
+  `bid`s.
+- **Grouped ballots are not anonymous to peers.** By design (§5.1): every holder of `K` sees
+  who voted what in a group decision. The anonymity claim of earlier versions survives only
+  for ungrouped parties.
+- **Considered mode is not cryptographic sealing.** `resultsSealed` gates the UI; it is not
+  a commitment scheme. A modified client can read ballots before the reveal.
+- **Sealed bounty text is sealed only inside the app.** R1 governs what Reckon renders; a
+  pasted response file is the user's own artifact, and nothing stops them reading it in a
+  text editor before their reveal (§7, [ADR-0009](../adr/0009-bounty-client-paste-import.md)).
+- **Redaction is drafted, not guaranteed.** The de-identification pass (§7) is a small
+  model's rewrite plus a human review; this paper makes no claim that the result is
+  re-identification-proof.
 - **Availability is out of scope.** The relay's resistance to denial-of-service, and the
   durability of its (default in-memory) store, are deployment concerns, not guarantees here.
 - **Metadata leaks remain.** Per Z, the relay still observes ballot counts, blob sizes, and
