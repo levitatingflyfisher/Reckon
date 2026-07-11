@@ -6,8 +6,9 @@ import 'package:reckon/features/case/domain/entities/case.dart';
 import 'package:reckon/features/case/domain/entities/criterion.dart';
 
 /// The cabin decision from the reckonBounty protocol spec §9, phrased as a
-/// Reckon case: option B is the affirmative ("buy"), so the spec's binary
-/// p(yes) is p(optionB).
+/// Reckon case. Note the trap the importer must refuse: the spec's worked
+/// binary responses say p(buy), but a Reckon request is always multi and
+/// nothing in a bare `p` names the option it affirms.
 Case _cabinCase() => Case(
       id: '5f0a2b1c-9d4e-4f6a-8b3c-7e1d2a5b4c6d',
       createdAt: DateTime.utc(2026, 7, 11),
@@ -287,10 +288,20 @@ void main() {
           optionB: 'Buy the cabin',
         );
 
-    test('binary p is p(optionB): the §9 forecasts map to leans 35 and 20',
+    test(
+        'a bare binary p is rejected — the request is multi and nothing '
+        'orients p to either option, so guessing risks inverting the forecast',
         () {
-      expect(lean(parse(_hustlerJson)), 35);
-      expect(lean(parse(_cautiousJson)), 20);
+      for (final json in [_hustlerJson, _cautiousJson]) {
+        expect(
+          () => lean(parse(json)),
+          throwsA(isA<FormatException>().having(
+              (e) => e.message,
+              'message',
+              allOf(contains('Keep renting each summer'),
+                  contains('Buy the cabin'), contains('distribution')))),
+        );
+      }
     });
 
     test('a distribution is matched by option text', () {

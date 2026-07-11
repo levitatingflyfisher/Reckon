@@ -278,9 +278,11 @@ exists; the app transmits nothing — the user's share sheet or clipboard is the
 **Import (the lean↔p mapping).** A response's forecast maps onto the R4 lean scale as
 `ℓ = clamp₀¹⁰⁰(round(100 · p(optionB)))`, where:
 
-- a **binary** `p` is read as `p(optionB)` — a Reckon request always lists its options as
-  `[optionA, optionB]`, making B the affirmative/second option, matching the spec's worked
-  example;
+- a bare **binary** `p` is **rejected** — the exported request is always `multi`, the spec
+  defines `p` only for binary questions, and nothing in the message orients `p` to either
+  option; reading it as one of them would silently invert the forecast whenever the
+  responder meant the other (the reference validator likewise fails a `p`-only answer to a
+  multi request);
 - a **multi** `distribution` is matched by option *text* (trimmed, case-insensitive): a key
   matching `optionB` gives `p(optionB)` directly; failing that, a key matching `optionA`
   gives its complement; matching neither rejects the response — a forecast about different

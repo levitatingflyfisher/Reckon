@@ -24,10 +24,10 @@ class ParsedBountyResponse {
   final String? responseId;
   final DateTime? createdAt;
 
-  /// Binary forecast: interpreted as p(optionB) — a Reckon request always
-  /// lists its options as [optionA, optionB], making B the affirmative /
-  /// second option, matching the spec's worked example where p is the
-  /// probability of the "yes" option.
+  /// Binary forecast, as parsed. A Reckon request is always `multi` (spec
+  /// §3.2 defines `p` only for binary questions), and nothing in a bare `p`
+  /// names the option it affirms — so [BountyCodec.leanFor] rejects it
+  /// rather than guess and risk silently inverting the forecast.
   final double? p;
 
   /// Multi forecast: probability per option text, summing to 1 ± 0.001.
@@ -147,7 +147,10 @@ class BountyCodec {
   /// Maps a response's forecast onto Reckon's lean scale (0 = fully
   /// optionA, 100 = fully optionB — the LeanSlider orientation).
   ///
-  ///  * Binary `p` is read as p(optionB) (see [ParsedBountyResponse.p]).
+  ///  * A bare binary `p` is rejected (see [ParsedBountyResponse.p]): the
+  ///    exported request is `multi`, so `p` carries no option orientation
+  ///    and reading it either way risks inverting the forecast — the exact
+  ///    silent corruption the sealed record must never absorb.
   ///  * A `distribution` is matched by option text, whitespace- and
   ///    case-tolerantly: a key matching [optionB] gives p(optionB)
   ///    directly; failing that, a key matching [optionA] gives it as the
@@ -161,7 +164,12 @@ class BountyCodec {
     double pB;
     final dist = response.distribution;
     if (dist == null) {
-      pB = response.p!; // The parser guarantees one of the two is present.
+      // The parser guarantees one of p/distribution is present.
+      throw FormatException(
+          '${response.botName}: answered with a bare binary "p", but this '
+          'request is multi — nothing says which option that probability '
+          'affirms. It needs a distribution naming this decision\'s options '
+          '("$optionA" / "$optionB").');
     } else {
       String norm(String s) => s.trim().toLowerCase();
       double? valueFor(String option) {

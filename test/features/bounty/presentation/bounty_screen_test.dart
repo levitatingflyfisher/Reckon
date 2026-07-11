@@ -49,7 +49,9 @@ const _responseJson = '{"reckonbounty": "0.1", "kind": "response", '
     '"request_id": "$_caseId", "id": "r1", '
     '"created_at": "2026-07-11T07:02:00Z", '
     '"bot": {"name": "hustlerBot80000"}, '
-    '"forecast": {"p": 0.35, "rationale": "Second homes rarely pencil."}}';
+    '"forecast": {"distribution": {"Buy the cabin": 0.35, '
+    '"Keep renting each summer": 0.65}, '
+    '"rationale": "Second homes rarely pencil."}}';
 
 void main() {
   late InMemoryForecasterRepository forecasters;

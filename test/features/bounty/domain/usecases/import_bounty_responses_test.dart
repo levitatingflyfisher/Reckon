@@ -9,8 +9,7 @@ import 'package:reckon/features/forecasters/domain/entities/forecaster.dart';
 import 'package:reckon/features/predictions/data/prediction_repository_impl.dart';
 import 'package:reckon/features/predictions/domain/entities/model_prediction.dart';
 
-/// The §9 cabin decision. Option B is the affirmative, so the spec's binary
-/// p(yes) reads as p(optionB).
+/// The §9 cabin decision, phrased as a Reckon case (optionB = "buy").
 Case _cabinCase() => Case(
       id: 'cabin-case',
       createdAt: DateTime.utc(2026, 7, 11),
@@ -25,19 +24,24 @@ Case _cabinCase() => Case(
       category: 'housing',
     );
 
+/// A conforming multi response: [pBuy] is the probability on optionB
+/// ("Buy the cabin"), so the imported lean is `round(100 * pBuy)`.
 String _response(
   String botName,
-  double p, {
+  double pBuy, {
   String? requestId = 'cabin-case',
-  String createdAt = '2026-07-11T07:02:00Z',
+  String? createdAt = '2026-07-11T07:02:00Z',
   String? model,
 }) =>
     '{"reckonbounty": "0.1", "kind": "response", '
     '${requestId == null ? '' : '"request_id": "$requestId", '}'
-    '"id": "resp-$botName", "created_at": "$createdAt", '
+    '"id": "resp-$botName", '
+    '${createdAt == null ? '' : '"created_at": "$createdAt", '}'
     '"bot": {"name": "$botName"'
     '${model == null ? '' : ', "model": "$model"'}}, '
-    '"forecast": {"p": $p, "rationale": "$botName reasoning"}}';
+    '"forecast": {"distribution": {"Buy the cabin": $pBuy, '
+    '"Keep renting each summer": ${1 - pBuy}}, '
+    '"rationale": "$botName reasoning"}}';
 
 void main() {
   late AppDatabase db;
@@ -217,6 +221,25 @@ void main() {
     expect(result.rejected.single, contains('yesNoBot'));
     expect((await duelRows()).single.payload['forecasterId'],
         'bounty:cautiousBot');
+  });
+
+  test('a bare binary p is rejected, never guessed onto an option', () async {
+    // The spec's own §3.2 worked response: p = 0.35 with no option named.
+    final result = await import(
+      _cabinCase(),
+      '{"reckonbounty": "0.1", "kind": "response", '
+      '"request_id": "cabin-case", "id": "resp-p", '
+      '"created_at": "2026-07-11T07:02:00Z", '
+      '"bot": {"name": "hustlerBot80000"}, '
+      '"forecast": {"p": 0.35, "rationale": "r"}}',
+    );
+
+    expect(result.imported, 0);
+    expect(result.rejected.single, contains('hustlerBot80000'));
+    expect(result.rejected.single, contains('distribution'));
+    expect(await duelRows(), isEmpty,
+        reason: 'a forecast whose orientation is a guess must never be '
+            'sealed into the record');
   });
 
   test('a malformed paste throws the codec\'s precise FormatException',
