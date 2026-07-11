@@ -38,7 +38,8 @@ void main() {
         votingMethod: VotingMethod.approval,
       );
 
-  Future<void> pump(WidgetTester tester, String partyId) async {
+  Future<void> pump(WidgetTester tester, String partyId,
+      {FakeAuthRepository? auth}) async {
     final router = GoRouter(
       initialLocation: '/party/$partyId/vote',
       routes: [
@@ -57,7 +58,8 @@ void main() {
         overrides: [
           partyRepositoryProvider.overrideWithValue(repo),
           partySyncServiceProvider.overrideWithValue(sync),
-          authRepositoryProvider.overrideWithValue(FakeAuthRepository('m-me')),
+          authRepositoryProvider
+              .overrideWithValue(auth ?? FakeAuthRepository('m-me')),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -135,4 +137,32 @@ void main() {
 
     expect(repo.ballots[party.id]!.single.memberId, isNull);
   });
+
+  testWidgets(
+      'a secure-storage failure on a group party surfaces and leaves the '
+      'submit button alive', (tester) async {
+    final party = await repo.createParty(
+      title: 'Where do we live?',
+      options: options,
+      votingMethod: VotingMethod.approval,
+      groupId: 'g1',
+    );
+    await pump(tester, party.id, auth: _ThrowingAuthRepository());
+    await vote(tester, 'Tacos');
+
+    // The failure is named, nothing was stored, and the voter can retry —
+    // a silent permanently-dead button would strand the ballot.
+    expect(find.textContaining("Couldn't submit"), findsOneWidget);
+    expect(repo.ballots[party.id] ?? const [], isEmpty);
+    expect(find.text('Submit vote'), findsOneWidget,
+        reason: '_submitting must reset so a retry is possible');
+  });
+}
+
+/// The known Android failure mode: flutter_secure_storage throwing while the
+/// keystore is unavailable (e.g. right after unlock).
+class _ThrowingAuthRepository extends FakeAuthRepository {
+  @override
+  Future<String> getOrCreateAccountId() async =>
+      throw StateError('keystore unavailable');
 }

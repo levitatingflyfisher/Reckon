@@ -41,26 +41,30 @@ class _PartyVoteScreenState extends ConsumerState<PartyVoteScreen> {
   Future<void> _submit(Party party) async {
     if (_submitting || !_canSubmit(party)) return;
     setState(() => _submitting = true);
-    final id = const Uuid().v4();
-    // Group decisions are attributed: the ballot carries this device's
-    // stable ghost account id as the member id. One-shot parties stay
-    // anonymous, exactly as before.
-    final memberId = party.groupId == null
-        ? null
-        : await ref.read(authRepositoryProvider).getOrCreateAccountId();
-    final ballot = party.votingMethod == VotingMethod.approval
-        ? Ballot.approval(
-            id: id,
-            party: party,
-            approvedOptionIds: _approved,
-            memberId: memberId)
-        : Ballot.ranked(
-            id: id,
-            party: party,
-            rankedOptionIds: _rankOrder,
-            memberId: memberId);
 
     try {
+      final id = const Uuid().v4();
+      // Group decisions are attributed: the ballot carries this device's
+      // stable ghost account id as the member id. One-shot parties stay
+      // anonymous, exactly as before. The auth read lives INSIDE the try:
+      // secure storage can throw (keystore unavailable right after unlock),
+      // and an escape here would leave _submitting stuck true — a submit
+      // button dead until the voter leaves and re-enters the screen.
+      final memberId = party.groupId == null
+          ? null
+          : await ref.read(authRepositoryProvider).getOrCreateAccountId();
+      final ballot = party.votingMethod == VotingMethod.approval
+          ? Ballot.approval(
+              id: id,
+              party: party,
+              approvedOptionIds: _approved,
+              memberId: memberId)
+          : Ballot.ranked(
+              id: id,
+              party: party,
+              rankedOptionIds: _rankOrder,
+              memberId: memberId);
+
       await ref.read(partyRepositoryProvider).submitBallot(party.id, ballot);
       // Synced party? Send the ballot to the relay/host too (a no-op when no
       // sync key exists). A push failure must NOT lose the vote: the local
