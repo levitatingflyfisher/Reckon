@@ -25,28 +25,44 @@ A **local-first personal decision journal for Android**. It runs a structured
 "inner-crowd" protocol over a real decision — conversational intake → blinded
 time-series re-polls → a reveal of your own drift → a delayed resolution check-in →
 a calibrated record — entirely on-device, with no account and a small on-device LLM.
-A second mode, **ReckonParty**, does group preference voting over LAN or an optional
-zero-knowledge relay. Flutter · Riverpod · Drift · `flutter_gemma`.
+A roster of **forecasters** (personas on the local model, BYOK/OpenAI-compatible
+backends, imported bounty bots) can *duel* the user on open cases: sealed forecasts,
+scored per-prediction at resolution, earning weight on a deference map. A second mode,
+**ReckonParty**, does group preference voting — one-shot anonymous parties or
+persistent groups with attributed ballots — over LAN or an optional zero-knowledge
+relay. Flutter · Riverpod · Drift · `flutter_gemma`.
 
 ## Non-negotiables (breaking one is a regression, not a feature)
 
-- **The model never decides.** It structures, synthesises, and observes. Any change
-  that turns an LLM output into a verdict ("you should pick B") is off-thesis.
+- **The model never decides.** It structures, synthesises, observes — and, in the
+  duel, forecasts. A forecast stays **sealed until the user's own reveal** (never
+  surface a lean/rationale on an open case), earns standing only through its scored
+  track record, and sentinel outputs are never logged. Any change that turns an LLM
+  output into a verdict ("you should pick B") is off-thesis. See
+  [ADR-0007](docs/adr/0007-forecaster-duel-alignment-scoring.md).
 - **Ghost works with zero server contact.** The full decision loop must keep running
   offline with no account. The only network call Ghost mode makes is downloading
   model weights over HTTPS. Don't add a telemetry endpoint, an analytics SDK, or a
   required sign-in.
-- **The record stays honest.** Clarity Score and calibration are **computed from
-  closed cases on query, never stored**. A re-poll is **blinded** — never surface a
+- **The record stays honest.** Clarity Score, calibration, and the deference map are
+  **computed from closed cases on query, never stored** — the one persisted score is
+  the per-forecast alignment score (`ModelPredictions.score`, written once at
+  resolution; a log entry, not a metric). A re-poll is **blinded** — never surface a
   user's prior polls before they re-answer. See
-  [ADR-0006](docs/adr/0006-honest-record-blinded-repolls.md).
+  [ADR-0006](docs/adr/0006-honest-record-blinded-repolls.md) and yellow paper R4/R5.
 - **The relay only ever sees ciphertext.** ReckonParty encrypts on-device (AES-GCM-256);
   the key travels in the join link's URL **fragment** and must never reach the server.
-  Don't move the key into the path/query or add a plaintext field. See
-  [ADR-0004](docs/adr/0004-reckonparty-zero-knowledge-sync.md).
+  Don't move the key into the path/query or add a plaintext field — group names and
+  member ids ride **only inside encrypted blobs**. See
+  [ADR-0004](docs/adr/0004-reckonparty-zero-knowledge-sync.md) /
+  [ADR-0008](docs/adr/0008-persistent-groups-attributed-ballots.md).
 - **Cloud is opt-in and BYOK-first.** A cloud backend may only ever run against a key
-  the *user* supplied (BYOK) or a proxy they chose (Connected). Never bake a key into
-  the binary; never default a user onto the cloud.
+  the *user* supplied (BYOK), an endpoint they configured (OpenAI-compatible), or a
+  proxy they chose (Connected) — and today only *inside the duel*, per-forecaster.
+  Never bake a key into the binary; never default a user onto the cloud.
+- **Nothing leaves without a preview.** A bounty export exists only as a file the user
+  reviewed and shared themselves; the bounty feature adds zero network callers. See
+  [ADR-0009](docs/adr/0009-bounty-client-paste-import.md).
 - **TDD, always.** Reproduce → failing test → fix → `flutter test` green → commit.
   Every bugfix ships with a regression test (Drift repos test against
   `NativeDatabase.memory()`).
@@ -66,11 +82,15 @@ The short version, by concern:
 |---|---|
 | **The decision protocol** (case, poll, reveal) | `lib/features/case/`, `lib/features/reveal/` |
 | **The outside view** (reference classes, stratification) | `lib/features/outside_view/`, `lib/core/database/seed/`, `assets/reference_classes.json` |
-| **The honest record** (Clarity Score, calibration) | `lib/features/record/domain/usecases/` |
+| **The honest record** (Clarity Score, calibration, update quality) | `lib/features/record/domain/usecases/` |
+| **Forecasters / the duel** (roster, RunDuel, settings section) | `lib/features/forecasters/`; per-forecaster backend resolution in `lib/core/llm/forecaster_llm.dart` |
+| **The deference map / prediction scoring** | `lib/features/predictions/` — weights usecase in `domain/usecases/`, R4 scoring in `data/prediction_repository_impl.dart`, `/forecasters` screen |
+| **The bounty interface** (reckonBounty codec, redaction, paste-import) | `lib/features/bounty/` — wire shapes stay in `domain/bounty_codec.dart` |
 | **The LLM** (on-device + cloud backends, routing) | `lib/core/llm/` — start at `llm_service.dart`, then `llm_providers.dart` |
 | **Model download** (resume, token, 416 recovery) | `lib/core/llm/model_download_service.dart`, `model_spec.dart` |
 | **The data model / storage** | `lib/core/database/`, `lib/features/*/data/` |
 | **ReckonParty** (voting, crypto, relay, LAN) | `lib/features/party/` — voting in `domain/usecases/`, sync in `sync/`, LAN in `sync/transport/` |
+| **ReckonParty groups** (rosters, considered mode) | `lib/features/party/` — `Group`/`GroupMember` domain + repos, `/groups` & `/group/:id` screens |
 | **The relay server** | `relay/` (a standalone Dart/shelf app; see `relay/README.md`) |
 | **Notifications** | `lib/core/notifications/` |
 | **Design system / theme** | `packages/openhearth_design/`, `lib/shared/widgets/`, `lib/core/theme/` |
@@ -101,10 +121,12 @@ cd relay && dart pub get && dart analyze && dart test
 - **minSdk 24** (MediaPipe GenAI requirement). The release build is currently
   **debug-signed** — a real signing config is required before Play distribution.
 - **LLM backends implement one interface** (`LlmService` in `core/llm/llm_service.dart`):
-  `PrivateModeImpl` (on-device, live), `AnthropicLlmService` + `ByokModeImpl` /
-  `ConnectedModeImpl` (cloud, built + tested but **not yet wired into the app**). A new
-  backend implements the same five methods and returns *recoverable sentinels* on
-  failure — never crash the app on a model hiccup.
+  `PrivateModeImpl` (on-device — the whole core loop), `ByokModeImpl` and
+  `OpenAiCompatLlmService` (cloud/HTTP — live **in the duel only**, resolved
+  per-forecaster in `forecaster_llm.dart`), `ConnectedModeImpl` (built + tested, not
+  wired, no proxy deployed). A new backend implements the same **six** methods and
+  returns *recoverable sentinels* on failure — never crash the app on a model hiccup,
+  and never log a sentinel as a forecast.
 - **Keep `ReckonModelSpec` pure Dart** (no `flutter_gemma` import) so it stays
   unit-testable; the `modelType` string is mapped to the plugin enum in
   `llm_providers.dart`.
