@@ -1,5 +1,6 @@
 import 'package:drift/native.dart';
 import 'package:reckon/core/database/app_database.dart';
+import 'package:reckon/features/party/data/group_repository_impl.dart';
 import 'package:reckon/features/party/data/local_party_repository.dart';
 import 'package:reckon/features/party/domain/entities/ballot.dart';
 import 'package:reckon/features/party/domain/entities/party.dart';
@@ -82,10 +83,16 @@ class RecordingSyncService extends PartySyncService {
     this.synced = true,
     this.failPush = false,
   }) : super(
-          local: LocalPartyRepository(AppDatabase(NativeDatabase.memory())),
+          local: LocalPartyRepository(_inertDb),
           keys: InMemoryPartyKeyStore(),
           relayFor: (_) async => InMemoryPartyRelay(),
+          groups: GroupRepositoryImpl(_inertDb),
         );
+
+  /// One never-opened database shared by every recording service — drift only
+  /// allocates resources on first query, and no overridden method ever
+  /// queries it.
+  static final _inertDb = AppDatabase(NativeDatabase.memory());
 
   final FakePartyRepository repo;
 

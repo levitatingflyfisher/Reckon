@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_card.dart';
+import '../data/group_providers.dart';
 import '../data/local_party_repository.dart';
 import '../data/party_providers.dart';
 import '../sync/party_sync_providers.dart';
@@ -55,6 +56,7 @@ class _LanHostSheetState extends ConsumerState<_LanHostSheet> {
     final controller = LanHostController(
       ref.read(partyRepositoryProvider) as LocalPartyRepository,
       ref.read(partyKeyStoreProvider),
+      ref.read(groupRepositoryProvider),
     );
     _controller = controller;
     _hosting = controller.start(widget.partyId);

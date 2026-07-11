@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reckon/core/database/app_database.dart';
+import 'package:reckon/features/party/data/group_repository_impl.dart';
 import 'package:reckon/features/party/data/local_party_repository.dart';
 import 'package:reckon/features/party/domain/entities/ballot.dart';
 import 'package:reckon/features/party/domain/entities/party.dart';
@@ -47,6 +48,7 @@ void main() {
       local: guestRepo,
       keys: InMemoryPartyKeyStore(),
       relayFor: (_) async => ChannelPartyRelay(pair.b),
+      groups: GroupRepositoryImpl(guestDb),
     );
 
     final link = PartyJoinLink(
@@ -71,6 +73,7 @@ void main() {
       local: hostRepo,
       keys: _seededKeys(party.id, gen.keyString),
       relayFor: (_) async => ChannelPartyRelay(pair.b),
+      groups: GroupRepositoryImpl(hostDb),
     );
     await hostSync.pull(party.id);
     final result = await hostRepo.computeResult(party.id) as ApprovalResult;

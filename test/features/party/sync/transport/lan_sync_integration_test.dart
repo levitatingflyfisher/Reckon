@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reckon/core/database/app_database.dart';
+import 'package:reckon/features/party/data/group_repository_impl.dart';
 import 'package:reckon/features/party/data/local_party_repository.dart';
 import 'package:reckon/features/party/domain/entities/ballot.dart';
 import 'package:reckon/features/party/domain/entities/party.dart';
@@ -126,6 +127,7 @@ void main() {
     local: repo,
     keys: InMemoryPartyKeyStore(),
     relayFor: lanAndCloudResolver(),
+    groups: GroupRepositoryImpl(db),
   );
   return (repo: repo, sync: sync);
 }

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reckon/core/database/app_database.dart';
+import 'package:reckon/features/party/data/group_repository_impl.dart';
 import 'package:reckon/features/party/data/local_party_repository.dart';
 import 'package:reckon/features/party/domain/entities/ballot.dart';
 import 'package:reckon/features/party/domain/entities/party.dart';
@@ -21,10 +22,13 @@ void main() {
   // local db + key store + sync service pointing at it.
   late InMemoryPartyRelay relay;
 
-  PartySyncService deviceWith(LocalPartyRepository local) => PartySyncService(
+  PartySyncService deviceWith(LocalPartyRepository local,
+          GroupRepositoryImpl groups) =>
+      PartySyncService(
         local: local,
         keys: InMemoryPartyKeyStore(),
         relayFor: (_) async => relay,
+        groups: groups,
       );
 
   setUp(() => relay = InMemoryPartyRelay());
@@ -37,7 +41,7 @@ void main() {
   test('share → join replicates the party to another device', () async {
     final dbA = AppDatabase(NativeDatabase.memory());
     final hostRepo = LocalPartyRepository(dbA);
-    final host = deviceWith(hostRepo);
+    final host = deviceWith(hostRepo, GroupRepositoryImpl(dbA));
 
     final party = await hostRepo.createParty(
         title: 'Dinner?', options: options, votingMethod: VotingMethod.approval);
@@ -47,7 +51,8 @@ void main() {
 
     final dbB = AppDatabase(NativeDatabase.memory());
     final guestRepo = LocalPartyRepository(dbB);
-    final joined = await deviceWith(guestRepo).joinParty(link);
+    final joined =
+        await deviceWith(guestRepo, GroupRepositoryImpl(dbB)).joinParty(link);
 
     expect(joined.id, party.id);
     expect(joined.title, 'Dinner?');
@@ -60,7 +65,7 @@ void main() {
   test('a guest ballot pushed to the relay reaches the host tally', () async {
     final dbA = AppDatabase(NativeDatabase.memory());
     final hostRepo = LocalPartyRepository(dbA);
-    final host = deviceWith(hostRepo);
+    final host = deviceWith(hostRepo, GroupRepositoryImpl(dbA));
     final party = await hostRepo.createParty(
         title: 'Dinner?', options: options, votingMethod: VotingMethod.approval);
     final link =
@@ -75,7 +80,7 @@ void main() {
     // Guest joins and votes.
     final dbB = AppDatabase(NativeDatabase.memory());
     final guestRepo = LocalPartyRepository(dbB);
-    final guest = deviceWith(guestRepo);
+    final guest = deviceWith(guestRepo, GroupRepositoryImpl(dbB));
     await guest.joinParty(link);
     final guestBallot =
         Ballot.approval(id: 'g1', party: party, approvedOptionIds: const ['a', 'b']);
@@ -95,7 +100,7 @@ void main() {
   test('the relay only ever holds ciphertext (zero-knowledge)', () async {
     final db = AppDatabase(NativeDatabase.memory());
     final repo = LocalPartyRepository(db);
-    final svc = deviceWith(repo);
+    final svc = deviceWith(repo, GroupRepositoryImpl(db));
     final party = await repo.createParty(
         title: 'Secret plan', options: options, votingMethod: VotingMethod.approval);
     await svc.shareParty(party.id, relayBaseUrl: 'https://r.example');
@@ -116,7 +121,7 @@ void main() {
   test('pull is idempotent — no duplicate ballots', () async {
     final dbA = AppDatabase(NativeDatabase.memory());
     final hostRepo = LocalPartyRepository(dbA);
-    final host = deviceWith(hostRepo);
+    final host = deviceWith(hostRepo, GroupRepositoryImpl(dbA));
     final party = await hostRepo.createParty(
         title: 'Q', options: options, votingMethod: VotingMethod.approval);
     final link =
@@ -124,7 +129,7 @@ void main() {
 
     final dbB = AppDatabase(NativeDatabase.memory());
     final guestRepo = LocalPartyRepository(dbB);
-    final guest = deviceWith(guestRepo);
+    final guest = deviceWith(guestRepo, GroupRepositoryImpl(dbB));
     await guest.joinParty(link);
     await guest.pushBallot(
         party.id,
@@ -137,5 +142,117 @@ void main() {
 
     await dbA.close();
     await dbB.close();
+  });
+
+  test('sharing a grouped decision lets a joiner rebuild the group', () async {
+    final dbA = AppDatabase(NativeDatabase.memory());
+    final hostRepo = LocalPartyRepository(dbA);
+    final hostGroups = GroupRepositoryImpl(dbA);
+    await hostGroups.createGroup(name: 'The household', id: 'g1');
+    final host = deviceWith(hostRepo, hostGroups);
+
+    final party = await hostRepo.createParty(
+      title: 'Where do we live?',
+      options: options,
+      votingMethod: VotingMethod.approval,
+      groupId: 'g1',
+      considered: true,
+    );
+    final link =
+        await host.shareParty(party.id, relayBaseUrl: 'https://r.example');
+
+    final dbB = AppDatabase(NativeDatabase.memory());
+    final guestRepo = LocalPartyRepository(dbB);
+    final guestGroups = GroupRepositoryImpl(dbB);
+    final joined = await deviceWith(guestRepo, guestGroups).joinParty(link);
+
+    expect(joined.groupId, 'g1');
+    expect(joined.considered, isTrue,
+        reason: 'guests must seal their tallies too');
+    final group = await guestGroups.getGroup('g1');
+    expect(group, isNotNull,
+        reason: 'joining a shared decision adopts its group locally');
+    expect(group!.name, 'The household');
+
+    await dbA.close();
+    await dbB.close();
+  });
+
+  test('attributed ballots carry roster names from device to device',
+      () async {
+    final dbA = AppDatabase(NativeDatabase.memory());
+    final hostRepo = LocalPartyRepository(dbA);
+    final hostGroups = GroupRepositoryImpl(dbA);
+    await hostGroups.createGroup(name: 'The household', id: 'g1');
+    final host = deviceWith(hostRepo, hostGroups);
+    final party = await hostRepo.createParty(
+      title: 'Where do we live?',
+      options: options,
+      votingMethod: VotingMethod.approval,
+      groupId: 'g1',
+    );
+    final link =
+        await host.shareParty(party.id, relayBaseUrl: 'https://r.example');
+
+    // Ada joins, names herself in her local roster, and votes attributed.
+    final dbB = AppDatabase(NativeDatabase.memory());
+    final guestRepo = LocalPartyRepository(dbB);
+    final guestGroups = GroupRepositoryImpl(dbB);
+    final guest = deviceWith(guestRepo, guestGroups);
+    await guest.joinParty(link);
+    await guestGroups.addMember(
+        groupId: 'g1', memberId: 'm-ada', displayName: 'Ada');
+    final ballot = Ballot.approval(
+        id: 'g1-v1', party: party, approvedOptionIds: const ['b'],
+        memberId: 'm-ada');
+    await guestRepo.submitBallot(party.id, ballot);
+    await guest.pushBallot(party.id, ballot);
+
+    // The host pulls: the ballot arrives attributed AND the host's roster
+    // learns who Ada is.
+    await host.pull(party.id);
+    final ballots = await hostRepo.getBallots(party.id);
+    expect(ballots.single.memberId, 'm-ada');
+    final roster = await hostGroups.membersOf('g1');
+    expect(roster.map((m) => m.displayName), contains('Ada'));
+
+    await dbA.close();
+    await dbB.close();
+  });
+
+  test('the relay sees no group name, member id, or display name', () async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repo = LocalPartyRepository(db);
+    final groups = GroupRepositoryImpl(db);
+    await groups.createGroup(name: 'The household', id: 'g-zk');
+    await groups.addMember(
+        groupId: 'g-zk', memberId: 'm-zk-ada', displayName: 'Ada');
+    final svc = deviceWith(repo, groups);
+
+    final party = await repo.createParty(
+      title: 'Secret plan',
+      options: options,
+      votingMethod: VotingMethod.approval,
+      groupId: 'g-zk',
+    );
+    await svc.shareParty(party.id, relayBaseUrl: 'https://r.example');
+    await svc.pushBallot(
+      party.id,
+      Ballot.approval(
+          id: 'zk-1', party: party, approvedOptionIds: const ['a'],
+          memberId: 'm-zk-ada'),
+    );
+
+    // Z-property, extended to group data: the stored bytes are ciphertext
+    // only — group names and member identities never appear.
+    final snap = await relay.fetchParty(party.id);
+    final partyBytes = String.fromCharCodes(snap!.party);
+    expect(partyBytes.contains('household'), isFalse);
+    expect(partyBytes.contains('g-zk'), isFalse);
+    final ballotBytes = String.fromCharCodes(relay.rawBallot(party.id, 'zk-1')!);
+    expect(ballotBytes.contains('Ada'), isFalse);
+    expect(ballotBytes.contains('m-zk-ada'), isFalse);
+
+    await db.close();
   });
 }
