@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -117,6 +119,50 @@ void main() {
     expect(sync.pullCount, greaterThan(afterOpen));
     expect(find.text('1 vote(s) · approval'), findsOneWidget);
     await unmount(tester);
+  });
+
+  testWidgets(
+      'backing out while the first pull is in flight must not leak the '
+      'auto-pull timer', (tester) async {
+    final party = await makeParty();
+    final gate = Completer<void>();
+    sync.pullGate = gate.future;
+
+    // Open the screen; the initial pull hangs on the slow relay.
+    final router = GoRouter(
+      initialLocation: '/party/${party.id}/result',
+      routes: [
+        GoRoute(
+          path: '/party/:id/result',
+          builder: (_, s) =>
+              PartyResultScreen(partyId: s.pathParameters['id']!),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          partyRepositoryProvider.overrideWithValue(repo),
+          partySyncServiceProvider.overrideWithValue(sync),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pump();
+
+    // Leave the screen before the pull resolves, then let it resolve.
+    await unmount(tester);
+    gate.complete();
+    await tester.pump();
+    sync.pullGate = null;
+
+    // A periodic timer created after dispose would fire forever; nothing
+    // may pull once the screen is gone. (A leaked timer would also fail
+    // the test harness's pending-timer check.)
+    final afterUnmount = sync.pullCount;
+    await tester.pump(const Duration(seconds: 12));
+    expect(sync.pullCount, afterUnmount,
+        reason: 'no pull may happen after the screen was disposed');
   });
 
   testWidgets('closing a synced party closes it on the relay too',

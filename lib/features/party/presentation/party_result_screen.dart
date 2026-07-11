@@ -51,6 +51,10 @@ class _PartyResultScreenState extends ConsumerState<PartyResultScreen> {
         await ref.read(partySyncServiceProvider).isSynced(widget.partyId);
     if (!synced || !mounted) return;
     await _pull();
+    // Re-check after the await: if the user backed out while the first pull
+    // was in flight, dispose() has already run and a timer created now
+    // would tick (and burn network) forever with nobody to cancel it.
+    if (!mounted) return;
     _autoPull = Timer.periodic(_autoPullEvery, (_) => _pull());
   }
 

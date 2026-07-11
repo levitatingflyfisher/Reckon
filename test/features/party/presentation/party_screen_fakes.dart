@@ -187,6 +187,10 @@ class RecordingSyncService extends PartySyncService {
   /// When true, [pushBallot] fails like an unreachable relay.
   bool failPush;
 
+  /// When set, [pull] awaits it first — a slow relay (offline host, LAN
+  /// timeout) whose first pull is still in flight when the user leaves.
+  Future<void>? pullGate;
+
   final pushed = <Ballot>[];
   int pullCount = 0;
   bool closedOnRelay = false;
@@ -226,6 +230,8 @@ class RecordingSyncService extends PartySyncService {
   @override
   Future<void> pull(String partyId) async {
     if (!synced) return;
+    final gate = pullGate;
+    if (gate != null) await gate;
     pullCount++;
     for (final b in pendingRemote.remove(partyId) ?? const <Ballot>[]) {
       await repo.submitBallot(partyId, b);
