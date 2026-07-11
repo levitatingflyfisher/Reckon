@@ -41,12 +41,15 @@ class BountyImportResult {
 ///    rule, and earn weight on the deference map with zero extra plumbing.
 ///
 /// Protocol rules enforced (reckonBounty spec v0.1):
-///  * one response per bot per request — within a paste the latest
-///    `created_at` wins (§3.2);
 ///  * a `request_id` naming a different request is rejected — a forecast
 ///    about another question must not enter this case's record;
 ///  * responses created after the case's deadline (the request's `reply_by`)
-///    are excluded from scored comparison (§3.1).
+///    are excluded from scored comparison (§3.1);
+///  * one response per bot per request — among the responses that survive
+///    the two gates above, the latest `created_at` wins (§3.2: "the latest
+///    created_at before reply_by"); a timestamped response beats an
+///    untimestamped one. The gates run first on purpose: deduping the raw
+///    paste let an ineligible response shadow a bot's valid one.
 class ImportBountyResponses {
   ImportBountyResponses(
     this._forecasters,
@@ -68,29 +71,14 @@ class ImportBountyResponses {
   Future<BountyImportResult> call(Case case_, String rawJson) async {
     final parsed = BountyCodec.parseResponses(rawJson);
 
-    // One response per bot: latest created_at wins; without timestamps the
-    // last one in the paste does.
-    final byBot = <String, ParsedBountyResponse>{};
-    for (final r in parsed) {
-      final prev = byBot[r.botName];
-      if (prev == null ||
-          r.createdAt == null ||
-          prev.createdAt == null ||
-          !r.createdAt!.isBefore(prev.createdAt!)) {
-        byBot[r.botName] = r;
-      }
-    }
-
-    final alreadyForecast = (await _predictions.forCase(case_.id))
-        .where((p) => p.kind == PredictionKind.duelForecast)
-        .map((p) => p.payload['forecasterId'])
-        .whereType<String>()
-        .toSet();
-    final roster = {for (final f in await _forecasters.all()) f.id};
-
-    var imported = 0, duplicates = 0;
     final rejected = <String>[];
-    for (final r in byBot.values) {
+
+    // Gates FIRST, dedup second — the rule is one response per bot PER
+    // REQUEST, latest created_at BEFORE reply_by wins (§3.2). Deduping
+    // before the gates let a bot's answer to a *different* request, or a
+    // post-deadline revision, knock out its valid answer to this one.
+    final eligible = <ParsedBountyResponse>[];
+    for (final r in parsed) {
       if (r.requestId != null && r.requestId != case_.id) {
         rejected.add('${r.botName}: answers a different request '
             '(${r.requestId}).');
@@ -104,6 +92,30 @@ class ImportBountyResponses {
             'so it sits out the scored comparison.');
         continue;
       }
+      eligible.add(r);
+    }
+
+    // One response per bot among the eligible: latest created_at wins; a
+    // timestamped response always beats an untimestamped one ("latest"
+    // needs a timestamp); among only untimestamped, the last in the paste.
+    final byBot = <String, ParsedBountyResponse>{};
+    for (final r in eligible) {
+      final prev = byBot[r.botName];
+      final replace = prev == null ||
+          prev.createdAt == null ||
+          (r.createdAt != null && !r.createdAt!.isBefore(prev.createdAt!));
+      if (replace) byBot[r.botName] = r;
+    }
+
+    final alreadyForecast = (await _predictions.forCase(case_.id))
+        .where((p) => p.kind == PredictionKind.duelForecast)
+        .map((p) => p.payload['forecasterId'])
+        .whereType<String>()
+        .toSet();
+    final roster = {for (final f in await _forecasters.all()) f.id};
+
+    var imported = 0, duplicates = 0;
+    for (final r in byBot.values) {
       final int lean;
       try {
         lean = BountyCodec.leanFor(r,

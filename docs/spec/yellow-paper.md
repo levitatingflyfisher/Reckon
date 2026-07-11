@@ -288,10 +288,12 @@ exists; the app transmits nothing — the user's share sheet or clipboard is the
   gives its complement; matching neither rejects the response — a forecast about different
   options must never enter this case's record.
 
-**Import gates.** One response per bot per request (latest `created_at` wins within a
-paste); a `request_id` naming a different request is rejected; a response created after
-`reply_by` sits out the scored comparison; re-pasting a file never duplicates a forecast
-(idempotence on `(case, forecaster)`).
+**Import gates.** In order: a `request_id` naming a different request is rejected; a
+response created after `reply_by` sits out the scored comparison; then one response per
+bot among the survivors — the latest `created_at` **before** `reply_by` wins within a
+paste, and a timestamped response beats an untimestamped one. Gates precede dedup so an
+ineligible response can never shadow a bot's valid one. Re-pasting a file never
+duplicates a forecast (idempotence on `(case, forecaster)`).
 
 Accepted responses become `duelForecast` rows attributed to a `bounty:<bot.name>`
 forecaster and are thereafter indistinguishable in treatment from resident forecasters:

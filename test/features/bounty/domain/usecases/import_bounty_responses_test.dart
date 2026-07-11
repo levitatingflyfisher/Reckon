@@ -208,6 +208,51 @@ void main() {
     expect(row.payload['lean'], 45);
   });
 
+  test(
+      'one combined answers file, two requests: the response to the OTHER '
+      'request must not knock out this case\'s valid one', () async {
+    // Bot X answered both cases; the other case's answer is newer, so a
+    // botName-keyed dedup run before the request gate would keep only the
+    // rejected one and import nothing.
+    final result = await import(
+      _cabinCase(),
+      '[${_response("botX", 0.35, createdAt: "2026-07-11T07:02:00Z")}, '
+      '${_response("botX", 0.90, requestId: "some-other-case", createdAt: "2026-07-12T09:00:00Z")}]',
+    );
+
+    expect(result.imported, 1);
+    expect(result.rejected.single, contains('different request'));
+    expect((await duelRows()).single.payload['lean'], 35);
+  });
+
+  test(
+      'a post-deadline revision must not knock out the pre-deadline answer — '
+      'the latest created_at BEFORE reply_by wins (§3.2)', () async {
+    final result = await import(
+      _cabinCase(),
+      '[${_response("botX", 0.35, createdAt: "2026-07-11T10:00:00Z")}, '
+      '${_response("botX", 0.90, createdAt: "2026-07-19T20:00:00Z")}]',
+    );
+
+    expect(result.imported, 1);
+    expect(result.rejected.single, contains('deadline'));
+    expect((await duelRows()).single.payload['lean'], 35);
+  });
+
+  test('an untimestamped response never replaces a timestamped one',
+      () async {
+    final result = await import(
+      _cabinCase(),
+      '[${_response("botX", 0.80, createdAt: "2026-07-11T09:00:00Z")}, '
+      '${_response("botX", 0.50, createdAt: null)}]',
+    );
+
+    expect(result.imported, 1);
+    expect((await duelRows()).single.payload['lean'], 80,
+        reason: 'the documented rule is latest created_at wins — a stray '
+            'entry with no timestamp cannot be "later"');
+  });
+
   test('an unmatchable distribution rejects that response, imports the rest',
       () async {
     final result = await import(
