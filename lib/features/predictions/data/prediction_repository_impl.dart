@@ -48,6 +48,37 @@ class PredictionRepositoryImpl implements PredictionRepository {
   }
 
   @override
+  Future<void> scoreDuelForecasts(
+    String caseId, {
+    required String chosenOption,
+    required int satisfaction,
+    required DateTime scoredAt,
+  }) async {
+    final rows = await (_db.select(_db.modelPredictions)
+          ..where((t) =>
+              t.caseId.equals(caseId) &
+              t.kind.equals(PredictionKind.duelForecast.name)))
+        .get();
+    await _db.transaction(() async {
+      for (final row in rows) {
+        // Payload lean: 0 = fully optionA, 100 = fully optionB (the same
+        // orientation as LeanSlider and the reveal chart). A missing lean
+        // reads as 50 — a no-signal forecast that scores 0 either way.
+        final lean =
+            ((row.payload['lean'] as num?) ?? 50).toDouble().clamp(0.0, 100.0);
+        final pChosen = chosenOption == 'b' ? lean / 100 : 1 - lean / 100;
+        final score = (2 * pChosen - 1) * (satisfaction / 2);
+        await (_db.update(_db.modelPredictions)
+              ..where((t) => t.id.equals(row.id)))
+            .write(ModelPredictionsCompanion(
+          score: Value(score),
+          scoredAt: Value(scoredAt),
+        ));
+      }
+    });
+  }
+
+  @override
   Future<List<ModelScorecardEntry>> scorecard() async {
     final rows = await _db.select(_db.modelPredictions).get();
     final byModel = <String, List<ModelPredictionRow>>{};

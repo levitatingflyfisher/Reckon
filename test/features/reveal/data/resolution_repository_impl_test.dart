@@ -4,6 +4,8 @@ import 'package:reckon/core/database/app_database.dart';
 import 'package:reckon/features/case/data/case_repository_impl.dart';
 import 'package:reckon/features/case/domain/entities/case.dart';
 import 'package:reckon/features/case/domain/entities/criterion.dart';
+import 'package:reckon/features/predictions/data/prediction_repository_impl.dart';
+import 'package:reckon/features/predictions/domain/entities/model_prediction.dart';
 import 'package:reckon/features/reveal/data/resolution_repository_impl.dart';
 
 void main() {
@@ -91,6 +93,44 @@ void main() {
     expect(list, hasLength(1));
     expect(list.single.caseId, 'c1');
     expect(list.single.satisfactionScore, 1);
+  });
+
+  test(
+      'recordSatisfaction scores duel forecasts per-prediction and leaves '
+      'observations unscored', () async {
+    final predictions = PredictionRepositoryImpl(db);
+    final scoringRepo = ResolutionRepositoryImpl(db, predictions: predictions);
+    await predictions.log(ModelPrediction(
+      id: 'duel-1',
+      caseId: 'c1',
+      modelVersion: 'gemma-3-1b-it#f1',
+      kind: PredictionKind.duelForecast,
+      predictedAt: DateTime(2026, 4, 11),
+      payload: const {'lean': 75, 'rationale': 'r', 'forecasterId': 'f1'},
+    ));
+    await predictions.log(ModelPrediction(
+      id: 'obs-1',
+      caseId: 'c1',
+      modelVersion: 'gemma-3-1b-it',
+      kind: PredictionKind.revealObservation,
+      predictedAt: DateTime(2026, 4, 11),
+      payload: const {'summary': 'an observation'},
+    ));
+    await scoringRepo.create(
+      caseId: 'c1',
+      chosenOption: 'b',
+      decidedAt: DateTime(2026, 4, 11),
+      resolutionCheckDate: DateTime(2026, 10, 11),
+    );
+    await scoringRepo.recordSatisfaction(caseId: 'c1', satisfactionScore: 2);
+
+    final logged = await predictions.forCase('c1');
+    final duel = logged.firstWhere((p) => p.id == 'duel-1');
+    final obs = logged.firstWhere((p) => p.id == 'obs-1');
+    // lean 75 toward the chosen b: p_chosen .75 -> alignment .5 -> x 1 = .5
+    expect(duel.score, closeTo(0.5, 1e-9));
+    expect(obs.score, isNull,
+        reason: 'observations are not forecasts and must not be scored');
   });
 
   test('recordSatisfaction writes score + closes the case', () async {

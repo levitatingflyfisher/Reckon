@@ -70,7 +70,12 @@ class ResolutionRepositoryImpl implements ResolutionRepository {
     required int satisfactionScore,
     String? reflection,
   }) async {
+    String? chosenOption;
     await _db.transaction(() async {
+      final resolution = await (_db.select(_db.resolutions)
+            ..where((t) => t.caseId.equals(caseId)))
+          .getSingleOrNull();
+      chosenOption = resolution?.chosenOption;
       await (_db.update(_db.resolutions)
             ..where((t) => t.caseId.equals(caseId)))
           .write(ResolutionsCompanion(
@@ -81,15 +86,20 @@ class ResolutionRepositoryImpl implements ResolutionRepository {
         CasesCompanion(status: Value(CaseStatus.closed.name)),
       );
     });
-    // Score any predictions tied to this case. Scoring rule: satisfaction
-    // is the outcome signal, normalised from -2..+2 onto -1..+1 so mean
-    // scores are comparable across cases regardless of satisfaction range.
+    // Score the case's duel forecasts, each against what it predicted (the
+    // per-prediction alignment rule documented on scoreDuelForecasts) — the
+    // old blanket scoreForCase gave every prediction the same score, which
+    // could never tell forecasters apart. Observation kinds stay unscored.
     // Opt-in per construction — tests that build the repo without a
     // prediction store will skip this step.
-    await _predictions?.scoreForCase(
-      caseId,
-      score: satisfactionScore / 2.0,
-      scoredAt: DateTime.now(),
-    );
+    final chosen = chosenOption;
+    if (chosen != null) {
+      await _predictions?.scoreDuelForecasts(
+        caseId,
+        chosenOption: chosen,
+        satisfaction: satisfactionScore,
+        scoredAt: DateTime.now(),
+      );
+    }
   }
 }

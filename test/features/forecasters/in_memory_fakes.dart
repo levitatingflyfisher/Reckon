@@ -54,6 +54,11 @@ class InMemoryPredictionRepository implements PredictionRepository {
   @override
   Future<void> scoreForCase(String caseId,
       {required double score, required DateTime scoredAt}) async {}
+  @override
+  Future<void> scoreDuelForecasts(String caseId,
+      {required String chosenOption,
+      required int satisfaction,
+      required DateTime scoredAt}) async {}
 
   @override
   Future<List<ModelScorecardEntry>> scorecard() async => const [];
