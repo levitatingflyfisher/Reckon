@@ -49,7 +49,7 @@ class LocalPartyRepository implements PartyRepository {
   Future<Party?> getParty(String id) async {
     final row = await (_db.select(_db.parties)..where((t) => t.id.equals(id)))
         .getSingleOrNull();
-    return row == null ? null : _partyFromRow(row);
+    return row == null ? null : partyFromRow(row);
   }
 
   /// All locally-stored ballots for a party (validated). Used by the LAN host
@@ -116,7 +116,10 @@ class LocalPartyRepository implements PartyRepository {
     }
   }
 
-  Party _partyFromRow(PartyRow row) => Party(
+  /// Rebuild the [Party] entity from its stored row. Static and public so
+  /// other party-feature repositories (e.g. group decision history) map rows
+  /// identically instead of drifting apart.
+  static Party partyFromRow(PartyRow row) => Party(
         id: row.id,
         title: row.title,
         votingMethod: _methodFromName(row.votingMethod),
@@ -163,7 +166,8 @@ class LocalPartyRepository implements PartyRepository {
     return ballots;
   }
 
-  VotingMethod _methodFromName(String name) => VotingMethod.values.firstWhere(
+  static VotingMethod _methodFromName(String name) =>
+      VotingMethod.values.firstWhere(
         (m) => m.name == name,
         orElse: () => VotingMethod.approval,
       );
