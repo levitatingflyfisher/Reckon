@@ -7,9 +7,12 @@ import '../../../shared/widgets/oh_button.dart';
 import '../data/party_providers.dart';
 import '../domain/entities/ballot.dart';
 import '../domain/entities/party.dart';
+import '../sync/party_sync_providers.dart';
 
 /// Cast one ballot for a party. This is the pass-the-phone surface: each voter
-/// fills it in, submits, and hands the device on. Fully on-device.
+/// fills it in, submits, and hands the device on. Fully on-device — except
+/// that a vote on a shared/joined party is also pushed to its relay/host, so
+/// remote participants' ballots actually reach the tally.
 class PartyVoteScreen extends ConsumerStatefulWidget {
   const PartyVoteScreen({super.key, required this.partyId});
   final String partyId;
@@ -44,8 +47,24 @@ class _PartyVoteScreenState extends ConsumerState<PartyVoteScreen> {
 
     try {
       await ref.read(partyRepositoryProvider).submitBallot(party.id, ballot);
+      // Synced party? Send the ballot to the relay/host too (a no-op when no
+      // sync key exists). A push failure must NOT lose the vote: the local
+      // store is the source of truth, so we save, warn, and move on.
+      var pushed = true;
+      try {
+        await ref.read(partySyncServiceProvider).pushBallot(party.id, ballot);
+      } catch (_) {
+        pushed = false;
+      }
       ref.invalidate(partyResultProvider(party.id));
       if (!mounted) return;
+      if (!pushed) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              "Saved on this device — couldn't reach the party host. Your "
+              'vote counts here; it just may not show up remotely.'),
+        ));
+      }
       context.go('/party/${party.id}/result');
     } catch (e) {
       if (!mounted) return;
