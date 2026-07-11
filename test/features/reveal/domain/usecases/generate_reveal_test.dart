@@ -80,7 +80,7 @@ void main() {
     expect(llm.capturedSeries!.finalChoice, 'go');
   });
 
-  Case _stayOrGo() => Case(
+  Case stayOrGo() => Case(
         id: 'c1',
         createdAt: DateTime(2026, 4, 1),
         deadline: null,
@@ -108,7 +108,7 @@ void main() {
     ));
 
     final result = await GenerateReveal(llm, predictions)
-        .call(case_: _stayOrGo(), polls: const [], chosenOption: 'b');
+        .call(case_: stayOrGo(), polls: const [], chosenOption: 'b');
 
     expect(result.text, 'your lean held steady');
     expect(llm.capturedSeries, isNull,
@@ -134,7 +134,7 @@ void main() {
     // reuse the A narrative (the app's signature screen would otherwise
     // describe the wrong option).
     final result = await GenerateReveal(llm, predictions)
-        .call(case_: _stayOrGo(), polls: const [], chosenOption: 'b');
+        .call(case_: stayOrGo(), polls: const [], chosenOption: 'b');
 
     expect(llm.capturedSeries, isNotNull,
         reason: 'a different chosen option must trigger a fresh generation');
