@@ -143,6 +143,28 @@ class OpenAiCompatLlmService implements LlmService {
     }
   }
 
+  @override
+  Future<RedactedQuestion> redactQuestion({
+    required String title,
+    required String background,
+  }) async {
+    try {
+      final text = await _client.complete(
+        LlmPrompts.redactor,
+        'TITLE: $title\nBACKGROUND: $background',
+      );
+      final json = _firstJsonObject(text);
+      final newTitle = (json?['title'] as String?)?.trim() ?? '';
+      final newBackground = (json?['background'] as String?)?.trim() ?? '';
+      if (newTitle.isEmpty || newBackground.isEmpty) {
+        return RedactedQuestion.sentinel;
+      }
+      return RedactedQuestion(title: newTitle, background: newBackground);
+    } catch (_) {
+      return RedactedQuestion.sentinel;
+    }
+  }
+
   // --- prompt builders (mirror the other backends) ---------------------------
 
   String _outsideViewPrompt(

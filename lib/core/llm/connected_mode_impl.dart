@@ -63,4 +63,11 @@ class ConnectedModeImpl implements LlmService {
   }) =>
       _inner.generateCommunitySeed(case_,
           persona: persona, temperature: temperature);
+
+  @override
+  Future<RedactedQuestion> redactQuestion({
+    required String title,
+    required String background,
+  }) =>
+      _inner.redactQuestion(title: title, background: background);
 }

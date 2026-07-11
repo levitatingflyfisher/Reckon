@@ -41,6 +41,10 @@ class _FakeLlm implements LlmService {
   @override
   Future<RevealObservation> generateRevealObservation(CaseTimeSeries ts) =>
       throw UnimplementedError();
+  @override
+  Future<RedactedQuestion> redactQuestion(
+          {required String title, required String background}) =>
+      throw UnimplementedError();
 }
 
 Case _case() => Case(

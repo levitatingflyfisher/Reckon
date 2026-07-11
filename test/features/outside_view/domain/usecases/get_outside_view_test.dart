@@ -123,6 +123,10 @@ class _FakeLlm implements LlmService {
   Future<CommunitySeed> generateCommunitySeed(Case case_,
           {String? persona, double? temperature}) =>
       throw UnimplementedError();
+  @override
+  Future<RedactedQuestion> redactQuestion(
+          {required String title, required String background}) =>
+      throw UnimplementedError();
 }
 
 class _FakePredictions implements PredictionRepository {

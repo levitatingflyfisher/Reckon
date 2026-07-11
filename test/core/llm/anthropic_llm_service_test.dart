@@ -156,6 +156,36 @@ void main() {
     expect(intake, isEmpty); // empty stream, no crash
   });
 
+  test('redactQuestion sends the redactor prompt and parses the rewrite',
+      () async {
+    final h = _service(_textResponse(
+        '{"title": "Buy the vacation cabin?", '
+        '"background": "Family of five, single income."}'));
+
+    final r = await h.service.redactQuestion(
+      title: 'Buy the cabin near Bear Lake?',
+      background: 'The Hansens are a family of five.',
+    );
+
+    expect(r.isSentinel, isFalse);
+    expect(r.title, 'Buy the vacation cabin?');
+    expect(r.background, 'Family of five, single income.');
+    final body = jsonDecode(h.requests.single.body) as Map<String, dynamic>;
+    expect(body['system'], contains('de-identify'));
+    final content =
+        ((body['messages'] as List).single as Map)['content'] as String;
+    expect(content, contains('Bear Lake'));
+    expect(content, contains('Hansens'));
+  });
+
+  test('redactQuestion degrades to the sentinel on HTTP failure', () async {
+    final h = _service('rate limited', status: 429);
+
+    final r = await h.service.redactQuestion(title: 't', background: 'b');
+
+    expect(r.isSentinel, isTrue);
+  });
+
   test('BYOK mode points at api.anthropic.com with the user key header',
       () async {
     final requests = <http.Request>[];

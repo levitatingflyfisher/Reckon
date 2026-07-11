@@ -105,6 +105,24 @@ ${persona == null ? '' : 'Your stance: $persona\n'}Read the decision, then reply
 Never refuse. If genuinely torn, stay near 50 and say why.
 ''';
 
+  /// De-identification rewrite for the bounty export. Same output contract as
+  /// the other structured calls (one flat JSON line) so every backend's JSON
+  /// extractor can parse it. Kept short for the on-device model.
+  static const redactor = '''
+You de-identify a decision question so it can be shared with strangers.
+Rewrite the TITLE and BACKGROUND you receive, applying these rules:
+- Remove names of people, employers, schools, and specific places; replace
+  them with roles or generic terms ("my brother", "a mid-size employer",
+  "a nearby town").
+- Turn exact ages and amounts into brackets ("38" -> "late 30s",
+  "\$412,000" -> "about \$400k").
+- Keep every fact that bears on the decision: relative amounts, distances,
+  timelines, who is affected.
+- Change nothing else. No advice, no commentary.
+Reply with EXACTLY one line of compact JSON and nothing else:
+{"title": "<rewritten title>", "background": "<rewritten background>"}
+''';
+
   /// The user-facing decision brief every forecaster receives — shared across
   /// backends so a duel compares models, not prompt phrasings. The lean
   /// orientation (A=0, B=100) is stated inline because the seed prompt scores

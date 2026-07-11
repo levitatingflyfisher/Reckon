@@ -31,6 +31,10 @@ class _ResidentLlm implements LlmService {
   Future<CommunitySeed> generateCommunitySeed(Case c,
           {String? persona, double? temperature}) =>
       throw UnimplementedError();
+  @override
+  Future<RedactedQuestion> redactQuestion(
+          {required String title, required String background}) =>
+      throw UnimplementedError();
 }
 
 /// Exposes a Ref to the resolver under test.

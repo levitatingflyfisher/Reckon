@@ -153,4 +153,51 @@ void main() {
     expect(seed.lean, 50);
     expect(seed.rationale, isEmpty);
   });
+
+  group('redactQuestion', () {
+    test('parses the single-line JSON rewrite', () async {
+      final model = _FakeModel(
+          '{"title": "Buy the vacation cabin?", '
+          '"background": "Family of five, single income."}');
+      final svc = PrivateModeImpl(model, 'qwen-2.5-1.5b-it');
+
+      final r = await svc.redactQuestion(
+        title: 'Buy the cabin near Bear Lake?',
+        background: 'The Hansens are a family of five; Jim works at Acme.',
+      );
+
+      expect(r.isSentinel, isFalse);
+      expect(r.title, 'Buy the vacation cabin?');
+      expect(r.background, 'Family of five, single income.');
+      // The redactor prompt reached the session.
+      expect(model.lastSystemInstruction, contains('de-identify'));
+    });
+
+    test('an unparseable reply degrades to the sentinel', () async {
+      final model = _FakeModel('Sure! Here is a redacted version: ...');
+      final svc = PrivateModeImpl(model, 'qwen-2.5-1.5b-it');
+
+      final r = await svc.redactQuestion(title: 't', background: 'b');
+
+      expect(r.isSentinel, isTrue);
+    });
+
+    test('a reply missing either field degrades to the sentinel', () async {
+      final model = _FakeModel('{"title": "only a title"}');
+      final svc = PrivateModeImpl(model, 'qwen-2.5-1.5b-it');
+
+      final r = await svc.redactQuestion(title: 't', background: 'b');
+
+      expect(r.isSentinel, isTrue);
+    });
+
+    test('a native failure degrades to the sentinel, never throws', () async {
+      final model = _FakeModel('unused', throwOnSession: true);
+      final svc = PrivateModeImpl(model, 'qwen-2.5-1.5b-it');
+
+      final r = await svc.redactQuestion(title: 't', background: 'b');
+
+      expect(r.isSentinel, isTrue);
+    });
+  });
 }

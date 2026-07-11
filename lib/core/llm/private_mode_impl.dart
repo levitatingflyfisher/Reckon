@@ -199,6 +199,34 @@ class PrivateModeImpl implements LlmService {
   }
 
   // ---------------------------------------------------------------------------
+  // LlmService — redactQuestion (the bounty export's de-identification pass)
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<RedactedQuestion> redactQuestion({
+    required String title,
+    required String background,
+  }) async {
+    try {
+      final text = await _generateBlocking(
+        LlmPrompts.redactor,
+        'TITLE: $title\nBACKGROUND: $background',
+      );
+      final json = _firstJsonLine(text);
+      final newTitle = (json?['title'] as String?)?.trim() ?? '';
+      final newBackground = (json?['background'] as String?)?.trim() ?? '';
+      // Half a rewrite is worse than none — the preview would look redacted
+      // while one field silently kept the original text.
+      if (newTitle.isEmpty || newBackground.isEmpty) {
+        return RedactedQuestion.sentinel;
+      }
+      return RedactedQuestion(title: newTitle, background: newBackground);
+    } catch (_) {
+      return RedactedQuestion.sentinel;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Private helpers
   // ---------------------------------------------------------------------------
 
