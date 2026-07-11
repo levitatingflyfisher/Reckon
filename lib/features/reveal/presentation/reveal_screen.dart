@@ -150,7 +150,16 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
                             ),
                           ),
                         ],
-                        _DuelSection(caseId: widget.caseId, case_: case_),
+                        // R1/R4: the duel table renders only after the
+                        // user's own record is complete. "I've decided"
+                        // merely navigates here — while the case is still
+                        // open the user can back out, keep re-polling, and
+                        // re-run the duel, so showing leans now would let
+                        // every later poll be scored as blind when it
+                        // wasn't. The table appears once the decision has
+                        // committed (status decided/resolving/closed).
+                        if (case_ != null && case_.status != CaseStatus.open)
+                          _DuelSection(caseId: widget.caseId, case_: case_),
                         const SizedBox(height: 24),
                         if (_loading)
                           const Center(child: CircularProgressIndicator())
@@ -203,8 +212,9 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
 
 /// The duel table — the forecasters' sealed leans, revealed alongside the
 /// user's own poll series (they were logged before the reveal and could not
-/// have influenced it — R1). Rendered only here: this screen IS the reveal
-/// moment.
+/// have influenced it — R1). Rendered only here, and only once the case has
+/// left `open` (the build site enforces it): the reveal moment is the
+/// committed decision, not a visit to this screen.
 class _DuelSection extends ConsumerWidget {
   const _DuelSection({required this.caseId, this.case_});
 

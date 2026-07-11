@@ -18,19 +18,19 @@ import 'package:reckon/features/reveal/presentation/reveal_screen.dart';
 
 const _caseId = 'case-reveal-duel';
 
-final _case = Case(
-  id: _caseId,
-  createdAt: DateTime.utc(2026, 4, 1),
-  deadline: null,
-  status: CaseStatus.open,
-  question: 'Move cities or stay?',
-  optionA: 'Stay',
-  optionB: 'Move',
-  statedCriteria: const [],
-  stakes: Stakes.high,
-  regretHorizon: RegretHorizon.years,
-  category: 'relocation',
-);
+Case _case(CaseStatus status) => Case(
+      id: _caseId,
+      createdAt: DateTime.utc(2026, 4, 1),
+      deadline: null,
+      status: status,
+      question: 'Move cities or stay?',
+      optionA: 'Stay',
+      optionB: 'Move',
+      statedCriteria: const [],
+      stakes: Stakes.high,
+      regretHorizon: RegretHorizon.years,
+      category: 'relocation',
+    );
 
 ModelPrediction _forecast(String id, String name, int lean, String rationale) =>
     ModelPrediction(
@@ -91,9 +91,11 @@ class _FakePredictions implements PredictionRepository {
 }
 
 void main() {
-  Widget harness(List<ModelPrediction> duels) => ProviderScope(
+  Widget harness(List<ModelPrediction> duels,
+          {CaseStatus status = CaseStatus.decided}) =>
+      ProviderScope(
         overrides: [
-          caseByIdProvider.overrideWith((ref, id) async => _case),
+          caseByIdProvider.overrideWith((ref, id) async => _case(status)),
           pollsForCaseProvider.overrideWith((ref, id) async => <Poll>[]),
           generateRevealProvider.overrideWith(
             (ref) async => GenerateReveal(_FakeLlm(), _FakePredictions()),
@@ -117,6 +119,27 @@ void main() {
     expect(find.text('Steelman advocate'), findsOneWidget);
     expect(find.textContaining('30'), findsOneWidget);
     expect(find.textContaining('80'), findsOneWidget);
+  });
+
+  testWidgets(
+      'while the case is still OPEN the duel table stays sealed — backing '
+      'out of the reveal screen must not leak the forecasts (R1/R4)',
+      (tester) async {
+    await tester.pumpWidget(harness(
+      [
+        _forecast('f1', 'Base-rate skeptic', 30, 'Most stay and are glad.'),
+        _forecast('f2', 'Steelman advocate', 80, 'The move case is stronger.'),
+      ],
+      status: CaseStatus.open,
+    ));
+    await tester.pumpAndSettle();
+
+    // "I've decided" only navigates here; the user can still press back and
+    // keep re-polling. Until the decision commits, no lean or rationale.
+    expect(find.text('THE DUEL'), findsNothing);
+    expect(find.text('Base-rate skeptic'), findsNothing);
+    expect(find.textContaining('lean 30'), findsNothing);
+    expect(find.textContaining('lean 80'), findsNothing);
   });
 
   testWidgets('rationales expand on tap', (tester) async {

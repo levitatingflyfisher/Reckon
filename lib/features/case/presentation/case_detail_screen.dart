@@ -256,7 +256,7 @@ class _DuelCardState extends ConsumerState<_DuelCard> {
                         style: textTheme.labelLarge,
                       ),
                       Text(
-                        "Revealed after you tap \"I've decided\" — "
+                        'Revealed once you commit your decision — '
                         'your read stays yours until then.',
                         style: textTheme.bodySmall,
                       ),
