@@ -101,7 +101,12 @@ class _PartyResultScreenState extends ConsumerState<PartyResultScreen> {
                 Text(party.title,
                     style: Theme.of(context).textTheme.headlineMedium),
                 const SizedBox(height: 16),
-                if (result is ApprovalResult)
+                // Considered mode: while voting is open, nobody — host
+                // included — sees a running score. Blind first; closing is
+                // the mutual reveal.
+                if (party.resultsSealed)
+                  _SealedView(ballotCount: _ballotCount(result))
+                else if (result is ApprovalResult)
                   _ApprovalView(result: result, labels: labels)
                 else if (result is RankedResult)
                   _RankedView(result: result, labels: labels),
@@ -111,6 +116,47 @@ class _PartyResultScreenState extends ConsumerState<PartyResultScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+int _ballotCount(Object result) => switch (result) {
+      ApprovalResult r => r.ballotCount,
+      RankedResult r => r.ballotCount,
+      _ => 0,
+    };
+
+/// What a considered party shows while open: who-has-voted count only —
+/// deliberately no tallies, no per-option anything. (A client-side courtesy,
+/// not cryptography: every key holder could decrypt the ballots. The UI keeps
+/// the household honest; see Party.resultsSealed.)
+class _SealedView extends StatelessWidget {
+  const _SealedView({required this.ballotCount});
+  final int ballotCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return OHCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.lock_outline, size: 18),
+              const SizedBox(width: 8),
+              Text('Results sealed', style: textTheme.titleMedium),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$ballotCount ${ballotCount == 1 ? 'vote' : 'votes'} in. '
+            'Everyone votes blind; when the host closes voting, the result '
+            'is revealed to all of you at once.',
+            style: textTheme.bodyMedium,
+          ),
+        ],
       ),
     );
   }
@@ -290,17 +336,23 @@ class _Actions extends ConsumerWidget {
           PartyHostAction(partyId: party.id),
         ],
         const SizedBox(height: 12),
-        OHButton(
-          label: 'Share result',
-          style: OHButtonStyle.secondary,
-          expanded: true,
-          icon: Icons.share,
-          onPressed: () => Share.share(_summary()),
-        ),
-        const SizedBox(height: 12),
+        // Sharing a sealed result would leak it — the share affordance only
+        // exists once the tally is visible.
+        if (!party.resultsSealed) ...[
+          OHButton(
+            label: 'Share result',
+            style: OHButtonStyle.secondary,
+            expanded: true,
+            icon: Icons.share,
+            onPressed: () => Share.share(_summary()),
+          ),
+          const SizedBox(height: 12),
+        ],
         if (!party.closed)
           OHButton(
-            label: 'Close voting',
+            label: party.resultsSealed
+                ? 'Close voting and reveal'
+                : 'Close voting',
             style: OHButtonStyle.text,
             expanded: true,
             onPressed: () async {

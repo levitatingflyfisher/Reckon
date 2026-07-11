@@ -143,4 +143,69 @@ void main() {
     expect(sync.pullCount, 0);
     await unmount(tester);
   });
+
+  group('considered mode (blind, then mutual reveal)', () {
+    Future<Party> makeConsideredParty({int votes = 2}) async {
+      final party = await repo.createParty(
+        title: 'Where do we live?',
+        options: options,
+        votingMethod: VotingMethod.approval,
+        groupId: 'g1',
+        considered: true,
+      );
+      for (var i = 0; i < votes; i++) {
+        await repo.submitBallot(
+          party.id,
+          Ballot.approval(
+              id: 'v$i',
+              party: party,
+              approvedOptionIds: const ['b'],
+              memberId: 'm$i'),
+        );
+      }
+      return party;
+    }
+
+    testWidgets('the tally stays sealed while voting is open', (tester) async {
+      final party = await makeConsideredParty();
+      await pump(tester, party.id);
+
+      // Who-has-voted count only — never a running score, never options.
+      expect(find.textContaining('2 votes in'), findsOneWidget);
+      expect(find.textContaining('vote(s) · approval'), findsNothing);
+      expect(find.text('Tacos'), findsNothing);
+      expect(find.text('Sushi'), findsNothing);
+      // Sharing a sealed result would leak it.
+      expect(find.text('Share result'), findsNothing);
+      await unmount(tester);
+    });
+
+    testWidgets('closing is the mutual reveal', (tester) async {
+      final party = await makeConsideredParty();
+      await pump(tester, party.id);
+
+      await tester.tap(find.text('Close voting and reveal'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('2 vote(s) · approval'), findsOneWidget);
+      expect(find.text('Sushi'), findsOneWidget);
+      expect(find.textContaining('votes in'), findsNothing);
+      expect(find.text('Share result'), findsOneWidget);
+      await unmount(tester);
+    });
+
+    testWidgets('an ordinary open party still shows its live tally',
+        (tester) async {
+      final party = await makeParty();
+      await repo.submitBallot(
+        party.id,
+        Ballot.approval(id: 'v1', party: party, approvedOptionIds: const ['a']),
+      );
+      await pump(tester, party.id);
+
+      expect(find.text('1 vote(s) · approval'), findsOneWidget);
+      expect(find.text('Close voting'), findsOneWidget);
+      await unmount(tester);
+    });
+  });
 }
