@@ -110,7 +110,8 @@ class _FakeLlm implements LlmService {
       );
 
   @override
-  Future<CommunitySeed> generateCommunitySeed(Case c) =>
+  Future<CommunitySeed> generateCommunitySeed(Case c,
+          {String? persona, double? temperature}) =>
       throw UnimplementedError();
 }
 

@@ -122,6 +122,30 @@ void main() {
     expect(seed.rationale, contains('B'));
   });
 
+  test('generateCommunitySeed honors persona and temperature', () async {
+    final h = _service(_textResponse('{"lean": 30, "rationale": "leans A"}'));
+    final seed = await h.service.generateCommunitySeed(
+      _case(),
+      persona: 'Steelmans the option the asker leans away from.',
+      temperature: 0.8,
+    );
+
+    expect(seed.lean, 30);
+    final body = jsonDecode(h.requests.single.body) as Map<String, dynamic>;
+    expect(body['system'], contains('Steelmans'));
+    expect(body['temperature'], 0.8);
+  });
+
+  test('generateCommunitySeed without a persona uses the neutral prompt',
+      () async {
+    final h = _service(_textResponse('{"lean": 55, "rationale": "close"}'));
+    await h.service.generateCommunitySeed(_case());
+
+    final body = jsonDecode(h.requests.single.body) as Map<String, dynamic>;
+    expect(body['system'], contains('"lean"'));
+    expect(body['system'], isNot(contains('stance:')));
+  });
+
   test('a non-200 response degrades gracefully, never throws', () async {
     final h = _service('rate limited', status: 429);
     final mismatch = await h.service.detectRepollSentiment(50, 'meh');

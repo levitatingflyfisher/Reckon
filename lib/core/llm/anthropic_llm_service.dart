@@ -120,11 +120,16 @@ class AnthropicLlmService implements LlmService {
   }
 
   @override
-  Future<CommunitySeed> generateCommunitySeed(Case case_) async {
+  Future<CommunitySeed> generateCommunitySeed(
+    Case case_, {
+    String? persona,
+    double? temperature,
+  }) async {
     try {
       final text = await _client.complete(
-        LlmPrompts.communitySeedBot,
-        _communitySeedPrompt(case_),
+        LlmPrompts.forecasterSeed(persona),
+        LlmPrompts.decisionBrief(case_),
+        temperature: temperature ?? 0.4,
       );
       final json = _firstJsonObject(text);
       if (json != null) {
@@ -194,17 +199,6 @@ class AnthropicLlmService implements LlmService {
       );
     }
     return sb.toString();
-  }
-
-  String _communitySeedPrompt(Case case_) {
-    return (StringBuffer()
-          ..writeln('DECISION')
-          ..writeln('Question: ${case_.question}')
-          ..writeln('Option A (lean 0): ${case_.optionA}')
-          ..writeln('Option B (lean 100): ${case_.optionB}')
-          ..writeln('Stakes: ${case_.stakes.name}')
-          ..writeln('Category: ${case_.category ?? "uncategorised"}'))
-        .toString();
   }
 
   Map<String, dynamic>? _firstJsonObject(String text) {

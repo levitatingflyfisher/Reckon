@@ -1,3 +1,5 @@
+import '../../features/case/domain/entities/case.dart';
+
 class LlmPrompts {
   LlmPrompts._();
 
@@ -89,7 +91,30 @@ Patterns worth surfacing:
 - Timing patterns
 ''';
 
-  static const communitySeedBot = '''
-[Phase 1 stub — not invoked]
+  /// System prompt for a duel forecast (the community-seed prompt, grown up).
+  /// [persona] is an optional one-sentence stance that turns the generic
+  /// forecaster into a named participant; null yields the neutral bot.
+  ///
+  /// Deliberately short: on-device the WHOLE context (system + brief + reply)
+  /// fits in 4096 tokens, and small models lose the thread under long
+  /// multi-constraint instructions.
+  static String forecasterSeed(String? persona) => '''
+You are a forecaster judging someone else's two-option decision.
+${persona == null ? '' : 'Your stance: $persona\n'}Read the decision, then reply with EXACTLY one line of compact JSON and nothing else:
+{"lean": <0-100, 0 = strongly option A, 100 = strongly option B>, "rationale": "<2-3 sentences>"}
+Never refuse. If genuinely torn, stay near 50 and say why.
 ''';
+
+  /// The user-facing decision brief every forecaster receives — shared across
+  /// backends so a duel compares models, not prompt phrasings. The lean
+  /// orientation (A=0, B=100) is stated inline because the seed prompt scores
+  /// against it.
+  static String decisionBrief(Case case_) => (StringBuffer()
+        ..writeln('DECISION')
+        ..writeln('Question: ${case_.question}')
+        ..writeln('Option A (lean 0): ${case_.optionA}')
+        ..writeln('Option B (lean 100): ${case_.optionB}')
+        ..writeln('Stakes: ${case_.stakes.name}')
+        ..writeln('Category: ${case_.category ?? "uncategorised"}'))
+      .toString();
 }

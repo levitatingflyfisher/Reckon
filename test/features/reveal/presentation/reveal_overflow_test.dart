@@ -99,7 +99,8 @@ class _FakeLlm implements LlmService {
             'pinned action button off the bottom of the column.',
       );
   @override
-  Future<CommunitySeed> generateCommunitySeed(Case c) =>
+  Future<CommunitySeed> generateCommunitySeed(Case c,
+          {String? persona, double? temperature}) =>
       throw UnimplementedError();
 }
 

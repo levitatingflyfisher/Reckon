@@ -69,5 +69,17 @@ abstract class LlmService {
     CaseTimeSeries timeSeries,
   );
 
-  Future<CommunitySeed> generateCommunitySeed(Case case_);
+  /// One forecaster's sealed lean on [case_]. [persona] is an optional
+  /// one-sentence stance (a "forecaster" on the resident model is exactly a
+  /// persona + temperature); [temperature] overrides the structured-call
+  /// default of 0.4.
+  ///
+  /// Error policy: failures return the sentinel `CommunitySeed(50, '')` — an
+  /// EMPTY rationale marks a non-forecast. Callers that log forecasts must
+  /// skip sentinels or the track record fills with model hiccups.
+  Future<CommunitySeed> generateCommunitySeed(
+    Case case_, {
+    String? persona,
+    double? temperature,
+  });
 }
