@@ -11,7 +11,7 @@ import '../features/glossary/presentation/glossary_screen.dart';
 import '../features/onboarding/presentation/auth_tier_screen.dart';
 import '../features/onboarding/presentation/first_case_prompt_screen.dart';
 import '../features/onboarding/presentation/model_onboarding_screen.dart';
-import '../features/predictions/presentation/model_scorecard_screen.dart';
+import '../features/predictions/presentation/forecasters_screen.dart';
 import '../features/outside_view/presentation/outside_view_screen.dart';
 import '../features/outside_view/presentation/stratification_screen.dart';
 import '../features/party/presentation/party_create_screen.dart';
@@ -110,8 +110,15 @@ final routerProvider = Provider<GoRouter>((ref) {
             ResolutionCheckInScreen(caseId: state.pathParameters['caseId']!),
       ),
       GoRoute(
+        path: '/forecasters',
+        builder: (_, __) => const ForecastersScreen(),
+      ),
+      // The model scorecard grew into the forecasters screen; the old
+      // route survives as a redirect so bookmarks and muscle memory keep
+      // working.
+      GoRoute(
         path: '/model-scorecard',
-        builder: (_, __) => const ModelScorecardScreen(),
+        redirect: (_, __) => '/forecasters',
       ),
       GoRoute(
         path: '/party/create',

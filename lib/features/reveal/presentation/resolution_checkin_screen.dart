@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_text_field.dart';
 import '../../case/data/case_providers.dart';
+import '../../predictions/data/prediction_providers.dart';
 import '../../record/data/record_providers.dart';
 import '../data/resolution_providers.dart';
 
@@ -56,6 +57,8 @@ class _ResolutionCheckInScreenState
     ref.invalidate(insightCardsProvider);
     ref.invalidate(closedCasesProvider);
     ref.invalidate(calibrationReportProvider);
+    ref.invalidate(forecasterWeightsProvider);
+    ref.invalidate(updateQualityProvider);
 
     if (mounted) context.go('/');
   }

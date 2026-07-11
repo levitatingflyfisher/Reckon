@@ -8,10 +8,12 @@ import '../domain/entities/calibration_report.dart';
 import '../domain/entities/clarity_score.dart';
 import '../domain/entities/insight_card.dart';
 import '../domain/entities/personal_base_rates.dart';
+import '../domain/entities/update_quality.dart';
 import '../domain/usecases/compute_calibration_report.dart';
 import '../domain/usecases/compute_clarity_score.dart';
 import '../domain/usecases/compute_insight_cards.dart';
 import '../domain/usecases/compute_personal_base_rates.dart';
+import '../domain/usecases/compute_update_quality.dart';
 
 /// Zip scored resolutions against each case's poll history — the one shape
 /// every record metric consumes. A provider (not a helper) so the metric
@@ -71,5 +73,13 @@ final calibrationReportProvider =
 final personalBaseRatesProvider =
     FutureProvider<PersonalBaseRates>((ref) async {
   return const ComputePersonalBaseRates()
+      .call(await ref.watch(closedCaseRecordsProvider.future));
+});
+
+/// Whether your re-polls tend to move toward the options you end up glad
+/// about — the "Your updates" card on the forecasters screen. Computed on
+/// read like every record metric (R2).
+final updateQualityProvider = FutureProvider<UpdateQuality>((ref) async {
+  return const ComputeUpdateQuality()
       .call(await ref.watch(closedCaseRecordsProvider.future));
 });
