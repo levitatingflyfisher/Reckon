@@ -28,12 +28,28 @@ to live. Reckon walks it through a protocol drawn from superforecasting practice
    a one-line observation about it.
 5. **Resolution.** A delayed check-in asks how it turned out — and that answer feeds
    your longitudinal record.
-6. **Record.** Your **Clarity Score**, calibration, personal base rates, and insight
-   cards, computed honestly from your closed cases.
+6. **Record.** Your **Clarity Score**, calibration, personal base rates, insight
+   cards, and update quality, computed honestly from your closed cases.
 
-There is also **ReckonParty** — a fast group-decision mode (approval or ranked-choice
+**The duel.** Forecasters can compete on your open case: personas over the on-device
+model, your own Anthropic key, any OpenAI-compatible endpoint (a llamafile on your
+LAN), and imported outside bots. Their forecasts stay **sealed** until you reveal your
+own decision, are scored individually when the case resolves, and accumulate into a
+**deference map** of earned weights — you included, on the same formula. Reckon never
+says "the model thinks you should…"; it shows you who has actually been right, and how
+often.
+
+**Ask outside bots.** A case can be exported as a de-identified
+[reckonBounty](docs/spec/yellow-paper.md) request file — the rewrite is drafted
+on-device and always passes through an editable preview before anything leaves — and
+bots' responses paste back in as sealed forecasts that earn a track record like any
+other forecaster.
+
+There is also **ReckonParty** — a group-decision mode (approval or ranked-choice
 voting) that syncs over your LAN or an optional zero-knowledge relay, no account
-required.
+required. One-shot parties stay anonymous; **persistent groups** give a household a
+named circle, attributed votes, a shared decision history, and **considered mode** —
+tallies sealed until everyone has voted, then a mutual reveal.
 
 ## Quickstart
 

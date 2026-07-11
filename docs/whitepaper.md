@@ -83,13 +83,16 @@ zero-knowledge relay. Full detail in [architecture/OVERVIEW.md](architecture/OVE
 ## 5. BYOK-upgradeable: the model is an instrument, not a moat
 
 Some users will want a stronger model for the synthesis, and will happily trade a little
-privacy to get it — *on their own terms*. Reckon's LLM layer is one interface with three
-implementations (on-device; the user's own Anthropic key; an opt-in proxy). Upgrading is
-a swap at a single seam, invisible to every feature, using the **same prompts** so the
-experience is continuous. The non-negotiable: a cloud backend only ever runs against a
-**key the user supplied** or a **proxy they chose** — never a key baked into the binary,
-never a silent cloud default. The model is a part you can replace, not a subscription you
-must keep.
+privacy to get it — *on their own terms*. Reckon's LLM layer is one interface with four
+implementations (on-device; the user's own Anthropic key; any OpenAI-compatible endpoint,
+down to a llamafile on the LAN; an opt-in proxy). Upgrading is a swap at a single seam,
+invisible to every feature, using the **same prompts** so the experience is continuous.
+The non-negotiable: a cloud backend only ever runs against a **key the user supplied** or
+a **proxy they chose** — never a key baked into the binary, never a silent cloud default.
+The model is a part you can replace, not a subscription you must keep. The **forecaster
+duel** takes the same idea further: models aren't just swappable, they are *competing
+participants* — each earns a scored track record against the user's own resolutions, and
+deference goes to whoever has actually been right.
 
 ## 6. Positioning: protocol-and-record, not a chatbot
 
@@ -114,25 +117,34 @@ A white paper that overclaims is marketing. Honestly, as of `0.1.0`:
 **Built, tested, live in-app:** the entire on-device Ghost loop — streaming intake, case
 model, blinded re-polls, outside view with stratification, reveal (drift chart +
 observation), resolution check-in, and the computed-on-query record (Clarity Score,
-calibration, base rates, insight cards); glossary, prediction scorecard, and export;
-deadline-aware, lockscreen-private notifications; a multi-model on-device backend
-(Gemma 3 1B / Qwen 2.5 1.5B / Phi-4 Mini) with resumable, 416-recovering downloads; and
-**ReckonParty** — approval/ranked-choice voting with AES-GCM-256 encryption, a
-self-hostable zero-knowledge relay, and LAN sync. CI runs analyze + test + a debug-APK
-smoke build + the relay suite on every push.
+calibration, base rates, insight cards, update quality); the **forecaster duel** —
+persona / BYOK / OpenAI-compatible / imported bounty-bot forecasters giving sealed
+forecasts on open cases, scored per-prediction at resolution into a **deference map** of
+earned weights (the user included, computed on read); the **bounty client** — export a
+de-identified request file behind a mandatory editable preview, paste responses back in
+as sealed forecasts; glossary and export; deadline-aware, lockscreen-private
+notifications; a multi-model on-device backend (Gemma 3 1B / Qwen 2.5 1.5B / Phi-4 Mini)
+with resumable, 416-recovering downloads; and **ReckonParty** — approval/ranked-choice
+voting with AES-GCM-256 encryption, a self-hostable zero-knowledge relay, LAN sync, and
+now **persistent groups** with attributed ballots and a sealed-until-everyone-votes
+considered mode. CI runs analyze + test + a debug-APK smoke build + a web-release smoke
+build + the relay suite on every push.
 
-**Aspirational — code exists, not yet wired or hosted:** the **BYOK and Connected cloud
-backends** are implemented and unit-tested, but nothing in the app instantiates them
-yet — the live service is always on-device, there's no cloud toggle, and no Connected
-proxy is deployed. The **Token/Named account tiers** are enum values only. **Community
-forecasting** is unbuilt. The experience is **Android-only** (the on-device model needs
-MediaPipe); there is no iOS build and only a web scaffold. The release build is
-debug-signed.
+**Aspirational — code exists, not yet wired or hosted:** a **cloud backend for the core
+loop** — BYOK and OpenAI-compatible backends run live inside the duel, per-forecaster,
+but intake/outside-view/reveal have no cloud toggle and no Connected proxy is deployed.
+The **Token/Named account tiers** are enum values only. **Group keys and group blobs on
+a relay** are an unpopulated (tested) namespace, deferred with relay deployment; there
+is no offline re-push queue. **Bounty transport** is files and paste — no directory
+fetch, no payments. The differentiating on-device experience is **Android-only** (the
+model needs MediaPipe); the web PWA's one AI path is the duel via BYOK/OpenAI-compatible
+forecasters. The release build is debug-signed.
 
-The honest boundary: the "BYOK-upgradeable" claim describes real, tested plumbing behind
-an unbuilt switch — the *capability* is there, the *user-facing upgrade* is Phase 2. And
-calibration on a household's sparse case history is a genuine open problem, not a solved
-one (see [limitations](limitations.md)).
+The honest boundary: the "BYOK-upgradeable *core loop*" claim still describes real,
+tested plumbing behind an unbuilt switch — the duel proves the plumbing in production;
+the loop's toggle is future work. And calibration on a household's sparse case history
+is a genuine open problem, not a solved one — forecaster weights gate on five scored
+cases and say so out loud (see [limitations](limitations.md)).
 
 ## 8. Why it's worth doing
 

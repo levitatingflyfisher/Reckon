@@ -85,27 +85,67 @@ Across your closed cases, Reckon computes (never stores — see
   moves during deliberation).
 - **Personal base rates** and **insight cards** — patterns surfaced from your own
   history ("you're most satisfied with health decisions, least with career ones").
+- **Update quality** — whether your re-polls tend to move *toward* the option you
+  ended up glad about. Deliberation that converges on the right answer is a skill;
+  this makes it visible.
 
 The point is not a grade. It's the mirror: *your own track record confronting you*, so
 your next decision is informed by evidence about your judgment instead of a flattering
 story about it.
 
+## The duel: forecasters keep score too
+
+The same mirror now points at the models. A **forecaster** is anyone who may state a
+lean on your open case and live with the consequences: a persona over the on-device
+model (a base-rate skeptic, a steelman advocate), a stronger model behind your own
+API key, a llamafile on your LAN, or an outside bot whose answer you pasted in through
+the [bounty interface](adr/0009-bounty-client-paste-import.md).
+
+Three rules keep the duel honest ([ADR-0007](adr/0007-forecaster-duel-alignment-scoring.md)):
+
+1. **Sealed until your reveal.** While a case is open you see only *"N forecasts
+   sealed"* — never a lean, never a rationale. A bot's opinion shown early would anchor
+   you exactly the way a visible prior poll would; the same blinding that protects your
+   re-polls protects your independence from the machines.
+2. **Scored at resolution, individually.** When you record how the decision felt, every
+   forecast is scored by how well it aligned with the option you were glad (or sorry)
+   about. There is no "the AI was right" in aggregate — there is *this forecaster, on
+   your cases, with this sample size*.
+3. **Deference is earned, never asserted.** The deference map shows each forecaster's
+   mean score and **earned weight** — and yours, computed on read by the same formula,
+   because the ensemble includes you. Below five scored cases an entry is listed but
+   weightless, and the screen says "not enough resolved decisions to say" instead of
+   pretending. Nothing anywhere says you *should* pick what a forecaster picked.
+
 ## ReckonParty: the other mode
 
-Some decisions aren't slow and personal — they're a group trying to converge without
-politics (where to eat, what to watch). **ReckonParty** is a stripped-down mode for
-that: a shared question, **approval** or **ranked-choice** voting, and a result computed
-locally in minutes. No rationales, no time series, no calibration. It's local-first (pass
-the phone around) and, for remote participants, syncs opaque encrypted blobs over the LAN
-or a zero-knowledge relay ([ADR-0004](adr/0004-reckonparty-zero-knowledge-sync.md)). It
-shares the app and the no-account ethos with Reckon, but it's a different tool for a
-different kind of decision.
+Some decisions aren't slow and personal — they're a group trying to converge. For the
+quick kind (where to eat, what to watch), **ReckonParty** is a stripped-down mode: a
+shared question, **approval** or **ranked-choice** voting, and a result computed locally
+in minutes — anonymous, no rationales, no history. It's local-first (pass the phone
+around) and, for remote participants, syncs opaque encrypted blobs over the LAN or a
+zero-knowledge relay ([ADR-0004](adr/0004-reckonparty-zero-knowledge-sync.md)).
+
+For the serious kind — where do we live, do we change schools — **persistent groups**
+([ADR-0008](adr/0008-persistent-groups-attributed-ballots.md)) give a household a named
+circle: votes carry names (a family deciding together wants to know who leans where), the
+group keeps its decision history, and **considered mode** seals the tallies until
+everyone has voted, then reveals mutually — the same anti-anchoring move as the blinded
+re-poll, applied to a marriage. Names and group data still ride only *inside* the
+encrypted blobs; the relay learns nothing new. One-shot parties stay as anonymous as they
+ever were.
 
 ## What the model is (and isn't) for
 
 Throughout, the LLM is an **instrument of the protocol, not an oracle**. It conducts the
 intake interview, synthesises the outside-view summary, detects a re-poll sentiment
-mismatch, and writes the reveal observation. It is never asked *what should I do?* and
-never answers it. That boundary is the reason Reckon can run on a small on-device model
-in the first place: the hard part is the protocol and the honest record, not a
-super-intelligent verdict.
+mismatch, writes the reveal observation, and drafts the bounty redaction. It is never
+asked *what should I do?* and never answers it.
+
+The duel sharpens this boundary rather than crossing it. A forecaster *is* asked "where
+do **you** lean?" — but its answer is sealed until your own decision is on record, it is
+addressed to the record rather than to you, and the only standing it can ever gain is a
+scored track record on your cases. The forbidden move stays forbidden: no output is ever
+rendered as "you should pick B." That boundary is the reason Reckon can run on a small
+on-device model in the first place: the hard part is the protocol and the honest record,
+not a super-intelligent verdict.

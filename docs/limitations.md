@@ -32,11 +32,17 @@ split and [feature status](reference/feature-status.md) for the per-area detail.
 - **A small on-device model is a small model.** Intake can be terse; the outside-view
   summary and reveal observation are best-effort. Every LLM call degrades to a
   recoverable fallback (empty stream / canned text) rather than crashing, so a weak or
-  failed generation shows up as a bland result, not an error screen.
-- **The BYOK/Connected upgrade isn't wired yet.** The Anthropic backends are built and
-  tested but nothing in the app instantiates them — there is no setting to switch to a
-  cloud model, and no Connected proxy is deployed. Until that lands, you get on-device
-  quality only.
+  failed generation shows up as a bland result, not an error screen. (In the duel a
+  failed generation is dropped entirely — never logged — so a flaky model shows up as
+  a missing forecast, not a fake 50/50.)
+- **The cloud upgrade reaches the duel, not the core loop.** BYOK (your Anthropic key)
+  and OpenAI-compatible endpoints run *per-forecaster inside the duel* — that's opt-in,
+  forecaster by forecaster. Intake, the outside view, and the reveal still always run
+  on-device: there is no setting to switch the core loop to a cloud model, and no
+  Connected proxy is deployed.
+- **Duel sample sizes start tiny.** A forecaster earns weight only after 5 scored
+  cases, and cases take weeks to resolve — expect the deference map to say "not enough
+  resolved decisions" for a while. That's the honest state, not a bug.
 
 ## Data, accounts, and sync
 
@@ -59,14 +65,42 @@ split and [feature status](reference/feature-status.md) for the per-area detail.
   and parties expire within a week regardless. A durable deployment needs a real
   `BlobStore`.
 - **Anyone with the join link can participate.** Access control *is* possession of the
-  link (and the key in its fragment); there's no per-voter authentication.
+  link (and the key in its fragment); there's no per-voter authentication. In groups,
+  member ids are **self-asserted** — nothing stops a key holder claiming another
+  member's id.
+- **Group ballots are attributed by design.** In a group decision, everyone holding the
+  key sees who voted what — that's the point (a household wants names on votes), but it
+  means the old "anonymous even to other voters" property now holds only for ungrouped
+  parties.
+- **Considered mode seals the UI, not the ciphertext.** Tallies are hidden until the
+  host closes voting, but every key holder *could* decrypt ballots early with a
+  modified client. It's a courtesy against peeking, not a cryptographic commitment.
+- **Groups sync through per-party links only.** The long-lived group-key store exists
+  but nothing populates it yet; there's no group blob on any relay and no automatic
+  re-push of a vote whose push failed (it saves locally and tells you).
+
+## The bounty interface
+
+- **De-identification is drafted, then it's on you.** The redaction pass runs on a
+  small on-device model and *always* lands in an editable preview — read it as a
+  stranger would before sharing. Nothing guarantees the rewrite is
+  re-identification-proof; the guarantee is that nothing leaves without your sign-off.
+- **Sealing stops at the app's edge.** Imported responses render only after your
+  reveal, but the pasted file is yours — the app can't stop you reading it in a text
+  editor first. Whether the seal holds before then is between you and you.
+- **Transport is manual.** Export is a shared/copied file; import is paste. No
+  directory fetch, no payments (`rail: none`) — deliberately, for now
+  ([ADR-0009](adr/0009-bounty-client-paste-import.md)).
 
 ## Not built
 
-- **Community forecasting and AI seed bots** — the tables exist locally but the feature
-  and any community server do not.
+- **A community server** — the seed-bot idea shipped as the local forecaster duel plus
+  the file-transported bounty client; no server exists and none is required for either.
+- **A cloud switch for the core loop, per-member group calibration, account tiers
+  beyond Ghost** — see [feature status](reference/feature-status.md).
 - **Voice input and a full PWA** were product goals; the on-device dependency and the
-  Android-only runtime mean they are not delivered today.
+  Android-only runtime mean they are not delivered today (the web PWA's one AI path is
+  the duel via BYOK / OpenAI-compatible forecasters).
 
 If a limitation here surprises you against the code, the code wins — file it, because
 the docs were written to match reality and reality moves.
