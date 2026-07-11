@@ -69,6 +69,21 @@ void main() {
       final json = PartyCodec.partyToJson(party(groupId: 'g1'));
       expect(json.containsKey('group'), isFalse);
     });
+
+    test(
+        'an id-only group manifest decodes as ungrouped — never a dangling '
+        'foreign key', () {
+      // Joining only creates a group from a FULL manifest (id + name), so a
+      // party that adopted the id alone would insert a parties row whose
+      // group_id references a group that was never created.
+      final json = PartyCodec.partyToJson(party());
+      json['group'] = {'id': 'g-orphan'};
+
+      expect(PartyCodec.groupManifestOf(json), isNull);
+      expect(PartyCodec.partyFromJson(json).groupId, isNull,
+          reason: 'the party must adopt a group only when the manifest the '
+              'joiner uses to create it exists too');
+    });
   });
 
   group('ballot wire shape', () {

@@ -55,7 +55,11 @@ class PartyCodec {
         createdAt: DateTime.parse(j['createdAt'] as String),
         closed: (j['closed'] as bool?) ?? false,
         considered: (j['considered'] as bool?) ?? false,
-        groupId: ((j['group'] as Map?)?['id']) as String?,
+        // Adopt a group only when the FULL manifest is present — the same
+        // rule groupManifestOf applies. Taking the id alone would build a
+        // party whose group_id references a group the joiner never creates
+        // (parties.group_id is a real foreign key).
+        groupId: groupManifestOf(j)?.id,
       );
 
   /// The group manifest carried by a party blob, if any — what a joining
