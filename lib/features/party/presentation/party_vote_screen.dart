@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/auth/auth_providers.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../data/party_providers.dart';
 import '../domain/entities/ballot.dart';
@@ -41,9 +42,23 @@ class _PartyVoteScreenState extends ConsumerState<PartyVoteScreen> {
     if (_submitting || !_canSubmit(party)) return;
     setState(() => _submitting = true);
     final id = const Uuid().v4();
+    // Group decisions are attributed: the ballot carries this device's
+    // stable ghost account id as the member id. One-shot parties stay
+    // anonymous, exactly as before.
+    final memberId = party.groupId == null
+        ? null
+        : await ref.read(authRepositoryProvider).getOrCreateAccountId();
     final ballot = party.votingMethod == VotingMethod.approval
-        ? Ballot.approval(id: id, party: party, approvedOptionIds: _approved)
-        : Ballot.ranked(id: id, party: party, rankedOptionIds: _rankOrder);
+        ? Ballot.approval(
+            id: id,
+            party: party,
+            approvedOptionIds: _approved,
+            memberId: memberId)
+        : Ballot.ranked(
+            id: id,
+            party: party,
+            rankedOptionIds: _rankOrder,
+            memberId: memberId);
 
     try {
       await ref.read(partyRepositoryProvider).submitBallot(party.id, ballot);

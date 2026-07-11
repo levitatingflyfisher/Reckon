@@ -1,9 +1,13 @@
 import 'package:drift/native.dart';
+import 'package:reckon/core/auth/auth_repository.dart';
+import 'package:reckon/core/auth/auth_tier.dart';
 import 'package:reckon/core/database/app_database.dart';
 import 'package:reckon/features/party/data/group_repository_impl.dart';
 import 'package:reckon/features/party/data/local_party_repository.dart';
 import 'package:reckon/features/party/domain/entities/ballot.dart';
+import 'package:reckon/features/party/domain/entities/group.dart';
 import 'package:reckon/features/party/domain/entities/party.dart';
+import 'package:reckon/features/party/domain/repositories/group_repository.dart';
 import 'package:reckon/features/party/domain/repositories/party_repository.dart';
 import 'package:reckon/features/party/domain/usecases/compute_approval_result.dart';
 import 'package:reckon/features/party/domain/usecases/compute_ranked_result.dart';
@@ -73,6 +77,82 @@ class FakePartyRepository implements PartyRepository {
   }
 }
 
+/// Pure in-memory [GroupRepository] for screen tests. Same idempotence
+/// contracts as the drift-backed implementation.
+class FakeGroupRepository implements GroupRepository {
+  FakeGroupRepository([this.partyRepo]);
+
+  /// When given, [partiesInGroup] filters this repo's parties by groupId.
+  final FakePartyRepository? partyRepo;
+
+  final groups = <String, Group>{};
+  final members = <String, List<GroupMember>>{};
+
+  @override
+  Future<Group> createGroup({required String name, String? id}) async {
+    final groupId = id ?? const Uuid().v4();
+    return groups[groupId] ??=
+        Group(id: groupId, name: name, createdAt: DateTime(2026, 7, 11));
+  }
+
+  @override
+  Future<Group?> getGroup(String id) async => groups[id];
+
+  @override
+  Future<List<Group>> listGroups() async =>
+      groups.values.where((g) => !g.archived).toList();
+
+  @override
+  Future<GroupMember> addMember({
+    required String groupId,
+    required String memberId,
+    required String displayName,
+  }) async {
+    final roster = members[groupId] ??= [];
+    for (final m in roster) {
+      if (m.memberId == memberId) return m;
+    }
+    final member = GroupMember(
+      id: const Uuid().v4(),
+      groupId: groupId,
+      memberId: memberId,
+      displayName: displayName,
+      joinedAt: DateTime(2026, 7, 11),
+    );
+    roster.add(member);
+    return member;
+  }
+
+  @override
+  Future<List<GroupMember>> membersOf(String groupId) async =>
+      List.of(members[groupId] ?? const []);
+
+  @override
+  Future<List<Party>> partiesInGroup(String groupId) async {
+    final all = partyRepo?.parties.values ?? const <Party>[];
+    return all.where((p) => p.groupId == groupId).toList().reversed.toList();
+  }
+
+  @override
+  Future<void> archive(String groupId) async {
+    final g = groups[groupId];
+    if (g != null) groups[groupId] = g.copyWith(archived: true);
+  }
+}
+
+/// A fixed-identity [AuthRepository] so screens can attribute ballots without
+/// touching secure storage.
+class FakeAuthRepository implements AuthRepository {
+  FakeAuthRepository([this.accountId = 'm-me']);
+  final String accountId;
+
+  @override
+  Future<String> getOrCreateAccountId() async => accountId;
+
+  @override
+  AuthTier get currentTier => AuthTier.ghost;
+}
+
 /// A [PartySyncService] whose network behavior is scripted. The superclass
 /// dependencies are inert placeholders — the database is never opened and the
 /// relay is never contacted, because every service method the screens call is
@@ -80,6 +160,7 @@ class FakePartyRepository implements PartyRepository {
 class RecordingSyncService extends PartySyncService {
   RecordingSyncService(
     this.repo, {
+    this.groupsFake,
     this.synced = true,
     this.failPush = false,
   }) : super(
@@ -96,6 +177,10 @@ class RecordingSyncService extends PartySyncService {
 
   final FakePartyRepository repo;
 
+  /// When set, a scripted [joinParty] mirrors the real service: it imports
+  /// [joinResult] into [repo] and adopts its group into [groupsFake].
+  final FakeGroupRepository? groupsFake;
+
   /// Whether this device holds a sync key for any party asked about.
   bool synced;
 
@@ -108,6 +193,25 @@ class RecordingSyncService extends PartySyncService {
 
   /// Ballots "on the relay" that the next [pull] folds into [repo].
   final pendingRemote = <String, List<Ballot>>{};
+
+  /// The party a scripted [joinParty] returns; null = joining fails like a
+  /// bad link.
+  Party? joinResult;
+
+  /// The group name carried by [joinResult]'s manifest, when grouped.
+  String joinGroupName = 'The household';
+
+  @override
+  Future<Party> joinParty(String url) async {
+    final party = joinResult;
+    if (party == null) throw ArgumentError('Not a ReckonParty join link');
+    final groupId = party.groupId;
+    if (groupId != null) {
+      await groupsFake?.createGroup(name: joinGroupName, id: groupId);
+    }
+    repo.parties[party.id] = party;
+    return party;
+  }
 
   @override
   Future<bool> isSynced(String partyId) async => synced;

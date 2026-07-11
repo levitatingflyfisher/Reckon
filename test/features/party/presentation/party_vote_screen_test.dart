@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:reckon/core/auth/auth_providers.dart';
 import 'package:reckon/features/party/data/party_providers.dart';
 import 'package:reckon/features/party/domain/entities/party.dart';
 import 'package:reckon/features/party/presentation/party_vote_screen.dart';
@@ -56,6 +57,7 @@ void main() {
         overrides: [
           partyRepositoryProvider.overrideWithValue(repo),
           partySyncServiceProvider.overrideWithValue(sync),
+          authRepositoryProvider.overrideWithValue(FakeAuthRepository('m-me')),
         ],
         child: MaterialApp.router(routerConfig: router),
       ),
@@ -108,5 +110,29 @@ void main() {
     expect(find.textContaining('Saved on this device'), findsNothing);
     expect(sync.pushed, isEmpty);
     expect(repo.ballots[party.id], hasLength(1));
+  });
+
+  testWidgets('a vote in a group decision is attributed to this member',
+      (tester) async {
+    final party = await repo.createParty(
+      title: 'Where do we live?',
+      options: options,
+      votingMethod: VotingMethod.approval,
+      groupId: 'g1',
+    );
+    await pump(tester, party.id);
+    await vote(tester, 'Tacos');
+
+    expect(repo.ballots[party.id]!.single.memberId, 'm-me',
+        reason: 'group decisions are attributed — the ghost account id is '
+            'the member id');
+  });
+
+  testWidgets('a vote on an ungrouped party stays anonymous', (tester) async {
+    final party = await makeParty();
+    await pump(tester, party.id);
+    await vote(tester, 'Tacos');
+
+    expect(repo.ballots[party.id]!.single.memberId, isNull);
   });
 }

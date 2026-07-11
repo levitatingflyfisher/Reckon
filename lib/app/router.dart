@@ -14,6 +14,9 @@ import '../features/onboarding/presentation/model_onboarding_screen.dart';
 import '../features/predictions/presentation/forecasters_screen.dart';
 import '../features/outside_view/presentation/outside_view_screen.dart';
 import '../features/outside_view/presentation/stratification_screen.dart';
+import '../features/party/presentation/group_create_screen.dart';
+import '../features/party/presentation/group_home_screen.dart';
+import '../features/party/presentation/groups_screen.dart';
 import '../features/party/presentation/party_create_screen.dart';
 import '../features/party/presentation/party_join_screen.dart';
 import '../features/party/presentation/party_result_screen.dart';
@@ -122,7 +125,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/party/create',
-        builder: (_, __) => const PartyCreateScreen(),
+        // ?groupId=<id> scopes the new decision to a persistent group.
+        builder: (_, state) =>
+            PartyCreateScreen(groupId: state.uri.queryParameters['groupId']),
+      ),
+      GoRoute(
+        path: '/groups',
+        builder: (_, __) => const GroupsScreen(),
+      ),
+      GoRoute(
+        path: '/groups/create',
+        builder: (_, __) => const GroupCreateScreen(),
+      ),
+      GoRoute(
+        path: '/group/:id',
+        builder: (_, state) =>
+            GroupHomeScreen(groupId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/party/join',
