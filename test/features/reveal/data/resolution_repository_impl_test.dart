@@ -6,7 +6,28 @@ import 'package:reckon/features/case/domain/entities/case.dart';
 import 'package:reckon/features/case/domain/entities/criterion.dart';
 import 'package:reckon/features/predictions/data/prediction_repository_impl.dart';
 import 'package:reckon/features/predictions/domain/entities/model_prediction.dart';
+import 'package:reckon/features/predictions/domain/repositories/prediction_repository.dart';
 import 'package:reckon/features/reveal/data/resolution_repository_impl.dart';
+
+/// A prediction store whose duel scoring always fails — the crash/DB-error
+/// window between "case closed" and "forecasts scored".
+class _ThrowingPredictions implements PredictionRepository {
+  @override
+  Future<void> scoreDuelForecasts(String caseId,
+          {required String chosenOption,
+          required int satisfaction,
+          required DateTime scoredAt}) =>
+      throw StateError('scoring blew up');
+  @override
+  Future<void> log(ModelPrediction p) async {}
+  @override
+  Future<List<ModelPrediction>> forCase(String caseId) async => [];
+  @override
+  Future<void> scoreForCase(String caseId,
+      {required double score, required DateTime scoredAt}) async {}
+  @override
+  Future<List<ModelScorecardEntry>> scorecard() async => [];
+}
 
 void main() {
   late AppDatabase db;
@@ -134,6 +155,37 @@ void main() {
     expect(duel.score, closeTo(0.5, 1e-9));
     expect(obs.score, isNull,
         reason: 'observations are not forecasts and must not be scored');
+  });
+
+  test(
+      'a scoring failure rolls the whole check-in back — the case stays '
+      'resolving and can be re-checked-in, never closed-but-unscored',
+      () async {
+    final failing =
+        ResolutionRepositoryImpl(db, predictions: _ThrowingPredictions());
+    await failing.create(
+      caseId: 'c1',
+      chosenOption: 'b',
+      decidedAt: DateTime(2026, 4, 11),
+      resolutionCheckDate: DateTime(2026, 10, 11),
+    );
+
+    await expectLater(
+      failing.recordSatisfaction(caseId: 'c1', satisfactionScore: 2),
+      throwsA(isA<StateError>()),
+    );
+
+    final case_ = await cases.getById('c1');
+    expect(case_!.status, CaseStatus.resolving,
+        reason: 'closing the case while its forecasts stay unscored would '
+            'silently drop them from every track record — no code path '
+            're-scores a closed case');
+    final row = await (db.select(db.resolutions)
+          ..where((t) => t.caseId.equals('c1')))
+        .getSingle();
+    expect(row.satisfactionScore, isNull,
+        reason: 'the satisfaction write and the scoring must commit or '
+            'fail as one');
   });
 
   test('recordSatisfaction writes score + closes the case', () async {

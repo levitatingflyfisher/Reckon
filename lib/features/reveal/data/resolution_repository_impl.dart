@@ -71,12 +71,11 @@ class ResolutionRepositoryImpl implements ResolutionRepository {
     required int satisfactionScore,
     String? reflection,
   }) async {
-    String? chosenOption;
     await _db.transaction(() async {
       final resolution = await (_db.select(_db.resolutions)
             ..where((t) => t.caseId.equals(caseId)))
           .getSingleOrNull();
-      chosenOption = resolution?.chosenOption;
+      final chosenOption = resolution?.chosenOption;
       await (_db.update(_db.resolutions)
             ..where((t) => t.caseId.equals(caseId)))
           .write(ResolutionsCompanion(
@@ -86,21 +85,25 @@ class ResolutionRepositoryImpl implements ResolutionRepository {
       await (_db.update(_db.cases)..where((t) => t.id.equals(caseId))).write(
         CasesCompanion(status: Value(CaseStatus.closed.name)),
       );
+      // Score the case's duel forecasts, each against what it predicted (the
+      // per-prediction alignment rule documented on scoreDuelForecasts) — the
+      // old blanket scoreForCase gave every prediction the same score, which
+      // could never tell forecasters apart. Observation kinds stay unscored.
+      // Opt-in per construction — tests that build the repo without a
+      // prediction store will skip this step.
+      //
+      // Scoring runs INSIDE the close transaction on purpose: a kill or
+      // throw between "case closed" and "scores written" once stranded every
+      // forecast on the case score-null forever, because a closed case has
+      // no re-check-in path. Close-and-score commit or roll back as one.
+      if (chosenOption != null) {
+        await _predictions?.scoreDuelForecasts(
+          caseId,
+          chosenOption: chosenOption,
+          satisfaction: satisfactionScore,
+          scoredAt: DateTime.now(),
+        );
+      }
     });
-    // Score the case's duel forecasts, each against what it predicted (the
-    // per-prediction alignment rule documented on scoreDuelForecasts) — the
-    // old blanket scoreForCase gave every prediction the same score, which
-    // could never tell forecasters apart. Observation kinds stay unscored.
-    // Opt-in per construction — tests that build the repo without a
-    // prediction store will skip this step.
-    final chosen = chosenOption;
-    if (chosen != null) {
-      await _predictions?.scoreDuelForecasts(
-        caseId,
-        chosenOption: chosen,
-        satisfaction: satisfactionScore,
-        scoredAt: DateTime.now(),
-      );
-    }
   }
 }

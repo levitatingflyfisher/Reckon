@@ -38,13 +38,25 @@ class _ResolutionCheckInScreenState
   }
 
   Future<void> _save() async {
-    await ref.read(resolutionRepositoryProvider).recordSatisfaction(
-          caseId: widget.caseId,
-          satisfactionScore: _score,
-          reflection: _reflection.text.trim().isEmpty
-              ? null
-              : _reflection.text.trim(),
-        );
+    try {
+      await ref.read(resolutionRepositoryProvider).recordSatisfaction(
+            caseId: widget.caseId,
+            satisfactionScore: _score,
+            reflection: _reflection.text.trim().isEmpty
+                ? null
+                : _reflection.text.trim(),
+          );
+    } catch (e) {
+      // The close+scoring transaction rolled back: the case is still
+      // resolving, nothing was recorded, and trying again is safe. Say so
+      // instead of leaking an unhandled async error.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("Couldn't save the check-in — nothing was "
+                'recorded. Please try again. ($e)')));
+      }
+      return;
+    }
 
     // The case is now closed and its outcome feeds the Record screen. Drop the
     // stale detail cache (#7) and the cached Record analytics (#6) so both
