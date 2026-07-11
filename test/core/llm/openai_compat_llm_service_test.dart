@@ -135,4 +135,41 @@ void main() {
     final h = _service(_chatResponse('ok'), model: 'qwen2.5:7b');
     expect(h.service.modelVersion, 'qwen2.5:7b');
   });
+
+  group('endpoint path joining', () {
+    Future<Uri> urlFor(String base) async {
+      final requests = <http.Request>[];
+      final mock = MockClient((req) async {
+        requests.add(req);
+        return http.Response(_chatResponse('ok'), 200,
+            headers: {'content-type': 'application/json'});
+      });
+      final client = OpenAiCompatClient(
+        baseUrl: Uri.parse(base),
+        model: 'm',
+        httpClient: mock,
+      );
+      await client.complete('s', 'u');
+      return requests.single.url;
+    }
+
+    test('a bare origin gets /v1/chat/completions appended', () async {
+      expect((await urlFor('http://192.168.1.20:8080')).toString(),
+          'http://192.168.1.20:8080/v1/chat/completions');
+    });
+
+    test('an OpenAI-SDK-style /v1/ base is not doubled', () async {
+      expect((await urlFor('http://localhost:8080/v1/')).toString(),
+          'http://localhost:8080/v1/chat/completions');
+      expect((await urlFor('http://localhost:8080/v1')).toString(),
+          'http://localhost:8080/v1/chat/completions');
+    });
+
+    test('a reverse-proxy path prefix is preserved, never dropped', () async {
+      expect((await urlFor('http://host/llm')).toString(),
+          'http://host/llm/v1/chat/completions');
+      expect((await urlFor('http://host/api/')).toString(),
+          'http://host/api/v1/chat/completions');
+    });
+  });
 }

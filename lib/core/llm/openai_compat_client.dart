@@ -19,8 +19,22 @@ class OpenAiCompatClient {
   }) : _http = httpClient ?? http.Client();
 
   /// Server origin, e.g. `http://192.168.1.20:8080` for a LAN llamafile.
-  /// The `/v1/chat/completions` path is appended here.
+  /// The `/v1/chat/completions` path is appended here — see [_endpoint] for
+  /// how bases that already carry a path are handled.
   final Uri baseUrl;
+
+  /// The chat-completions endpoint under [baseUrl]. Users paste every shape
+  /// the ecosystem produces: a bare origin, an OpenAI-SDK-style `.../v1/`,
+  /// a reverse-proxied prefix like `/llm`. `Uri.resolve` mangled two of
+  /// those (doubling `/v1`, dropping a no-trailing-slash prefix), so join
+  /// textually: keep the base path, append `/v1/chat/completions`, and do
+  /// not double a `/v1` the user already wrote.
+  Uri _endpoint() {
+    final base = baseUrl.toString().replaceAll(RegExp(r'/+$'), '');
+    final suffix =
+        base.endsWith('/v1') ? '/chat/completions' : '/v1/chat/completions';
+    return Uri.parse('$base$suffix');
+  }
 
   /// Extra headers on every request — self-hosted gateways often want an
   /// `authorization: Bearer …`. `content-type` is added automatically.
@@ -40,7 +54,7 @@ class OpenAiCompatClient {
     int maxTokens = 1024,
   }) async {
     final res = await _http.post(
-      baseUrl.resolve('v1/chat/completions'),
+      _endpoint(),
       headers: {
         'content-type': 'application/json',
         ...headers,
