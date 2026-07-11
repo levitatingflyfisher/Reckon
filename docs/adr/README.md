@@ -12,3 +12,6 @@ trade-off it settles.
 | [0004](0004-reckonparty-zero-knowledge-sync.md) | ReckonParty sync is zero-knowledge — encrypted blobs, key in the URL fragment, no BaaS |
 | [0005](0005-flutter-clean-architecture.md) | Flutter Clean Architecture with Riverpod and Drift |
 | [0006](0006-honest-record-blinded-repolls.md) | Keep the record honest — computed-on-query calibration and blinded re-polls |
+| [0007](0007-forecaster-duel-alignment-scoring.md) | The forecaster duel — sealed parallel forecasts, per-prediction alignment scoring |
+| [0008](0008-persistent-groups-attributed-ballots.md) | Persistent groups — a local container over per-party sync, attributed ballots, the considered reveal |
+| [0009](0009-bounty-client-paste-import.md) | The bounty client — files and paste first, redaction preview mandatory |
