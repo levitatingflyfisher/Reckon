@@ -65,6 +65,33 @@ jobs:
       - name: Build debug APK
         run: flutter build apk --debug
 
+  build-web:
+    name: Build web release (smoke)
+    needs: analyze-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.x'
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Code generation (Drift, etc.)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # Two regressions this job exists to catch: (1) a dart:io/ffi import
+      # leaking outside the web/native conditional-import trios (discipline-
+      # only otherwise — the analyzer can't see it, only a web compile can),
+      # and (2) drift/base-href-shaped deploy breakage. Built with the same
+      # --base-href the gh-pages deploy uses (docs/how-to/build-and-run.md).
+      - name: Build web (release, deploy base-href)
+        run: flutter build web --release --base-href /Reckon/
+
   relay:
     name: Relay (analyze & test)
     runs-on: ubuntu-latest
