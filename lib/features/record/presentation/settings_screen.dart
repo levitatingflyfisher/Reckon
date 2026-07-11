@@ -13,6 +13,7 @@ import '../../../shared/widgets/oh_card.dart';
 import '../../export/data/export_providers.dart';
 import '../../export/data/share_export.dart';
 import '../../export/domain/formatters.dart';
+import '../../forecasters/presentation/forecaster_settings_section.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -46,6 +47,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
           const _HfTokenTile(),
           const SizedBox(height: 12),
+          const ForecastersSection(),
+          const SizedBox(height: 24),
           Text('Appearance', style: textTheme.titleLarge),
           const SizedBox(height: 8),
           const _ThemePicker(),
