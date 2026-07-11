@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/bounty/presentation/bounty_screen.dart';
 import '../features/case/presentation/case_detail_screen.dart';
 import '../features/case/presentation/case_summary_screen.dart';
 import '../features/case/presentation/home_screen.dart';
@@ -91,6 +92,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/case/:caseId',
         builder: (_, state) =>
             CaseDetailScreen(caseId: state.pathParameters['caseId']!),
+      ),
+      GoRoute(
+        path: '/bounty/:caseId',
+        builder: (_, state) =>
+            BountyScreen(caseId: state.pathParameters['caseId']!),
       ),
       GoRoute(
         path: '/repoll/:caseId',

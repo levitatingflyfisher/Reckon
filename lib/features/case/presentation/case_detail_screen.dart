@@ -24,7 +24,25 @@ class CaseDetailScreen extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Case')),
+      appBar: AppBar(
+        title: const Text('Case'),
+        actions: [
+          // Bounty export/import lives behind the overflow: open cases only —
+          // once the user has decided, outside forecasts can't be sealed.
+          if (caseAsync.valueOrNull?.status == CaseStatus.open)
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'bounty') context.push('/bounty/$caseId');
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'bounty',
+                  child: Text('Ask outside bots'),
+                ),
+              ],
+            ),
+        ],
+      ),
       body: caseAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
