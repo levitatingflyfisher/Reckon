@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -55,6 +56,14 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
   /// surfacing a raw StateError in the chat bubble, show a dedicated
   /// "download a model first" screen with a direct Settings link.
   Future<void> _gateOnModel() async {
+    // The web build has no on-device model runtime, so there is nothing to
+    // gate on — short-circuit to the "not ready" state, which renders the
+    // web-specific friendly message below. This also avoids the secure-storage
+    // read in the native path, keeping web startup off that dependency.
+    if (kIsWeb) {
+      if (mounted) setState(() => _modelReady = false);
+      return;
+    }
     // Resolve the *actual* selected model before checking the filesystem.
     // activeModelSpecProvider is synchronous and derives from the async
     // selectedModelIdProvider; reading it here — before that future
@@ -227,26 +236,50 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  'Reckon needs an on-device model before it can open a case.',
-                  style: textTheme.titleLarge,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  "Head to Settings, pick a model, and tap Download. It "
-                  "stays on your phone — nothing leaves the device.",
-                  style: textTheme.bodyMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                OHButton(
-                  label: 'Open Settings',
-                  expanded: true,
-                  onPressed: () => context.go('/settings'),
-                ),
-              ],
+              children: kIsWeb
+                  ? [
+                      Text(
+                        'AI-guided intake is coming to the web soon.',
+                        style: textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Reckon interviews you with an on-device model, which "
+                        "the browser version can't run yet. Install the Android "
+                        "app to open a case — your journal, glossary, and "
+                        "settings all work here in the meantime.",
+                        style: textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      OHButton(
+                        label: 'Back to journal',
+                        expanded: true,
+                        onPressed: () => context.go('/'),
+                      ),
+                    ]
+                  : [
+                      Text(
+                        'Reckon needs an on-device model before it can open a '
+                        'case.',
+                        style: textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "Head to Settings, pick a model, and tap Download. It "
+                        "stays on your phone — nothing leaves the device.",
+                        style: textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      OHButton(
+                        label: 'Open Settings',
+                        expanded: true,
+                        onPressed: () => context.go('/settings'),
+                      ),
+                    ],
             ),
           ),
         ),
