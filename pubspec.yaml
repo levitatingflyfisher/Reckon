@@ -84,6 +84,9 @@ dev_dependencies:
   custom_lint: ^0.6.4
   riverpod_lint: ^2.3.10
   mockito: ^5.4.4
+  # Generates the launcher icon (the "scales" balance mark) into Android
+  # mipmaps + an adaptive icon + the web PWA icons from a single source.
+  flutter_launcher_icons: ^0.14.4
 
 # Task 2 concern: flutter_gemma 0.13.2 depends on sqlite3 ^3.1.0 while
 # drift_dev 2.x pins sqlite3 ^2.x. Both packages use different APIs of
@@ -119,3 +122,22 @@ flutter:
           weight: 600
         - asset: assets/fonts/Nunito-Bold.ttf
           weight: 700
+
+# The launcher / PWA icon: the slate "scales" balance mark (matching the
+# symbol used for Reckon on the OpenHearth landing page). Slate — #536B82
+# structure, #7E94A8 pans — on a pale #EAEEF1 tile, deliberately the
+# landing mark rather than the app's terracotta brand.
+#   regenerate:  dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/scales_icon.png"
+  android: true
+  ios: false
+  min_sdk_android: 24
+  adaptive_icon_background: "#EAEEF1"
+  adaptive_icon_foreground: "assets/icon/scales_foreground.png"
+  remove_alpha_ios: false
+  web:
+    generate: true
+    image_path: "assets/icon/scales_icon.png"
+    background_color: "#EAEEF1"
+    theme_color: "#536B82"
