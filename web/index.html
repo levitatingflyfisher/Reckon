@@ -18,21 +18,46 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Reckon — a private, local-first decision journal. Think it through, log the call, learn from your own track record.">
+  <meta name="theme-color" content="#536B82">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="reckon">
+  <meta name="apple-mobile-web-app-title" content="Reckon">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>reckon</title>
+  <title>Reckon</title>
   <link rel="manifest" href="manifest.json">
+  <script>/* keep local data across sessions (resist eviction on installed PWAs) */if(navigator.storage&&navigator.storage.persist){try{navigator.storage.persist();}catch(e){}}</script>
+  <style>
+#oh-boot{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#EAEEF1;z-index:99999;transition:opacity .35s ease}
+#oh-boot .s{width:42px;height:42px;border:3px solid #D6DEE6;border-top-color:#536B82;border-radius:50%;animation:ohspin .8s linear infinite}
+@keyframes ohspin{to{transform:rotate(360deg)}}
+@media(prefers-color-scheme:dark){#oh-boot{background:#14202B}#oh-boot .s{border-color:#2A3946;border-top-color:#7E97AE}}
+</style>
+  <script>
+(function(){
+  // Self-heal stale PWA caches: when a new service worker takes over after a
+  // redeploy, reload once so a returning visitor never sees a blank stale shell.
+  if('serviceWorker' in navigator){var done=false;
+    navigator.serviceWorker.addEventListener('controllerchange',function(){if(done)return;done=true;location.reload();});
+    navigator.serviceWorker.getRegistrations().then(function(rs){rs.forEach(function(r){r.update();});}).catch(function(){});}
+  // Remove the boot spinner once Flutter has painted (or after a hard timeout).
+  var iv=setInterval(function(){
+    if(document.querySelector('flt-glass-pane,flutter-view,flt-scene-host')){
+      clearInterval(iv);var b=document.getElementById('oh-boot');
+      if(b){b.style.opacity='0';setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},400);}
+    }},150);
+  setTimeout(function(){var b=document.getElementById('oh-boot');if(b&&b.parentNode)b.parentNode.removeChild(b);},25000);
+})();
+</script>
 </head>
 <body>
+<div id="oh-boot"><div class="s"></div></div>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

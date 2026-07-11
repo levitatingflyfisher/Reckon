@@ -1,11 +1,11 @@
 {
-    "name": "reckon",
-    "short_name": "reckon",
+    "name": "Reckon",
+    "short_name": "Reckon",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#EAEEF1",
     "theme_color": "#536B82",
-    "description": "A new Flutter project.",
+    "description": "A private, local-first decision journal. Think it through, log the call, learn from your own track record.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
