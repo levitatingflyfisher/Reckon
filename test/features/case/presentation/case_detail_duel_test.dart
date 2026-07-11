@@ -159,4 +159,47 @@ void main() {
     expect(find.text('1 forecast sealed'), findsOneWidget);
     expect(find.textContaining(_rationale), findsNothing);
   });
+
+  testWidgets(
+      'a duel setup failure (roster fetch) surfaces in a snackbar instead of '
+      'vanishing as an unhandled zone error', (tester) async {
+    // RunDuel's setup phase — enabled() with its lazy default seeding — runs
+    // BEFORE its internal per-forecaster try, so a throw here escapes the
+    // usecase entirely.
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        caseByIdProvider.overrideWith((ref, id) async => _case()),
+        pollsForCaseProvider.overrideWith((ref, id) async => <Poll>[]),
+        outsideViewForCaseProvider.overrideWith((ref, id) async => null),
+        forecasterRepositoryProvider.overrideWithValue(forecasters),
+        predictionRepositoryProvider.overrideWithValue(predictions),
+        runnableForecastersProvider.overrideWith((ref) async =>
+            [_persona('persona-base-rate-skeptic', 'Base-rate skeptic')]),
+        runDuelProvider.overrideWith((ref) => RunDuel(
+              _ThrowingForecasters(),
+              ref.watch(predictionRepositoryProvider),
+              (f) async => _FakeLlm(),
+            )),
+      ],
+      child: const MaterialApp(home: CaseDetailScreen(caseId: _caseId)),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Run the duel'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining("couldn't run"), findsOneWidget,
+        reason: 'the user must learn why nothing was sealed — a silently '
+            'resetting spinner loops the same failure forever');
+    expect(find.text('Run the duel'), findsOneWidget,
+        reason: 'the button must come back for a retry');
+  });
+}
+
+/// A roster whose fetch fails — e.g. default-persona seeding hitting a DB
+/// error on first run.
+class _ThrowingForecasters extends InMemoryForecasterRepository {
+  @override
+  Future<List<Forecaster>> enabled() async =>
+      throw StateError('seeding failed');
 }

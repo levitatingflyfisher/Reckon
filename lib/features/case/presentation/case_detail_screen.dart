@@ -205,6 +205,14 @@ class _DuelCardState extends ConsumerState<_DuelCard> {
               ? 'No forecasts sealed — ${result.failed} failed. Try again.'
               : 'Every forecaster has already answered.';
       messenger.showSnackBar(SnackBar(content: Text(text)));
+    } catch (e) {
+      // RunDuel's setup phase (roster fetch/seeding, the forCase query)
+      // runs before its internal per-forecaster try — a throw there would
+      // otherwise vanish as an unhandled zone error while the button just
+      // popped back, looping the user through the same silent failure.
+      // Naming the error leaks no forecast content (R1).
+      messenger.showSnackBar(
+          SnackBar(content: Text("The duel couldn't run: $e")));
     } finally {
       if (mounted) setState(() => _running = false);
     }
