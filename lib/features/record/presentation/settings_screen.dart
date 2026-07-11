@@ -1,12 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:share_plus/share_plus.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../core/llm/hf_token.dart';
@@ -16,6 +11,7 @@ import '../../../core/theme/theme_preference.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_card.dart';
 import '../../export/data/export_providers.dart';
+import '../../export/data/share_export.dart';
 import '../../export/domain/formatters.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -156,18 +152,19 @@ class _ExportCardState extends ConsumerState<_ExportCard> {
           .replaceAll(':', '-')
           .split('.')
           .first;
-      final dir = await getTemporaryDirectory();
-      final file = File(p.join(dir.path, 'reckon-export-$stamp.$ext'));
-      await file.writeAsBytes(utf8.encode(content), flush: true);
-      await Share.shareXFiles(
-        [XFile(file.path)],
+      await shareExport(
+        content: content,
+        fileName: 'reckon-export-$stamp.$ext',
         subject: 'Reckon export — $stamp',
         text: 'My Reckon data (generated $stamp)',
       );
     } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Export failed: $e')),
-      );
+      // On web, delivery isn't wired up yet and throws an UnsupportedError with
+      // a user-facing message; show that verbatim instead of "Export failed:".
+      final message = e is UnsupportedError
+          ? (e.message ?? 'Export is not available here yet.')
+          : 'Export failed: $e';
+      messenger.showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
