@@ -93,6 +93,9 @@ void main() {
     expect(list, hasLength(1));
     expect(list.single.caseId, 'c1');
     expect(list.single.satisfactionScore, 1);
+    expect(list.single.chosenOption, 'a',
+        reason: 'record analytics need the chosen option to score '
+            'the user\'s own final poll with the duel formula');
   });
 
   test(

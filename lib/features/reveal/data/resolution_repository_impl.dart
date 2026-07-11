@@ -60,6 +60,7 @@ class ResolutionRepositoryImpl implements ResolutionRepository {
         .map((r) => ScoredResolution(
               caseId: r.caseId,
               satisfactionScore: r.satisfactionScore!,
+              chosenOption: r.chosenOption,
             ))
         .toList();
   }

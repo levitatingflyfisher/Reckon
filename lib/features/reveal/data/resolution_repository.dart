@@ -22,7 +22,13 @@ class ScoredResolution {
   const ScoredResolution({
     required this.caseId,
     required this.satisfactionScore,
+    required this.chosenOption,
   });
   final String caseId;
   final int satisfactionScore;
+
+  /// 'a' or 'b' — which option the user went with. Lets record analytics
+  /// score the user's own final poll with the same alignment rule the duel
+  /// forecasters are scored by (computed on read, never persisted — R2).
+  final String chosenOption;
 }

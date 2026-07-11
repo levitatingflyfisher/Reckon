@@ -7,10 +7,17 @@ class ClosedCaseRecord {
     required this.case_,
     required this.polls,
     required this.satisfactionScore,
+    this.chosenOption,
   });
   final Case case_;
   final List<Poll> polls;
   final int satisfactionScore;
+
+  /// 'a' or 'b' — which option the user chose at the reveal. Optional so the
+  /// metrics that only read satisfaction stay constructible without it; the
+  /// alignment-based metrics (forecaster weights, update quality) skip
+  /// records where it is absent.
+  final String? chosenOption;
 }
 
 class ComputeInsightCards {

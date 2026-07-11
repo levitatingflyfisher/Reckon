@@ -47,9 +47,12 @@ class _ResolutionCheckInScreenState
 
     // The case is now closed and its outcome feeds the Record screen. Drop the
     // stale detail cache (#7) and the cached Record analytics (#6) so both
-    // reflect the new closed case without an app restart.
+    // reflect the new closed case without an app restart. Invalidating
+    // closedCaseRecordsProvider cascades to every metric that watches it
+    // (insights, calibration, base rates, forecaster weights, update quality).
     ref.invalidate(caseByIdProvider(widget.caseId));
     ref.invalidate(clarityScoreProvider);
+    ref.invalidate(closedCaseRecordsProvider);
     ref.invalidate(insightCardsProvider);
     ref.invalidate(closedCasesProvider);
     ref.invalidate(calibrationReportProvider);

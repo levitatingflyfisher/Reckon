@@ -13,10 +13,13 @@ import '../domain/usecases/compute_clarity_score.dart';
 import '../domain/usecases/compute_insight_cards.dart';
 import '../domain/usecases/compute_personal_base_rates.dart';
 
-/// Zip scored resolutions against each case's poll history. Shared between
-/// the insight-cards and calibration-report providers since they consume
-/// the same shape.
-Future<List<ClosedCaseRecord>> _buildClosedCaseRecords(Ref ref) async {
+/// Zip scored resolutions against each case's poll history — the one shape
+/// every record metric consumes. A provider (not a helper) so the metric
+/// providers share a single fetch; anything that closes a case must
+/// invalidate it (see ResolutionCheckInScreen), which cascades to every
+/// watcher.
+final closedCaseRecordsProvider =
+    FutureProvider<List<ClosedCaseRecord>>((ref) async {
   final resolutions =
       await ref.watch(resolutionRepositoryProvider).scoredResolutions();
   final caseRepo = ref.watch(caseRepositoryProvider);
@@ -34,10 +37,11 @@ Future<List<ClosedCaseRecord>> _buildClosedCaseRecords(Ref ref) async {
       case_: case_,
       polls: polls,
       satisfactionScore: r.satisfactionScore,
+      chosenOption: r.chosenOption,
     );
   }));
   return records.whereType<ClosedCaseRecord>().toList();
-}
+});
 
 final clarityScoreProvider = FutureProvider<ClarityScore>((ref) async {
   final resolutions =
@@ -47,7 +51,8 @@ final clarityScoreProvider = FutureProvider<ClarityScore>((ref) async {
 });
 
 final insightCardsProvider = FutureProvider<List<InsightCard>>((ref) async {
-  return const ComputeInsightCards().call(await _buildClosedCaseRecords(ref));
+  return const ComputeInsightCards()
+      .call(await ref.watch(closedCaseRecordsProvider.future));
 });
 
 final closedCasesProvider = FutureProvider<List<Case>>((ref) async {
@@ -57,7 +62,7 @@ final closedCasesProvider = FutureProvider<List<Case>>((ref) async {
 final calibrationReportProvider =
     FutureProvider<CalibrationReport>((ref) async {
   return const ComputeCalibrationReport()
-      .call(await _buildClosedCaseRecords(ref));
+      .call(await ref.watch(closedCaseRecordsProvider.future));
 });
 
 /// Your own decision base rates mined from history (the "second brain") —
@@ -66,5 +71,5 @@ final calibrationReportProvider =
 final personalBaseRatesProvider =
     FutureProvider<PersonalBaseRates>((ref) async {
   return const ComputePersonalBaseRates()
-      .call(await _buildClosedCaseRecords(ref));
+      .call(await ref.watch(closedCaseRecordsProvider.future));
 });
