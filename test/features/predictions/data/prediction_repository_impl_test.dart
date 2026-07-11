@@ -85,6 +85,12 @@ void main() {
     expect(phi.meanScore, 1.0);
   });
 
+  test('duelForecast kind round-trips through persistence', () async {
+    await predictions.log(make(kind: PredictionKind.duelForecast));
+    final list = await predictions.forCase('c1');
+    expect(list.single.kind, PredictionKind.duelForecast);
+  });
+
   test('unscored predictions yield null meanScore', () async {
     await predictions.log(make(model: 'new-model'));
     final card = await predictions.scorecard();
