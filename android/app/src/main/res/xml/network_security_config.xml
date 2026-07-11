@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cleartext policy for LAN forecasters (llamafile/Ollama endpoints speak
+     plain HTTP on the home network).
+
+     Android's config language has no CIDR ranges, so "RFC1918 only" cannot
+     be expressed literally here; this file pins the loopback + emulator
+     hosts and keeps everything else HTTPS-only at the platform level. In
+     practice Reckon's HTTP stack is Dart's own (package:http over dart:io
+     sockets), which Android's cleartext enforcement does not intercept —
+     arbitrary private-range endpoints (192.168.x.x etc.) work from Dart
+     regardless. This config governs any platform-level fetches (WebView,
+     native plugins) and documents the intended posture: cleartext to
+     private addresses only, never to the internet. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <!-- Android-emulator alias for the development host. -->
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
