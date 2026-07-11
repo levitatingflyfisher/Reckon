@@ -69,19 +69,36 @@ class LocalPartyRepository implements PartyRepository {
   @override
   Future<void> submitBallot(String partyId, Ballot ballot) async {
     // Idempotent by ballot id so re-submits and sync-merges (see
-    // PartySyncService) can't create duplicates.
-    await _db.into(_db.partyBallots).insert(
-          PartyBallotsCompanion.insert(
-            id: ballot.id,
-            partyId: partyId,
-            method: ballot.method.name,
-            approvals: ballot.approvals.toList(),
-            ranking: ballot.ranking,
-            submittedAt: DateTime.now(),
-            memberId: Value(ballot.memberId),
-          ),
-          mode: InsertMode.insertOrIgnore,
-        );
+    // PartySyncService) can't create duplicates. Attributed (group)
+    // ballots additionally enforce ONE ballot per member, latest wins:
+    // every vote-screen visit mints a fresh ballot id, so without this a
+    // member could vote any number of times and every ballot would count —
+    // silently swinging a sealed considered decision. Anonymous
+    // (pass-the-phone) ballots keep accumulating: they carry no identity
+    // to dedupe on, and several voters legitimately share one device.
+    await _db.transaction(() async {
+      final memberId = ballot.memberId;
+      if (memberId != null) {
+        await (_db.delete(_db.partyBallots)
+              ..where((t) =>
+                  t.partyId.equals(partyId) &
+                  t.memberId.equals(memberId) &
+                  t.id.equals(ballot.id).not()))
+            .go();
+      }
+      await _db.into(_db.partyBallots).insert(
+            PartyBallotsCompanion.insert(
+              id: ballot.id,
+              partyId: partyId,
+              method: ballot.method.name,
+              approvals: ballot.approvals.toList(),
+              ranking: ballot.ranking,
+              submittedAt: DateTime.now(),
+              memberId: Value(ballot.memberId),
+            ),
+            mode: InsertMode.insertOrIgnore,
+          );
+    });
   }
 
   /// Insert a party that was created elsewhere and joined via a link, keeping

@@ -173,5 +173,72 @@ void main() {
       expect(ballots.singleWhere((b) => b.id == 'v2').memberId, isNull,
           reason: 'anonymous ballots stay anonymous');
     });
+
+    test('one ballot per member: a re-vote replaces, never accumulates',
+        () async {
+      final party = await repo.createParty(
+        title: 'Where do we live?',
+        options: options,
+        votingMethod: VotingMethod.approval,
+      );
+      // The same member votes three times (three vote-screen visits mint
+      // three fresh ballot ids). Only the last ballot may count — otherwise
+      // one member silently swings a sealed considered decision.
+      for (final (id, approved) in [
+        ('v1', ['a']),
+        ('v2', ['b']),
+        ('v3', ['c']),
+      ]) {
+        await repo.submitBallot(
+          party.id,
+          Ballot.approval(
+            id: id,
+            party: party,
+            approvedOptionIds: approved,
+            memberId: 'm-1',
+          ),
+        );
+      }
+
+      final result = await repo.computeResult(party.id) as ApprovalResult;
+      expect(result.ballotCount, 1);
+      final ballot = (await repo.getBallots(party.id)).single;
+      expect(ballot.approvals, {'c'}, reason: 'the latest vote wins');
+      expect(ballot.memberId, 'm-1');
+    });
+
+    test('anonymous (pass-the-phone) ballots still accumulate', () async {
+      final party = await repo.createParty(
+        title: 'Dinner',
+        options: options,
+        votingMethod: VotingMethod.approval,
+      );
+      await repo.submitBallot(party.id,
+          Ballot.approval(id: 'v1', party: party, approvedOptionIds: const ['a']));
+      await repo.submitBallot(party.id,
+          Ballot.approval(id: 'v2', party: party, approvedOptionIds: const ['a']));
+
+      final result = await repo.computeResult(party.id) as ApprovalResult;
+      expect(result.ballotCount, 2);
+    });
+
+    test('distinct members keep distinct ballots', () async {
+      final party = await repo.createParty(
+        title: 'Where do we live?',
+        options: options,
+        votingMethod: VotingMethod.approval,
+      );
+      await repo.submitBallot(
+          party.id,
+          Ballot.approval(
+              id: 'v1', party: party, approvedOptionIds: const ['a'], memberId: 'm-1'));
+      await repo.submitBallot(
+          party.id,
+          Ballot.approval(
+              id: 'v2', party: party, approvedOptionIds: const ['b'], memberId: 'm-2'));
+
+      final result = await repo.computeResult(party.id) as ApprovalResult;
+      expect(result.ballotCount, 2);
+    });
   });
 }

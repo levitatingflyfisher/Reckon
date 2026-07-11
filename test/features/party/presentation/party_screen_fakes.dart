@@ -57,6 +57,10 @@ class FakePartyRepository implements PartyRepository {
   Future<void> submitBallot(String partyId, Ballot ballot) async {
     final existing = ballots[partyId] ??= [];
     if (existing.any((b) => b.id == ballot.id)) return; // idempotent by id
+    // One ballot per member, latest wins — same contract as the drift repo.
+    if (ballot.memberId != null) {
+      existing.removeWhere((b) => b.memberId == ballot.memberId);
+    }
     existing.add(ballot);
   }
 
