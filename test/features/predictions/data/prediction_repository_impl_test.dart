@@ -164,6 +164,31 @@ void main() {
           reason: 'a zero score is still a scored forecast');
     });
 
+    test(
+        'a malformed (non-numeric) lean reads as 50 — R4 — instead of '
+        'throwing and stranding the whole case unscored', () async {
+      await predictions.log(ModelPrediction(
+        id: 'd-bad',
+        caseId: 'c1',
+        modelVersion: 'm#d-bad',
+        kind: PredictionKind.duelForecast,
+        predictedAt: DateTime(2026, 4, 11),
+        payload: const {'lean': '70', 'forecasterId': 'd-bad'},
+      ));
+      await predictions.log(duel(id: 'd-good', lean: 80));
+      await predictions.scoreDuelForecasts(
+        'c1',
+        chosenOption: 'b',
+        satisfaction: 2,
+        scoredAt: DateTime(2026, 10, 12),
+      );
+      // The string lean is no-signal: alignment 0, but still scored.
+      expect((await byId('d-bad')).score, closeTo(0, 1e-9));
+      expect((await byId('d-bad')).scoredAt, isNotNull);
+      expect((await byId('d-good')).score, closeTo(0.6, 1e-9),
+          reason: 'one malformed payload must not block the rest');
+    });
+
     test('observation kinds are NOT scored — they are not forecasts',
         () async {
       await predictions.log(make(id: 'o1', kind: PredictionKind.outsideView));

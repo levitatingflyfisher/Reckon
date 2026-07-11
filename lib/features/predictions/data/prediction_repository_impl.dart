@@ -62,10 +62,13 @@ class PredictionRepositoryImpl implements PredictionRepository {
     await _db.transaction(() async {
       for (final row in rows) {
         // Payload lean: 0 = fully optionA, 100 = fully optionB (the same
-        // orientation as LeanSlider and the reveal chart). A missing lean
-        // reads as 50 — a no-signal forecast that scores 0 either way.
+        // orientation as LeanSlider and the reveal chart). A missing OR
+        // malformed lean reads as 50 (R4) — a no-signal forecast that
+        // scores 0 either way; throwing here would strand every forecast
+        // on the case unscored, with the case already closed.
+        final rawLean = row.payload['lean'];
         final lean =
-            ((row.payload['lean'] as num?) ?? 50).toDouble().clamp(0.0, 100.0);
+            (rawLean is num ? rawLean.toDouble() : 50.0).clamp(0.0, 100.0);
         final pChosen = chosenOption == 'b' ? lean / 100 : 1 - lean / 100;
         final score = (2 * pChosen - 1) * (satisfaction / 2);
         await (_db.update(_db.modelPredictions)
