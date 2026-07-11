@@ -31,7 +31,8 @@ If you write one, put it in `docs/tutorials/`.
 *Task-oriented — how do I accomplish X (assumes you know the basics)?*
 
 - **[Build & run](how-to/build-and-run.md)** — set up the toolchain, generate code,
-  run on Android, download a model, and (optionally) enable a cloud backend.
+  run on Android, download a model, enable cloud forecasters, and build + deploy the
+  web PWA (base-href, drift-worker recompile, gh-pages, headless boot probe).
 - **[Host a ReckonParty relay](how-to/host-a-relay.md)** — run the optional
   zero-knowledge sync server for remote participants.
 - Agent-guidance for working *in* this repo: **[AGENTS.md](../AGENTS.md)**.

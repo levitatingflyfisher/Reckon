@@ -45,8 +45,9 @@ The ReckonParty relay is a separate Dart package with its own suite:
 cd relay && dart pub get && dart analyze && dart test
 ```
 
-CI (`.github/workflows/ci.yml`) runs analyze + test, a debug-APK smoke build, and the
-relay suite on every push and PR.
+CI (`.github/workflows/ci.yml`) runs analyze + test, a debug-APK smoke build, a
+web-release smoke build (with the deploy's `--base-href`, so the 8 web/native
+conditional-import trios stay honest), and the relay suite on every push and PR.
 
 ## Build an APK
 
@@ -60,6 +61,64 @@ Play Store distribution. Wiring a real signing config (and MediaPipe keep-rules 
 enable R8/minify) is a prerequisite for release; see
 [limitations](../limitations.md).
 
+## Build & deploy the web PWA
+
+The PWA is served from this repo's `gh-pages` branch at
+`https://levitatingflyfisher.github.io/Reckon/`. The journal runs on drift-wasm; the
+on-device model does not run on web (the duel via BYOK / OpenAI-compatible forecasters
+is the web build's one AI path).
+
+```bash
+flutter build web --release --base-href /Reckon/
+```
+
+- **`--base-href /Reckon/` is not optional.** The site lives under a `/Reckon/` path,
+  and a build without it 404s every asset once deployed — the app serves `index.html`
+  and then never boots. (This exact regression took the live PWA down on 2026-07-10;
+  CI now smoke-builds with the flag.)
+- **The drift worker is compiled, not copied.** `web/drift_worker.js` is compiled from
+  `web/drift_worker.dart` against this project's exact `drift`/`sqlite3` versions —
+  the prebuilt worker from a drift release bundles a different sqlite3 and fails at
+  runtime with `LinkError … Import "dart" "localtime"`. After bumping `drift` or
+  `sqlite3`, recompile:
+
+  ```bash
+  dart compile js -O2 -o web/drift_worker.js web/drift_worker.dart
+  ```
+
+- **Don't touch `web/index.html` casually** — it carries the boot spinner, the
+  service-worker self-heal, and the `navigator.storage.persist()` call that keeps a
+  PWA's local journal from being evicted.
+
+Deploy is a manual rsync of the build onto `gh-pages` (never mix it into `master`):
+
+```bash
+git fetch origin gh-pages
+git worktree add /tmp/ghp-Reckon gh-pages
+rsync -a --delete --exclude='.git' build/web/ /tmp/ghp-Reckon/
+touch /tmp/ghp-Reckon/.nojekyll
+cd /tmp/ghp-Reckon && git add -A && git commit -m "deploy: Reckon web PWA" \
+  && git push origin HEAD:gh-pages
+cd - && git worktree remove /tmp/ghp-Reckon
+```
+
+**Verify the deploy with a headless boot probe** — an HTTP 200 is not a booted app (a
+missing base-href still serves `index.html` perfectly while the app never starts).
+Load the live URL in a headless browser and wait for Flutter's render root:
+
+```js
+// node probe.mjs  (npm i playwright)
+import { chromium } from 'playwright';
+const browser = await chromium.launch();
+const page = await browser.newPage();
+await page.goto('https://levitatingflyfisher.github.io/Reckon/',
+    { waitUntil: 'domcontentloaded' });
+await page.waitForSelector('flt-glass-pane, flutter-view',
+    { timeout: 30000, state: 'attached' });   // throws = NO-BOOT
+console.log('BOOTED');
+await browser.close();
+```
+
 ## Toolchain notes
 
 - **`sqlite3` override.** `flutter_gemma` pulls `sqlite3 ^3.x` while `drift_dev` pins
@@ -69,11 +128,16 @@ enable R8/minify) is a prerequisite for release; see
   download leaves a resumable `.part` (see
   [model architecture](../reference/model-architecture.md)).
 
-## Enabling a cloud model (developer note)
+## Enabling a cloud model
 
-The BYOK and Connected backends are implemented and unit-tested but **not wired into the
-app** — there is no settings toggle and `llmServiceProvider` always returns the on-device
-`PrivateModeImpl`. To experiment, construct `ByokModeImpl(apiKey: …)` (or
+**In the duel (user-facing, live):** store your Anthropic key in Settings and add a
+BYOK forecaster, or add an OpenAI-compatible forecaster pointing at a llamafile/Ollama
+`base_url`. Cloud backends run *only* there, per-forecaster
+([ADR-0007](../adr/0007-forecaster-duel-alignment-scoring.md)).
+
+**For the core loop (developer note):** intake/outside-view/reveal have no cloud
+switch — `llmServiceProvider` always returns the on-device `PrivateModeImpl`. To
+experiment, construct `ByokModeImpl(apiKey: …)` (or
 `ConnectedModeImpl(workerBaseUrl: …)`) and override `llmServiceProvider`. Never bake a
 key into the binary or default users onto the cloud — that's a hard non-negotiable
 ([ADR-0002](../adr/0002-pluggable-llm-backends.md)).
