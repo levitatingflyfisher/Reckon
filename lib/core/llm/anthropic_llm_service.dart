@@ -132,10 +132,13 @@ class AnthropicLlmService implements LlmService {
         temperature: temperature ?? 0.4,
       );
       final json = _firstJsonObject(text);
-      if (json != null) {
-        final lean = (json['lean'] as num?)?.round() ?? 50;
+      // A missing/non-numeric lean is a model hiccup, not a forecast: return
+      // the empty-rationale sentinel (matching the openai-compat and
+      // on-device backends) so RunDuel's guard drops it instead of logging a
+      // fabricated 50/50 wearing the model's prose.
+      if (json != null && json['lean'] is num) {
         return CommunitySeed(
-          lean: lean.clamp(0, 100),
+          lean: (json['lean'] as num).round().clamp(0, 100),
           rationale: json['rationale'] as String? ?? '',
         );
       }

@@ -122,6 +122,19 @@ void main() {
     expect(seed.rationale, contains('B'));
   });
 
+  test(
+      'generateCommunitySeed with a rationale but NO lean returns the '
+      'empty-rationale sentinel — a fabricated 50 must never be logged',
+      () async {
+    final h = _service(
+        _textResponse('{"rationale": "sounds plausible either way"}'));
+    final seed = await h.service.generateCommunitySeed(_case());
+    expect(seed.lean, 50);
+    expect(seed.rationale, isEmpty,
+        reason: "RunDuel's sentinel guard keys on the empty rationale; "
+            'keeping the model prose would log a forecast it never made');
+  });
+
   test('generateCommunitySeed honors persona and temperature', () async {
     final h = _service(_textResponse('{"lean": 30, "rationale": "leans A"}'));
     final seed = await h.service.generateCommunitySeed(
