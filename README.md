@@ -40,7 +40,7 @@ says "the model thinks you should…"; it shows you who has actually been right,
 often.
 
 **Ask outside bots.** A case can be exported as a de-identified
-[reckonBounty](docs/spec/yellow-paper.md) request file — the rewrite is drafted
+[reckonBounty](https://github.com/levitatingflyfisher/reckonBounty) request file — the rewrite is drafted
 on-device and always passes through an editable preview before anything leaves — and
 bots' responses paste back in as sealed forecasts that earn a track record like any
 other forecaster.
