@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reckon/core/database/app_database.dart';
+import 'package:reckon/features/party/data/group_repository_impl.dart';
 import 'package:reckon/features/party/data/local_party_repository.dart';
 import 'package:reckon/features/party/domain/entities/ballot.dart';
 import 'package:reckon/features/party/domain/entities/party.dart';
@@ -103,5 +104,74 @@ void main() {
 
   test('computeResult on an unknown party throws', () async {
     expect(repo.computeResult('ghost'), throwsStateError);
+  });
+
+  group('persistent groups', () {
+    test('createParty persists group scope and considered mode', () async {
+      // The group row must exist first — parties.group_id is a real foreign
+      // key and the database enforces it.
+      await GroupRepositoryImpl(db).createGroup(name: 'Household', id: 'g1');
+
+      final created = await repo.createParty(
+        title: 'Where do we live?',
+        options: options,
+        votingMethod: VotingMethod.approval,
+        groupId: 'g1',
+        considered: true,
+      );
+      expect(created.groupId, 'g1');
+      expect(created.considered, isTrue);
+
+      final fetched = await repo.getParty(created.id);
+      expect(fetched!.groupId, 'g1');
+      expect(fetched.considered, isTrue);
+    });
+
+    test('importParty keeps a joined party in its group, considered intact',
+        () async {
+      await GroupRepositoryImpl(db).createGroup(name: 'Household', id: 'g1');
+
+      final visiting = Party(
+        id: 'p-import',
+        title: 'Where do we live?',
+        options: options,
+        votingMethod: VotingMethod.approval,
+        createdAt: DateTime.utc(2026, 7, 11),
+        groupId: 'g1',
+        considered: true,
+      );
+      await repo.importParty(visiting);
+
+      final fetched = await repo.getParty('p-import');
+      expect(fetched!.groupId, 'g1');
+      expect(fetched.considered, isTrue);
+    });
+
+    test('submitBallot round-trips member attribution', () async {
+      final party = await repo.createParty(
+        title: 'Dinner',
+        options: options,
+        votingMethod: VotingMethod.approval,
+      );
+      await repo.submitBallot(
+        party.id,
+        Ballot.approval(
+          id: 'v1',
+          party: party,
+          approvedOptionIds: const ['a'],
+          memberId: 'm-1',
+        ),
+      );
+      await repo.submitBallot(
+        party.id,
+        Ballot.approval(
+            id: 'v2', party: party, approvedOptionIds: const ['b']),
+      );
+
+      final ballots = await repo.getBallots(party.id);
+      expect(ballots.singleWhere((b) => b.id == 'v1').memberId, 'm-1');
+      expect(ballots.singleWhere((b) => b.id == 'v2').memberId, isNull,
+          reason: 'anonymous ballots stay anonymous');
+    });
   });
 }

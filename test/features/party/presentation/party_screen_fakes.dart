@@ -29,6 +29,8 @@ class FakePartyRepository implements PartyRepository {
     required String title,
     required List<PartyOption> options,
     required VotingMethod votingMethod,
+    String? groupId,
+    bool considered = false,
   }) async {
     final party = Party(
       id: const Uuid().v4(),
@@ -36,6 +38,8 @@ class FakePartyRepository implements PartyRepository {
       options: options,
       votingMethod: votingMethod,
       createdAt: DateTime(2026, 7, 11),
+      groupId: groupId,
+      considered: considered,
     );
     parties[party.id] = party;
     return party;

@@ -23,6 +23,8 @@ class LocalPartyRepository implements PartyRepository {
     required String title,
     required List<PartyOption> options,
     required VotingMethod votingMethod,
+    String? groupId,
+    bool considered = false,
   }) async {
     final party = Party(
       id: _uuid.v4(),
@@ -30,6 +32,8 @@ class LocalPartyRepository implements PartyRepository {
       options: options,
       votingMethod: votingMethod,
       createdAt: DateTime.now(),
+      groupId: groupId,
+      considered: considered,
     );
     await _db.into(_db.parties).insert(
           PartiesCompanion.insert(
@@ -40,6 +44,8 @@ class LocalPartyRepository implements PartyRepository {
               for (final o in options) {'id': o.id, 'label': o.label},
             ],
             createdAt: party.createdAt,
+            groupId: Value(party.groupId),
+            considered: Value(party.considered),
           ),
         );
     return party;
@@ -72,6 +78,7 @@ class LocalPartyRepository implements PartyRepository {
             approvals: ballot.approvals.toList(),
             ranking: ballot.ranking,
             submittedAt: DateTime.now(),
+            memberId: Value(ballot.memberId),
           ),
           mode: InsertMode.insertOrIgnore,
         );
@@ -90,6 +97,8 @@ class LocalPartyRepository implements PartyRepository {
             ],
             createdAt: party.createdAt,
             closed: Value(party.closed),
+            groupId: Value(party.groupId),
+            considered: Value(party.considered),
           ),
           mode: InsertMode.insertOrIgnore,
         );
@@ -132,6 +141,8 @@ class LocalPartyRepository implements PartyRepository {
         ],
         createdAt: row.createdAt,
         closed: row.closed,
+        groupId: row.groupId,
+        considered: row.considered,
       );
 
   /// Rebuild [Ballot] entities from stored rows, routing each through its
@@ -151,12 +162,14 @@ class LocalPartyRepository implements PartyRepository {
               id: r.id,
               party: party,
               approvedOptionIds: r.approvals.cast<String>(),
+              memberId: r.memberId,
             ));
           case VotingMethod.ranked:
             ballots.add(Ballot.ranked(
               id: r.id,
               party: party,
               rankedOptionIds: r.ranking.cast<String>(),
+              memberId: r.memberId,
             ));
         }
       } on ArgumentError {
