@@ -18,6 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clone the sibling sanctuary packages
+        # Reckon depends on these by sibling path (../packages/... relative
+        # to this checkout), matching the local monorepo layout. Checked out
+        # one level above $GITHUB_WORKSPACE, which is writable — the runner
+        # owns the whole .../work/<repo>/ tree, not just the checkout dir.
+        # sanctuary_backup_ui itself depends on sanctuary_auth_core by the
+        # same sibling path, so both must land under packages/.
+        run: |
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryAuthCore ../packages/sanctuary_auth_core
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryBackupUi ../packages/sanctuary_backup_ui
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.x'
@@ -42,6 +53,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Clone the sibling sanctuary packages
+        run: |
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryAuthCore ../packages/sanctuary_auth_core
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryBackupUi ../packages/sanctuary_backup_ui
 
       - uses: actions/setup-java@v4
         with:
@@ -71,6 +87,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Clone the sibling sanctuary packages
+        run: |
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryAuthCore ../packages/sanctuary_auth_core
+          git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryBackupUi ../packages/sanctuary_backup_ui
 
       - uses: subosito/flutter-action@v2
         with:
