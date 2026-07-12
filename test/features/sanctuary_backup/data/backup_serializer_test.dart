@@ -25,11 +25,15 @@ void main() {
 
   tearDown(() => db.close());
 
+  // Seeds a case with a poll, an outside view (with a citation), and a
+  // resolution — every entity type ExportBundle carries — so the round-trip
+  // test below actually exercises the encode/decode pair for all four, not
+  // just cases + polls.
   Future<void> seedCase() async {
     await db.into(db.cases).insert(CasesCompanion.insert(
           id: 'c1',
           createdAt: now,
-          status: 'open',
+          status: 'decided',
           question: 'Marry now or wait?',
           optionA: 'Wait',
           optionB: 'Marry',
@@ -44,6 +48,29 @@ void main() {
           pollNumber: 1,
           lean: 60,
           confidence: 'high',
+        ));
+    await db.into(db.outsideViews).insert(OutsideViewsCompanion.insert(
+          id: 'ov1',
+          caseId: 'c1',
+          generatedAt: now,
+          baseRateSummary: 'summary',
+          referenceClassUsed: 'relationship / marriage',
+          uncertaintyLevel: 'low',
+          stratificationFactors: const {'age': 30},
+          llmMode: 'private',
+          modelVersion: 'gemma-3-1b-it',
+          citations: const Value([
+            {'author': 'A', 'title': 'A Study', 'url': 'https://x'},
+          ]),
+        ));
+    await db.into(db.resolutions).insert(ResolutionsCompanion.insert(
+          id: 'r1',
+          caseId: 'c1',
+          decidedAt: now,
+          chosenOption: 'Marry',
+          resolutionCheckDate: now.add(const Duration(days: 30)),
+          satisfactionScore: const Value(8),
+          reflection: const Value('glad'),
         ));
   }
 
@@ -75,11 +102,22 @@ void main() {
       final polls = case0['polls'] as List<dynamic>;
       expect(polls, hasLength(1));
       expect((polls.single as Map<String, dynamic>)['id'], 'p1');
+
+      final outsideView = case0['outsideView'] as Map<String, dynamic>;
+      expect(outsideView['id'], 'ov1');
+      expect(outsideView['stratificationFactors'], {'age': 30});
+      final citations = outsideView['citations'] as List<dynamic>;
+      expect((citations.single as Map<String, dynamic>)['title'], 'A Study');
+
+      final resolution = case0['resolution'] as Map<String, dynamic>;
+      expect(resolution['chosenOption'], 'Marry');
+      expect(resolution['satisfactionScore'], 8);
     });
   });
 
   group('restoreAll', () {
-    test('round-trips a full dump back into the database', () async {
+    test('round-trips a full dump — case, poll, outside view, and '
+        'resolution all survive', () async {
       await seedCase();
       final bytes = await serializer.dumpAll();
 
@@ -90,8 +128,26 @@ void main() {
       final cases = await db2.select(db2.cases).get();
       expect(cases, hasLength(1));
       expect(cases.first.question, 'Marry now or wait?');
+
       final polls = await db2.select(db2.polls).get();
       expect(polls, hasLength(1));
+      expect(polls.first.id, 'p1');
+
+      final views = await db2.select(db2.outsideViews).get();
+      expect(views, hasLength(1));
+      expect(views.first.stratificationFactors, {'age': 30});
+      expect(views.first.citations, hasLength(1));
+      final citation =
+          (views.first.citations!.single as Map<String, dynamic>);
+      expect(citation['title'], 'A Study');
+      expect(citation['url'], 'https://x');
+
+      final resolutions = await db2.select(db2.resolutions).get();
+      expect(resolutions, hasLength(1));
+      expect(resolutions.first.caseId, 'c1');
+      expect(resolutions.first.chosenOption, 'Marry');
+      expect(resolutions.first.satisfactionScore, 8);
+      expect(resolutions.first.reflection, 'glad');
     });
 
     test('rejects a backup from a different app', () async {
