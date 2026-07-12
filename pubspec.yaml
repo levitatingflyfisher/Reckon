@@ -52,8 +52,10 @@ dependencies:
   crypto: ^3.0.3
   cryptography: ^2.7.0 # AES-GCM for ReckonParty end-to-end encryption
   http: ^1.2.0 # Connected/BYOK LLM calls to the Anthropic Messages API
-  intl: ^0.19.0
+  # >=0.20.2 to satisfy sanctuary_backup_ui's constraint (SANCTUARY-BRIEF §4.W2).
+  intl: ^0.20.2
   share_plus: ^10.1.2
+  file_picker: ^8.0.0 # picks the .ohbk file for encrypted-backup restore
   qr_flutter: ^4.1.0 # render the LAN join link as a scannable QR code
   url_launcher: ^6.3.1  # opens curated citation links in the system browser
   nsd: ^4.1.0 # mDNS/DNS-SD advertise + browse for LAN party auto-discovery
@@ -61,6 +63,13 @@ dependencies:
   # downloads so Android's Doze/process-suspend can't kill an in-app transfer
   # when the screen sleeps (the partial is now resumable, but staying awake
   # avoids the interruption in the first place)
+
+  # Encrypted backup (.ohbk) — sibling path deps (eloEngine precedent).
+  # SANCTUARY-BRIEF §3, §4.W2. Clone next to this repo; see README.
+  sanctuary_auth_core:
+    path: ../packages/sanctuary_auth_core
+  sanctuary_backup_ui:
+    path: ../packages/sanctuary_backup_ui
 
   # OpenHearth design system — tokens, typography, theme. In-repo
   # reconstruction of the shared ../ohStyle package so Reckon builds
