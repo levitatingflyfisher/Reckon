@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sanctuary_backup_ui/sanctuary_backup_ui.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../../core/llm/hf_token.dart';
@@ -56,6 +57,9 @@ class SettingsScreen extends ConsumerWidget {
           Text('Your data', style: textTheme.titleLarge),
           const SizedBox(height: 8),
           const _ExportCard(),
+          const SizedBox(height: 12),
+          const _BackupCard(),
+          const BackupSettingsSection(),
           const SizedBox(height: 24),
           const ListTile(
             title: Text('Auth tier'),
@@ -181,9 +185,11 @@ class _ExportCardState extends ConsumerState<_ExportCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Export everything Reckon knows about you: cases, polls, '
-            'outside views, and resolutions. Stays on your device '
-            'unless you share it.',
+            'Share a plain, unencrypted copy of everything Reckon knows '
+            'about you: cases, polls, outside views, and resolutions — for '
+            'reading elsewhere, not for safekeeping. Stays on your device '
+            'unless you share it. For a restorable backup, see Encrypted '
+            'backup below.',
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -209,6 +215,31 @@ class _ExportCardState extends ConsumerState<_ExportCard> {
               ],
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Introduces the encrypted-backup controls (rendered immediately below by
+/// [BackupSettingsSection], from sanctuary_backup_ui) with copy that keeps
+/// two things distinct in the user's mind: this is a *restorable* backup
+/// unlocked by 12 recovery words, unlike the plain exports above; and those
+/// words are not a ReckonParty join-link (SANCTUARY-BRIEF §4.W2 — "clearly
+/// labeled so recovery phrases are never confused with party join-links").
+class _BackupCard extends StatelessWidget {
+  const _BackupCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return OHCard(
+      child: Text(
+        'An encrypted, restorable backup of everything above, protected by '
+        '12 recovery words only you hold — nobody else, not even this app, '
+        'can read it without them. Different from a ReckonParty join link: '
+        'those share a decision with someone else; these words recover '
+        'your data on a new device.',
+        style: textTheme.bodyMedium,
       ),
     );
   }
