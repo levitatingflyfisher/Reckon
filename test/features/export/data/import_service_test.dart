@@ -9,11 +9,12 @@ import 'package:reckon/features/export/domain/entities/export_bundle.dart';
 import 'package:reckon/features/outside_view/domain/entities/citation.dart';
 import 'package:reckon/features/outside_view/domain/entities/outside_view.dart';
 import 'package:reckon/features/outside_view/domain/entities/user_profile.dart';
+import 'package:reckon/features/predictions/domain/entities/model_prediction.dart';
 
 /// [ImportService] rehydrates [AppDatabase] from an [ExportBundle] — the
 /// mirror image of [ExportService.gather()]. Destructive: wipes every table
-/// this app owns (plus `model_predictions`, which has an enforced FK to
-/// `cases` but is NOT part of the backup payload) and re-inserts inside one
+/// this app owns (including `model_predictions`, which IS part of the
+/// backup payload as of W4 F1 — see below) and re-inserts inside one
 /// transaction, FK-safe (SANCTUARY-BRIEF §2.5, §4.W2).
 void main() {
   late AppDatabase db;
@@ -80,6 +81,18 @@ void main() {
           satisfactionScore: 8,
           reflection: 'glad',
         ),
+        predictions: [
+          ModelPrediction(
+            id: 'mp1',
+            caseId: 'c1',
+            modelVersion: 'gemma-3-1b-it',
+            kind: PredictionKind.duelForecast,
+            predictedAt: now,
+            payload: const {'lean': 70, 'forecasterName': 'The Actuary'},
+            score: 0.4,
+            scoredAt: now.add(const Duration(days: 30)),
+          ),
+        ],
       ),
     ], profile: const UserProfile(sesBracket: 'middle', religiosity: 'low'));
 
@@ -104,6 +117,14 @@ void main() {
     expect(resolutions, hasLength(1));
     expect(resolutions.first.caseId, 'c1');
     expect(resolutions.first.satisfactionScore, 8);
+
+    // W4 F1: restore genuinely replaces the forecaster-duel track record,
+    // it does not silently drop it.
+    final predictions = await db.select(db.modelPredictions).get();
+    expect(predictions, hasLength(1));
+    expect(predictions.first.caseId, 'c1');
+    expect(predictions.first.kind, 'duelForecast');
+    expect(predictions.first.score, 0.4);
 
     final profile = await (db.select(db.userProfile)
           ..where((t) => t.id.equals(1)))
@@ -168,12 +189,14 @@ void main() {
   });
 
   // The FK landmine: model_predictions.caseId references Cases with NO
-  // cascade (drift default = SQLite "NO ACTION"). It is not part of
-  // ExportBundle/the backup payload, so a naive wipe of only
+  // cascade (drift default = SQLite "NO ACTION"). A naive wipe of only
   // {resolutions, outsideViews, polls, cases} throws
   // SQLITE_CONSTRAINT_FOREIGNKEY the moment a user who has ever run the duel
   // (which logs predictions) tries to restore. A fresh-DB round-trip test
-  // would NOT catch this — it must be seeded explicitly.
+  // would NOT catch this — it must be seeded explicitly. This case's old
+  // predictions are NOT in the incoming bundle (the bundle only carries a
+  // different, new case) — they are cleared with the rest of the old data,
+  // not orphaned and not incorrectly reattached to the new case.
   test('restoreAll succeeds even when model_predictions references a '
       'to-be-wiped case (FK-safe order)', () async {
     await db.into(db.cases).insert(CasesCompanion.insert(
@@ -220,8 +243,9 @@ void main() {
     expect(cases, hasLength(1));
     expect(cases.first.id, 'c-new');
 
-    // model_predictions is duel-scoped history over the wiped case; it is
-    // not part of the backup payload, so it is cleared rather than orphaned.
+    // The old case's predictions had no corresponding entry in the incoming
+    // bundle (only the new case was restored) — cleared rather than
+    // orphaned or misattached.
     final predictions = await db.select(db.modelPredictions).get();
     expect(predictions, isEmpty);
   });

@@ -17,15 +17,18 @@ import '../domain/entities/export_bundle.dart';
 /// §2.5. A failure anywhere rolls the whole transaction back; there is no
 /// partial restore.
 ///
-/// `model_predictions` is wiped even though it is **not** part of
-/// [ExportBundle] (and so is not restored): its `caseId` column has an
-/// enforced foreign key to `cases` with no cascade
-/// (`model_predictions_table.dart`), so leaving it out of the wipe would
-/// throw `SQLITE_CONSTRAINT_FOREIGNKEY` the moment a user who has ever run
-/// the forecaster duel (which logs predictions) tried to restore. Once the
-/// cases underneath them are replaced, those predictions would be stale
-/// data attributed to the wrong case content anyway — clearing them is the
-/// honest destructive-replace behaviour, not a shortcut.
+/// `model_predictions` (the forecaster-duel prediction/track-record history)
+/// **is** part of [ExportBundle] (W4 F1 — the confirm-dialog copy and
+/// docs/privacy-model.md both promise restore "replaces" this data, so it
+/// must genuinely round-trip, not be silently destroyed). It is still wiped
+/// before the parent `cases` rows are wiped, same as every other
+/// case-scoped table — its `caseId` column has an enforced foreign key to
+/// `cases` with no cascade (`model_predictions_table.dart`), so leaving it
+/// out of the wipe would throw `SQLITE_CONSTRAINT_FOREIGNKEY`. Rows for a
+/// case that is present in the bundle are re-inserted right after that case;
+/// rows for a case that has been dropped from the bundle (e.g. the backup
+/// predates a case created since) have nothing to attach to and are left
+/// cleared, matching the promised replace semantics.
 ///
 /// Party sync (`parties`, `party_ballots`, `groups`, `group_members`,
 /// `forecasters`) is untouched: none of those tables reference `cases`, they
@@ -73,6 +76,21 @@ class ImportService {
                   resolutionCheckDate: resolution.resolutionCheckDate,
                   satisfactionScore: Value(resolution.satisfactionScore),
                   reflection: Value(resolution.reflection),
+                ),
+              );
+        }
+
+        for (final prediction in entry.predictions) {
+          await _db.into(_db.modelPredictions).insert(
+                ModelPredictionsCompanion.insert(
+                  id: prediction.id,
+                  caseId: entry.case_.id,
+                  modelVersion: prediction.modelVersion,
+                  kind: prediction.kind.name,
+                  predictedAt: prediction.predictedAt,
+                  payload: prediction.payload,
+                  score: Value(prediction.score),
+                  scoredAt: Value(prediction.scoredAt),
                 ),
               );
         }

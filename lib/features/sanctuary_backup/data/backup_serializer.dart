@@ -13,6 +13,7 @@ import '../../export/domain/entities/export_bundle.dart';
 import '../../outside_view/domain/entities/citation.dart';
 import '../../outside_view/domain/entities/outside_view.dart';
 import '../../outside_view/domain/entities/user_profile.dart';
+import '../../predictions/domain/entities/model_prediction.dart';
 
 /// Serializes all Reckon user data to/from a JSON [Uint8List] for encrypted
 /// backup via sanctuary_backup_ui.
@@ -117,6 +118,7 @@ class ReckonBackupSerializer implements BackupSerializer {
             e.outsideView == null ? null : _outsideViewToJson(e.outsideView!),
         'resolution':
             e.resolution == null ? null : _resolutionToJson(e.resolution!),
+        'predictions': e.predictions.map(_predictionToJson).toList(),
       };
 
   Map<String, dynamic> _pollToJson(Poll p) => {
@@ -143,6 +145,17 @@ class ReckonBackupSerializer implements BackupSerializer {
         'citations': v.citations.map((c) => c.toJson()).toList(),
       };
 
+  Map<String, dynamic> _predictionToJson(ModelPrediction p) => {
+        'id': p.id,
+        'caseId': p.caseId,
+        'modelVersion': p.modelVersion,
+        'kind': p.kind.name,
+        'predictedAt': p.predictedAt.toIso8601String(),
+        'payload': p.payload,
+        'score': p.score,
+        'scoredAt': p.scoredAt?.toIso8601String(),
+      };
+
   Map<String, dynamic> _resolutionToJson(ResolutionExport r) => {
         'decidedAt': r.decidedAt.toIso8601String(),
         'chosenOption': r.chosenOption,
@@ -155,6 +168,7 @@ class ReckonBackupSerializer implements BackupSerializer {
     final pollsJson = (json['polls'] as List<dynamic>?) ?? const [];
     final outsideViewJson = json['outsideView'] as Map<String, dynamic>?;
     final resolutionJson = json['resolution'] as Map<String, dynamic>?;
+    final predictionsJson = (json['predictions'] as List<dynamic>?) ?? const [];
 
     return CaseExport(
       case_: Case(
@@ -188,6 +202,10 @@ class ReckonBackupSerializer implements BackupSerializer {
           outsideViewJson == null ? null : _outsideViewFromJson(outsideViewJson),
       resolution:
           resolutionJson == null ? null : _resolutionFromJson(resolutionJson),
+      predictions: predictionsJson
+          .cast<Map<String, dynamic>>()
+          .map(_predictionFromJson)
+          .toList(),
     );
   }
 
@@ -219,6 +237,21 @@ class ReckonBackupSerializer implements BackupSerializer {
         citations: Citation.listFromDynamic(
           json['citations'] as List<dynamic>?,
         ),
+      );
+
+  ModelPrediction _predictionFromJson(Map<String, dynamic> json) =>
+      ModelPrediction(
+        id: json['id'] as String,
+        caseId: json['caseId'] as String,
+        modelVersion: json['modelVersion'] as String,
+        kind: PredictionKind.values.firstWhere(
+          (k) => k.name == json['kind'],
+          orElse: () => PredictionKind.outsideView,
+        ),
+        predictedAt: _dateTime(json['predictedAt'])!,
+        payload: (json['payload'] as Map<String, dynamic>?) ?? const {},
+        score: (json['score'] as num?)?.toDouble(),
+        scoredAt: _dateTime(json['scoredAt']),
       );
 
   ResolutionExport _resolutionFromJson(Map<String, dynamic> json) =>

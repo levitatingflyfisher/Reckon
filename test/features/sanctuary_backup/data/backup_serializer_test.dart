@@ -72,6 +72,18 @@ void main() {
           satisfactionScore: const Value(8),
           reflection: const Value('glad'),
         ));
+    // W4 F1: the forecaster-duel track record must round-trip through the
+    // backup, not be silently dropped on restore.
+    await db.into(db.modelPredictions).insert(ModelPredictionsCompanion.insert(
+          id: 'mp1',
+          caseId: 'c1',
+          modelVersion: 'gemma-3-1b-it',
+          kind: 'duelForecast',
+          predictedAt: now,
+          payload: const {'lean': 70, 'forecasterName': 'The Actuary'},
+          score: const Value(0.4),
+          scoredAt: Value(now.add(const Duration(days: 30))),
+        ));
   }
 
   group('dumpAll', () {
@@ -112,6 +124,13 @@ void main() {
       final resolution = case0['resolution'] as Map<String, dynamic>;
       expect(resolution['chosenOption'], 'Marry');
       expect(resolution['satisfactionScore'], 8);
+
+      final predictions = case0['predictions'] as List<dynamic>;
+      expect(predictions, hasLength(1));
+      final prediction = predictions.single as Map<String, dynamic>;
+      expect(prediction['id'], 'mp1');
+      expect(prediction['kind'], 'duelForecast');
+      expect(prediction['score'], 0.4);
     });
   });
 
@@ -148,6 +167,14 @@ void main() {
       expect(resolutions.first.chosenOption, 'Marry');
       expect(resolutions.first.satisfactionScore, 8);
       expect(resolutions.first.reflection, 'glad');
+
+      // W4 F1: the forecaster-duel prediction/track-record history is not
+      // silently destroyed by restore — it genuinely round-trips.
+      final predictions = await db2.select(db2.modelPredictions).get();
+      expect(predictions, hasLength(1));
+      expect(predictions.first.caseId, 'c1');
+      expect(predictions.first.kind, 'duelForecast');
+      expect(predictions.first.score, 0.4);
     });
 
     test('rejects a backup from a different app', () async {
