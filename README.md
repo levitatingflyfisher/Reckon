@@ -68,6 +68,30 @@ On first use, pick a model in onboarding and let it download (a few hundred MB t
 ~4 GB depending on the model — Wi-Fi recommended). After that, everything works
 offline. Full instructions: [docs/how-to/build-and-run.md](docs/how-to/build-and-run.md).
 
+### Encrypted backup — sibling packages
+
+Reckon's encrypted `.ohbk` backup (Settings → Encrypted Backup) is built on two shared
+packages consumed by **sibling path dependency** (`../packages/...`, same pattern as
+`eloEngine`). Clone them next to this repo so the paths resolve:
+
+```
+packages/
+  sanctuary_auth_core/     # github: levitatingflyfisher/sanctuaryAuthCore
+  sanctuary_backup_ui/     # github: levitatingflyfisher/sanctuaryBackupUi
+Reckon/                    # this repo
+```
+
+```bash
+git clone https://github.com/levitatingflyfisher/sanctuaryAuthCore packages/sanctuary_auth_core
+git clone https://github.com/levitatingflyfisher/sanctuaryBackupUi packages/sanctuary_backup_ui
+git clone git@github.com:levitatingflyfisher/Reckon.git
+cd Reckon
+flutter pub get
+```
+
+Everything else in Reckon works without them, but `flutter pub get` fails on a clone
+that's missing these two directories.
+
 ## See the docs
 
 - **[VISION.md](VISION.md)** — the one idea, the design commitments, an honest
