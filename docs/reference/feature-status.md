@@ -20,7 +20,8 @@ forecaster-duel build. This is the honest per-area breakdown behind the
 | Record: Clarity Score, calibration, base rates, insight cards, update quality | Live | `features/record/domain/usecases/` |
 | Technique glossary | Live | `features/glossary/`, `assets/glossary.json` |
 | Deference map (`/forecasters`; `/model-scorecard` redirects to it) | Live | `features/predictions/` |
-| Export (Markdown / JSON) | Live | `features/export/` |
+| Export (Markdown / JSON, plaintext) | Live | `features/export/` |
+| Encrypted backup (.ohbk export/import, restorable) | Live | `features/sanctuary_backup/`, `features/export/data/import_service.dart` |
 | Notifications (re-poll + resolution, deadline-aware, lockscreen-private) | Live | `core/notifications/` |
 | Reference-class database | Live — **~15 of ~20** target categories | `assets/reference_classes.json`, `core/database/seed/` |
 

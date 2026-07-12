@@ -99,6 +99,35 @@ share sheet or clipboard is the transport, and you choose the destination. Impor
 pasting response JSON into a text field. The de-identification is a small model's draft
 plus your review; treat the preview as the guarantee, not the model.
 
+### Encrypted backup — files only; the key never leaves the device
+
+Settings → **Encrypted Backup** produces a `.ohbk` file: your cases, polls, outside
+views, resolutions, and profile, encrypted with a key derived from a **12-word recovery
+phrase generated on-device**. Reckon transmits nothing to make this backup — you choose
+where the file goes (the system share sheet), exactly like the plaintext exports.
+
+What the honesty copy in-app says plainly, and this page repeats for the record:
+
+- **The recovery words are the only way to decrypt the backup.** Reckon stores no
+  copy anywhere else — no server, no account, no "forgot your words?" recovery.
+  Lose them and lose the backup; the app can't help.
+- **Restore is destructive.** It replaces every case, poll, outside view, resolution,
+  and model prediction currently on the device with the contents of the backup file,
+  inside a single transaction — never a partial restore. The confirm dialog states
+  this before it happens.
+- **It is not a ReckonParty join link.** A join link shares one decision's key with
+  someone else you're deciding with; a recovery phrase recovers *your* backup on a
+  *new device*. The two live in visibly separate settings sections so they're never
+  confused.
+- **What it does *not* cover:** the ReckonParty forecaster roster, groups, and any
+  in-flight party data are not part of this backup — those are a separate,
+  ephemeral, link-carried key system (`features/party/sync/party_crypto.dart`,
+  AES-GCM-256) with nothing in common with a durable single-user backup, and are left
+  untouched by both export and restore.
+- **A wrong phrase fails closed with a specific, calm message** — never a silent
+  partial restore. The blob's ChaCha20-Poly1305 authentication tag alone rules out a
+  tampered or foreign file before any data is touched.
+
 ## Android permissions, and why
 
 | Permission | Why |

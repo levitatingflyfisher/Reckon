@@ -58,6 +58,15 @@ multiple of 4 before decoding.
 requires nonces never repeat under a fixed `K`; the spec forbids any code path that
 encrypts with a caller-supplied or reused nonce.
 
+**A distinct wire format: the `.ohbk` encrypted backup.** Settings → Encrypted Backup
+(`features/sanctuary_backup/`) is a separate feature with its own key derivation
+(BIP39 recovery phrase → HKDF, `sanctuary_auth_core`), its own cipher
+(ChaCha20-Poly1305, not the AES-GCM-256 of `E(K, d)` above), and its own AAD context
+(`'reckon-backup/v1'`, distinct from any party-sync value). It is OHBK-conformant per
+`sanctuary_auth_core`'s own spec and out of scope for this paper (§0): it shares no key
+material, no wire format, and no code path with `E`/`D` above, so nothing here
+constrains it and nothing it does relaxes E1's guarantee for party sync.
+
 ## 4. The join link and key secrecy
 
 A join link is:
