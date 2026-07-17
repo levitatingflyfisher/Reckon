@@ -5,6 +5,12 @@ All notable changes to Reckon will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- Fleet conformance suite (`test/fleet_conformance_test.dart` via the
+  shared `oh_fleet_conformance` package): Reckon's recorded posture —
+  tokens style tier, exact four-permission Android surface, recorded
+  tighter analyzer override, startup maintenance — plus committed size
+  budgets in `budgets.json` (gzipped `main.dart.js` and arm64 APK,
+  measured x 1.05).
 - Snapshot vault ("Previous backups" on the backup settings section):
   every encrypted export and every restore leaves a stamped on-device
   snapshot (keep-10, pinnable) you can restore, pin or delete.

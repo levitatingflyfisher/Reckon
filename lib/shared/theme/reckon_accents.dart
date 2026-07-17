@@ -4,7 +4,8 @@ import 'dart:ui';
 ///
 /// History: Reckon shipped with an in-repo "reconstruction" of the shared
 /// `openhearth_design` package whose terracotta values had silently diverged
-/// from canonical (`hearth500 0xFFA85040` / `hearth400 0xFFC47B6A`). The
+/// from the canonical `hearth500` / `hearth400` (values deliberately not
+/// restated here — C1 forbids retyped token hex, even in comments). The
 /// de-fork decision (fleet spec §8) killed the fork and **blessed the
 /// diverged hues as Reckon's identity** — so they are named for Reckon now
 /// (*ember*), not for the shared hearth ramp they no longer belong to.

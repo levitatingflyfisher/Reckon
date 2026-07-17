@@ -84,6 +84,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  # The fleet's standards as tests (style/backup/budgets/permissions/
+  # harness) — sibling checkout like the other path deps; see README.
+  oh_fleet_conformance:
+    path: ../packages/oh_fleet_conformance
   # In-process relay server for the ReckonParty sync integration test.
   reckonparty_relay:
     path: relay
