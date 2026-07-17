@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 /// Loads real fonts so golden PNGs show readable text instead of the
 /// placeholder boxes Flutter renders by default:
-///  1. the app's OWN bundled fonts (e.g. Lora / Nunito)
+///  1. the app's OWN bundled fonts (e.g. openhearth_design's Lora / Nunito)
 ///     from its asset manifest — so goldens show the real design-system type;
 ///  2. the SDK Roboto + Material Icons as the default-family fallback.
 /// Both are best-effort: if fonts can't be found, tests still run (text just
