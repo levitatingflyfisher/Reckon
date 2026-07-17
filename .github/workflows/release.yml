@@ -15,14 +15,16 @@ jobs:
         with:
           path: Reckon
 
-      # The OpenHearth design system is now vendored in-repo at
-      # packages/openhearth_design — no sibling ohStyle checkout needed.
-      # The encrypted-backup packages are NOT vendored — clone them as
-      # true siblings of Reckon/ (eloEngine precedent, SANCTUARY-BRIEF §3).
-      - name: Clone the sibling sanctuary packages
+      # Every path dep in pubspec.yaml resolves against a sibling of the
+      # Reckon/ checkout (eloEngine precedent, SANCTUARY-BRIEF §3): the
+      # sanctuary pair under packages/, the canonical ohStyle design
+      # package, and the fleet-conformance test harness.
+      - name: Clone the sibling path-dep packages
         run: |
           git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryAuthCore packages/sanctuary_auth_core
           git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryBackupUi packages/sanctuary_backup_ui
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohStyle ohStyle
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohFleetConformance packages/oh_fleet_conformance
 
       - uses: actions/setup-java@v4
         with:
@@ -55,14 +57,16 @@ jobs:
         with:
           path: Reckon
 
-      # The OpenHearth design system is now vendored in-repo at
-      # packages/openhearth_design — no sibling ohStyle checkout needed.
-      # The encrypted-backup packages are NOT vendored — clone them as
-      # true siblings of Reckon/ (eloEngine precedent, SANCTUARY-BRIEF §3).
-      - name: Clone the sibling sanctuary packages
+      # Every path dep in pubspec.yaml resolves against a sibling of the
+      # Reckon/ checkout (eloEngine precedent, SANCTUARY-BRIEF §3): the
+      # sanctuary pair under packages/, the canonical ohStyle design
+      # package, and the fleet-conformance test harness.
+      - name: Clone the sibling path-dep packages
         run: |
           git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryAuthCore packages/sanctuary_auth_core
           git clone --depth 1 https://github.com/levitatingflyfisher/sanctuaryBackupUi packages/sanctuary_backup_ui
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohStyle ohStyle
+          git clone --depth 1 https://github.com/levitatingflyfisher/ohFleetConformance packages/oh_fleet_conformance
 
       - uses: actions/setup-java@v4
         with:
