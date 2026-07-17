@@ -27,6 +27,11 @@ All notable changes to Reckon will be documented in this file.
   wrong shape, invalid base64 blobs) now surfaces as the sync flow's
   normal transport failure instead of an unhandled decode error — the
   relay body is untrusted input (the join link picks the relay host).
+- The same guard for the peer-to-peer path: a malformed peer snapshot
+  over a LAN/Nearby/WebRTC channel (non-map snapshot, wrong field types,
+  invalid base64 blobs) now surfaces as the channel flow's normal
+  `StateError` instead of leaking a raw `TypeError`/`FormatException` —
+  the peer device controls every byte of that snapshot.
 
 ### Changed
 - De-forked the design package: the in-repo `packages/openhearth_design`
