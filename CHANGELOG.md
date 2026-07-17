@@ -46,3 +46,12 @@ All notable changes to Reckon will be documented in this file.
 - The unused `permission_handler` dependency. The notification-permission
   prompt goes through `flutter_local_notifications`'
   `requestNotificationsPermission()`; nothing imported the package.
+- Unused flutter_gemma native families from the Android APK (image
+  generator, vision-tasks base, gemma/gecko embedders, text chunker,
+  RAG sqlite vector store — Reckon does text inference only, which loads
+  just `libllm_inference_engine_jni.so`/`liblitertlm_jni.so`; verified
+  against the plugin's 0.13.2 Kotlin source). Expected arm64 APK drop:
+  ~85 MiB (~156 MB → ~70 MB). Excludes are a reversible `packaging`
+  block in `android/app/build.gradle.kts`. On-device verification of a
+  rebuilt APK (download a model, run a duel) is still pending — please
+  smoke-test text inference on hardware before shipping this build.
