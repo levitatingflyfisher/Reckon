@@ -35,6 +35,10 @@ void main() {
       secureKeyStoreProvider.overrideWithValue(store),
       cryptoServiceProvider.overrideWithValue(const DefaultCryptoService()),
       sanctuaryAppDomainProvider.overrideWithValue('reckon'),
+      // v0.2.0 takes a MANDATORY verified pre-restore snapshot; without an
+      // in-memory vault the default store needs a real filesystem and every
+      // restore fails closed as snapshotFailed.
+      vaultStoreProvider.overrideWithValue(InMemoryVaultStore()),
       backupSerializerProvider
           .overrideWith((ref) => ReckonBackupSerializer(database)),
       sanctuaryBackupConfigProvider.overrideWithValue(
