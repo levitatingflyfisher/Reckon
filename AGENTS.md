@@ -93,7 +93,7 @@ The short version, by concern:
 | **ReckonParty groups** (rosters, considered mode) | `lib/features/party/` — `Group`/`GroupMember` domain + repos, `/groups` & `/group/:id` screens |
 | **The relay server** | `relay/` (a standalone Dart/shelf app; see `relay/README.md`) |
 | **Notifications** | `lib/core/notifications/` |
-| **Design system / theme** | `packages/openhearth_design/`, `lib/shared/widgets/`, `lib/core/theme/` |
+| **Design system / theme** | `lib/shared/theme/` (blessed app identity: `ReckonTheme`, `ReckonAccents`, tokens), `lib/shared/widgets/`, `lib/core/theme/` |
 | **Routing / app shell** | `lib/app/` |
 
 Docs are organized [Diátaxis](https://diataxis.fr/)-style — see

@@ -859,10 +859,10 @@ packages:
   openhearth_design:
     dependency: "direct main"
     description:
-      path: "packages/openhearth_design"
+      path: "../ohStyle/openhearth_design"
       relative: true
     source: path
-    version: "0.1.0"
+    version: "0.4.0"
   package_config:
     dependency: transitive
     description:

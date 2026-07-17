@@ -162,7 +162,7 @@ flowchart LR
 | **ReckonParty — crypto/sync** | `lib/features/party/sync/` (`party_crypto.dart`, `party_relay.dart`, `party_link.dart`, `party_codec.dart`, `party_sync_service.dart`) |
 | **ReckonParty — LAN transport** | `lib/features/party/sync/transport/` |
 | **Relay server** | `relay/` (standalone Dart + shelf; `relay/lib/relay.dart`) |
-| **Design system / theme** | `packages/openhearth_design/`, `lib/shared/widgets/`, `lib/core/theme/` |
+| **Design system / theme** | `lib/shared/theme/` (blessed app identity: `ReckonTheme`, `ReckonAccents`, tokens), `lib/shared/widgets/`, `lib/core/theme/` |
 
 ## Invariants that must always hold
 

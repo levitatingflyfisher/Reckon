@@ -23,6 +23,14 @@ All notable changes to Reckon will be documented in this file.
 - Plain-JSON export tile alongside the encrypted backup.
 
 ### Changed
+- De-forked the design package: the in-repo `packages/openhearth_design`
+  reconstruction (whose every token had silently diverged from the shared
+  `ohStyle` package) is deleted. Reckon's shipped look is unchanged —
+  blessed as app identity in `lib/shared/theme/` (`ReckonTheme`,
+  `ReckonAccents` ember hues, `ReckonPalette`/`ReckonRadii`/
+  `ReckonTypography`), pinned by the golden sweeps. The canonical
+  `../ohStyle/openhearth_design` sibling is now the declared dependency
+  for future deliberate convergence.
 - Backup envelope validation now goes through the shared
   `sanctuary_backup_ui` v0.2.0 helper; preview and restore share one
   validation gate, so the preview can never accept a file the restore

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:openhearth_design/openhearth_design.dart';
+import 'package:reckon/shared/theme/reckon_theme.dart';
 import 'package:reckon/shared/widgets/oh_button.dart';
 
 import 'visual_golden_helper.dart';
@@ -61,9 +61,9 @@ void main() {
     await goldenAtSizes(
       tester,
       name: 'oh_button',
-      // Render through the real OhTheme so the StadiumBorder pills, button
+      // Render through the real ReckonTheme so the StadiumBorder pills, button
       // typography and accent colors match production, not bare Material.
-      theme: OhTheme.light(),
+      theme: ReckonTheme.light(),
       home: Scaffold(
         body: SafeArea(
           child: SingleChildScrollView(child: _buttonGallery()),

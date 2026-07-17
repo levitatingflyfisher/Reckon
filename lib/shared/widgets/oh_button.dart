@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 enum OHButtonStyle { primary, secondary, text }
 
 /// Reckon-specific button adapter — label/icon convenience + optional
-/// full-width. Shape, color, and typography come from OhTheme (StadiumBorder
+/// full-width. Shape, color, and typography come from ReckonTheme (StadiumBorder
 /// pills by default).
 class OHButton extends StatelessWidget {
   const OHButton({

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Reckon-specific lean slider — two option labels flanking a 0–100 slider.
-/// Slider colors, track height, and thumb size come from OhTheme.sliderTheme.
+/// Slider colors, track height, and thumb size come from ReckonTheme.sliderTheme.
 class LeanSlider extends StatelessWidget {
   const LeanSlider({
     super.key,

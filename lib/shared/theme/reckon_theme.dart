@@ -1,43 +1,55 @@
 import 'package:flutter/material.dart';
 
-import 'oh_colors.dart';
-import 'oh_radii.dart';
-import 'oh_typography.dart';
+import 'reckon_accents.dart';
+import 'reckon_tokens.dart';
 
-/// The three OpenHearth themes. A theme is a user-owned preference — the app
-/// never flips it based on system dark-mode (see Reckon's `ThemePreference`).
+/// The three Reckon themes. A theme is a user-owned preference — the app
+/// never flips it based on system dark-mode (see `ThemePreference`).
 ///
-///   * [light]      — hearth terracotta on linen. Daytime default.
-///   * [hearthDark] — warm brown-black, hearth-family. Evening.
+///   * [light]      — ember terracotta on linen. Daytime default.
+///   * [hearthDark] — warm brown-black, ember accent. Evening.
 ///   * [night]      — neutral high-contrast dark, sage accent. Late night.
-abstract final class OhTheme {
-  /// Hearth terracotta on linen.
+///
+/// ## Why this is app code, not the shared package
+///
+/// This construction is Reckon's blessed identity, carried over verbatim from
+/// the retired in-repo `openhearth_design` fork (de-fork decision, fleet spec
+/// §8). The canonical `openhearth_design` package builds its themes
+/// differently in nearly every respect (color scheme slots, type ladder,
+/// component themes, radii), so reproducing this exact rendering through
+/// `OhTheme.*(appAccent: …)` + `copyWith` would mean re-implementing
+/// `ThemeData`'s internals. Instead the construction lives here, byte-for-byte
+/// equal to what shipped; the golden sweeps in `test/visual/` pin it.
+/// Converging on the canonical builders is a deliberate future visual change,
+/// not a refactor.
+abstract final class ReckonTheme {
+  /// Ember terracotta on linen.
   static ThemeData light() => _build(
         _scheme(
           brightness: Brightness.light,
-          seed: OhColors.hearth500,
-          primary: OhColors.hearth500,
-          onPrimary: OhColors.linen50,
-          surface: OhColors.linen50,
-          surfaceHighest: OhColors.linen100,
-          onSurface: OhColors.linen900,
-          onSurfaceVariant: OhColors.linen600,
-          outline: OhColors.linen300,
+          seed: ReckonAccents.ember500,
+          primary: ReckonAccents.ember500,
+          onPrimary: ReckonPalette.linen50,
+          surface: ReckonPalette.linen50,
+          surfaceHighest: ReckonPalette.linen100,
+          onSurface: ReckonPalette.linen900,
+          onSurfaceVariant: ReckonPalette.linen600,
+          outline: ReckonPalette.linen300,
         ),
       );
 
-  /// Warm brown-black, still hearth-family.
+  /// Warm brown-black, still ember-family.
   static ThemeData hearthDark() => _build(
         _scheme(
           brightness: Brightness.dark,
-          seed: OhColors.hearth400,
-          primary: OhColors.hearth400,
-          onPrimary: OhColors.linen900,
-          surface: OhColors.hearthDarkBg,
-          surfaceHighest: OhColors.hearthDarkSurfaceHigh,
-          onSurface: OhColors.linen100,
-          onSurfaceVariant: OhColors.linen400,
-          outline: OhColors.linen700,
+          seed: ReckonAccents.ember400,
+          primary: ReckonAccents.ember400,
+          onPrimary: ReckonPalette.linen900,
+          surface: ReckonPalette.hearthDarkBg,
+          surfaceHighest: ReckonPalette.hearthDarkSurfaceHigh,
+          onSurface: ReckonPalette.linen100,
+          onSurfaceVariant: ReckonPalette.linen400,
+          outline: ReckonPalette.linen700,
         ),
       );
 
@@ -45,12 +57,12 @@ abstract final class OhTheme {
   static ThemeData night() => _build(
         _scheme(
           brightness: Brightness.dark,
-          seed: OhColors.sage400,
-          primary: OhColors.sage400,
-          onPrimary: OhColors.nightBg,
-          surface: OhColors.nightBg,
-          surfaceHighest: OhColors.nightSurfaceHigh,
-          onSurface: OhColors.nightText,
+          seed: ReckonPalette.sage400,
+          primary: ReckonPalette.sage400,
+          onPrimary: ReckonPalette.nightBg,
+          surface: ReckonPalette.nightBg,
+          surfaceHighest: ReckonPalette.nightSurfaceHigh,
+          onSurface: ReckonPalette.nightText,
           onSurfaceVariant: const Color(0xFFA7ACB3),
           outline: const Color(0xFF3A3F47),
         ),
@@ -90,8 +102,8 @@ abstract final class OhTheme {
   }
 
   static ThemeData _build(ColorScheme scheme) {
-    final text = OhTypography.textTheme(scheme.onSurface);
-    const pill = RoundedRectangleBorder(borderRadius: OhRadii.pill);
+    final text = ReckonTypography.textTheme(scheme.onSurface);
+    const pill = RoundedRectangleBorder(borderRadius: ReckonRadii.pill);
 
     return ThemeData(
       useMaterial3: true,
@@ -158,15 +170,15 @@ abstract final class OhTheme {
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: const OutlineInputBorder(
-          borderRadius: OhRadii.lg,
+          borderRadius: ReckonRadii.lg,
           borderSide: BorderSide.none,
         ),
         enabledBorder: const OutlineInputBorder(
-          borderRadius: OhRadii.lg,
+          borderRadius: ReckonRadii.lg,
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: OhRadii.lg,
+          borderRadius: ReckonRadii.lg,
           borderSide: BorderSide(color: scheme.primary, width: 1.5),
         ),
       ),
@@ -174,7 +186,7 @@ abstract final class OhTheme {
         color: scheme.surfaceContainerHighest,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: const RoundedRectangleBorder(borderRadius: OhRadii.lg),
+        shape: const RoundedRectangleBorder(borderRadius: ReckonRadii.lg),
       ),
       dividerTheme: DividerThemeData(
         color: scheme.outlineVariant,
@@ -185,14 +197,14 @@ abstract final class OhTheme {
         backgroundColor: scheme.surfaceContainerHighest,
         labelStyle: text.labelMedium,
         side: BorderSide.none,
-        shape: const RoundedRectangleBorder(borderRadius: OhRadii.sm),
+        shape: const RoundedRectangleBorder(borderRadius: ReckonRadii.sm),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: scheme.inverseSurface,
         contentTextStyle:
             text.bodyMedium?.copyWith(color: scheme.onInverseSurface),
         behavior: SnackBarBehavior.floating,
-        shape: const RoundedRectangleBorder(borderRadius: OhRadii.md),
+        shape: const RoundedRectangleBorder(borderRadius: ReckonRadii.md),
       ),
     );
   }

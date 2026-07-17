@@ -1,33 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:openhearth_design/openhearth_design.dart';
 
-/// Which of the three OhTheme variants Reckon is currently displaying.
+import '../../shared/theme/reckon_theme.dart';
+
+/// Which of the three ReckonTheme variants Reckon is currently displaying.
 ///
 /// Theme is a user-owned preference — we never flip it based on system
 /// dark-mode. See `ohStyle/CLAUDE.md` for the full rationale on the
 /// tri-theme model and why auto-switching is wrong for this portfolio.
 enum ThemePreference {
-  /// [OhTheme.light]. Hearth terracotta on linen. Daytime default.
+  /// [ReckonTheme.light]. Ember terracotta on linen. Daytime default.
   light,
 
-  /// [OhTheme.hearthDark]. Warm brown-black, still hearth family.
+  /// [ReckonTheme.hearthDark]. Warm brown-black, still ember family.
   /// Evening, reflective reading.
   hearthDark,
 
-  /// [OhTheme.night]. Neutral high-contrast dark, sage accent.
+  /// [ReckonTheme.night]. Neutral high-contrast dark, sage accent.
   /// Deep reading, late nights, low ambient light.
   night;
 
   ThemeData build() {
     switch (this) {
       case ThemePreference.light:
-        return OhTheme.light();
+        return ReckonTheme.light();
       case ThemePreference.hearthDark:
-        return OhTheme.hearthDark();
+        return ReckonTheme.hearthDark();
       case ThemePreference.night:
-        return OhTheme.night();
+        return ReckonTheme.night();
     }
   }
 

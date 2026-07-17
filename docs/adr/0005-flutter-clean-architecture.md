@@ -25,9 +25,12 @@ carries three layers:
 Cross-cutting infrastructure lives in `lib/core/` (`database`, `llm`, `auth`,
 `notifications`, `theme`). State is **Riverpod**; storage is **Drift over SQLite**
 (`app_database.g.dart` is committed; regenerate with `build_runner`); routing is
-`go_router`. The design system is `packages/openhearth_design`, an **in-repo
-reconstruction** of the shared OpenHearth style package so the app builds standalone
-(fresh clone, CI) without a sibling checkout.
+`go_router`. The design system was originally `packages/openhearth_design`, an
+**in-repo reconstruction** of the shared OpenHearth style package. That fork was
+retired (its token values had silently diverged from canonical); Reckon's shipped
+look is now blessed as app-identity code in `lib/shared/theme/` (`ReckonTheme`,
+`ReckonAccents`, `ReckonPalette`), and the canonical `../ohStyle/openhearth_design`
+sibling package is the declared dependency for future, deliberate convergence.
 
 ## Consequences
 

@@ -71,12 +71,15 @@ dependencies:
   sanctuary_backup_ui:
     path: ../packages/sanctuary_backup_ui
 
-  # OpenHearth design system — tokens, typography, theme. In-repo
-  # reconstruction of the shared ../ohStyle package so Reckon builds
-  # standalone (CI, fresh clones, contributors) without the sibling checkout.
+  # OpenHearth design system — the CANONICAL shared package (sibling
+  # checkout), replacing the retired in-repo fork whose every token had
+  # silently diverged. Reckon's shipped look is blessed as app identity in
+  # lib/shared/theme/ (ReckonTheme/ReckonAccents — zero visual change,
+  # pinned by the goldens); this dependency is the declared convergence
+  # point for deliberately adopting canonical tokens in a future pass.
   # Fonts are bundled by this app (assets section below).
   openhearth_design:
-    path: packages/openhearth_design
+    path: ../ohStyle/openhearth_design
 
 dev_dependencies:
   flutter_test:
