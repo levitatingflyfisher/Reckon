@@ -22,6 +22,12 @@ All notable changes to Reckon will be documented in this file.
   than 7 days.
 - Plain-JSON export tile alongside the encrypted backup.
 
+### Fixed
+- A corrupt or hostile relay response to a party fetch (malformed JSON,
+  wrong shape, invalid base64 blobs) now surfaces as the sync flow's
+  normal transport failure instead of an unhandled decode error — the
+  relay body is untrusted input (the join link picks the relay host).
+
 ### Changed
 - De-forked the design package: the in-repo `packages/openhearth_design`
   reconstruction (whose every token had silently diverged from the shared

@@ -71,15 +71,29 @@ class HttpPartyRelay implements PartyRelay {
           );
         }
       }
-      final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
-      return RelaySnapshot(
-        party: base64.decode(json['party'] as String),
-        closed: (json['closed'] as bool?) ?? false,
-        ballots: {
-          for (final e in (json['ballots'] as Map).entries)
-            e.key as String: base64.decode(e.value as String),
-        },
-      );
+      // The body is untrusted (see above): decode + shape-check under a
+      // guard, so a corrupt or hostile response surfaces as the flow's
+      // normal transport failure (DioException) instead of leaking a raw
+      // FormatException/TypeError. Same trust-boundary stance as
+      // ChannelPartyRelay, which drops frames it cannot decode.
+      try {
+        final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+        return RelaySnapshot(
+          party: base64.decode(json['party'] as String),
+          closed: (json['closed'] as bool?) ?? false,
+          ballots: {
+            for (final e in (json['ballots'] as Map).entries)
+              e.key as String: base64.decode(e.value as String),
+          },
+        );
+      } catch (e) {
+        throw DioException(
+          requestOptions: res.requestOptions,
+          type: DioExceptionType.badResponse,
+          error: e,
+          message: 'Malformed relay response for party $partyId',
+        );
+      }
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
       rethrow;
