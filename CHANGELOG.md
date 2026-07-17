@@ -41,3 +41,8 @@ All notable changes to Reckon will be documented in this file.
   `sanctuary_backup_ui` v0.2.0 helper; preview and restore share one
   validation gate, so the preview can never accept a file the restore
   would reject.
+
+### Removed
+- The unused `permission_handler` dependency. The notification-permission
+  prompt goes through `flutter_local_notifications`'
+  `requestNotificationsPermission()`; nothing imported the package.

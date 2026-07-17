@@ -44,7 +44,6 @@ dependencies:
   # Notifications
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.4
-  permission_handler: ^11.3.1
 
   # Misc
   uuid: ^4.4.0
