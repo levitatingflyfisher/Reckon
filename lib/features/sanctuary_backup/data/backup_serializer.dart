@@ -30,7 +30,8 @@ import '../../predictions/domain/entities/model_prediction.dart';
 /// depth behind the OHBK AEAD context, which already binds a blob to
 /// `'reckon-backup/v1'` and would fail to decrypt under any other app's key
 /// (SANCTUARY-BRIEF §2.8).
-class ReckonBackupSerializer implements BackupSerializer {
+class ReckonBackupSerializer
+    implements BackupSerializer, PreviewableBackupSerializer {
   ReckonBackupSerializer(this._db);
   final AppDatabase _db;
 
@@ -40,10 +41,17 @@ class ReckonBackupSerializer implements BackupSerializer {
   Future<Uint8List> dumpAll() async {
     final bundle = await ExportService(_db).gather();
 
+    // WIRE-COMPAT: this stays the FLAT legacy shape (top-level keys, no
+    // `payload` nesting) because every shipped Reckon reader looks for
+    // top-level `profile`/`cases` — deliberately NOT BackupEnvelope.wrap.
+    // `createdAt` is ADDITIVE: the v0.2.0 canonical stamp preview/staleness
+    // copy reads; old readers ignore unknown keys, so new backups still
+    // restore on old installs.
     final payload = <String, dynamic>{
       'app': _appId,
       'schemaVersion': _db.schemaVersion,
       'generatedAt': bundle.generatedAt.toIso8601String(),
+      'createdAt': bundle.generatedAt.toUtc().toIso8601String(),
       'profile': {
         'sesBracket': bundle.profile.sesBracket,
         'religiosity': bundle.profile.religiosity,
@@ -55,43 +63,62 @@ class ReckonBackupSerializer implements BackupSerializer {
     return Uint8List.fromList(utf8.encode(jsonEncode(payload)));
   }
 
+  /// The dry-run parse behind preview-before-restore and export
+  /// verify-by-read-back: validates exactly like [restoreAll] (wrong app,
+  /// future schema, missing cases, malformed profile) — but never writes.
   @override
-  Future<void> restoreAll(Uint8List data) async {
-    // jsonDecode/utf8.decode throw FormatException on malformed input —
-    // that propagates as-is, which BackupController maps to
-    // RestoreOutcome.corruptFile.
-    final json = jsonDecode(utf8.decode(data)) as Map<String, dynamic>;
+  Future<BackupManifest> describeBackup(Uint8List plaintext) async {
+    _requireBundle(_unwrap(plaintext).payload); // throws what restoreAll would
+    return BackupEnvelope.describe(plaintext);
+  }
 
-    final app = json['app'] as String?;
-    if (app != _appId) {
-      throw FormatException(
-        'This backup was made by a different app '
-        '(expected "$_appId", got "${app ?? '<missing>'}")',
+  /// Envelope validation via the shared helper. Reckon's shipped envelopes
+  /// always carried an `app` key, so the default `requireAppKey: true`
+  /// stands: a missing key rejects, exactly as the old hand-rolled check
+  /// did. The flat legacy shape has no `payload` key, so unwrap hands back
+  /// the whole envelope map — top-level `profile`/`cases` stay addressable.
+  UnwrappedBackup _unwrap(Uint8List data) => BackupEnvelope.unwrap(
+        data,
+        expectedAppId: _appId,
+        currentSchemaVersion: _db.schemaVersion,
       );
-    }
 
-    final version = json['schemaVersion'] as int?;
-    if (version == null) {
-      throw const FormatException('Missing schemaVersion in backup payload');
-    }
-    if (version > _db.schemaVersion) {
-      throw BackupSchemaException(version, _db.schemaVersion);
-    }
-
-    final casesJson = json['cases'] as List<dynamic>?;
-    if (casesJson == null) {
+  /// The content gate [restoreAll] applies to the unwrapped payload —
+  /// shared with [describeBackup] so preview and restore can never drift:
+  /// describe can never pass what restore would reject.
+  static ({List<dynamic> cases, Map<String, dynamic>? profile})
+      _requireBundle(Map<String, Object?> payload) {
+    final cases = payload['cases'];
+    if (cases is! List<dynamic>) {
       throw const FormatException('Missing cases in backup payload');
     }
-    final profileJson = json['profile'] as Map<String, dynamic>?;
+    final profile = payload['profile'];
+    if (profile is! Map<String, dynamic>?) {
+      throw const FormatException('Malformed profile in backup payload');
+    }
+    return (cases: cases, profile: profile);
+  }
+
+  @override
+  Future<void> restoreAll(Uint8List data) async {
+    // BackupEnvelope.unwrap throws FormatException for malformed input or a
+    // mismatched app (-> RestoreOutcome.corruptFile) and BackupSchemaException
+    // for a future schema (-> tooNewBackup) — the same contract the old
+    // hand-rolled checks implemented.
+    final unwrapped = _unwrap(data);
+    final parts = _requireBundle(unwrapped.payload);
+    final profileJson = parts.profile;
 
     final bundle = ExportBundle(
-      generatedAt: _dateTime(json['generatedAt']) ?? DateTime.now(),
+      // createdAt already falls back to the legacy `generatedAt` spelling
+      // inside unwrap; a stampless blob restores dated now, as before.
+      generatedAt: unwrapped.createdAt ?? DateTime.now(),
       profile: UserProfile(
         sesBracket: profileJson?['sesBracket'] as String?,
         religiosity: profileJson?['religiosity'] as String?,
         relationshipStatus: profileJson?['relationshipStatus'] as String?,
       ),
-      cases: casesJson
+      cases: parts.cases
           .cast<Map<String, dynamic>>()
           .map(_caseFromJson)
           .toList(),

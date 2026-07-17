@@ -87,6 +87,32 @@ void main() {
   }
 
   group('dumpAll', () {
+    test(
+        'envelope stays FLAT (legacy shape byte-compatible) and adds a UTC '
+        'createdAt stamp additively', () async {
+      final bytes = await serializer.dumpAll();
+      final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
+
+      // WIRE-COMPAT: every key the OLD shipped reader requires is still
+      // there, at the top level, and no wrap-style nesting appeared.
+      expect(json['app'], 'reckon');
+      expect(json['schemaVersion'], db.schemaVersion);
+      expect(json['generatedAt'], isA<String>());
+      expect(json['profile'], isA<Map<String, dynamic>>());
+      expect(json['cases'], isA<List<dynamic>>());
+      expect(json.containsKey('payload'), isFalse,
+          reason: 'old readers look for top-level profile/cases — the flat '
+              'shape must never be nested under a payload key');
+
+      // ADDITIVE: the v0.2.0 canonical creation stamp.
+      final createdAt = DateTime.parse(json['createdAt'] as String);
+      expect(createdAt.isUtc, isTrue);
+      expect(
+        DateTime.now().toUtc().difference(createdAt).inMinutes,
+        lessThan(5),
+      );
+    });
+
     test('envelope carries app and schemaVersion', () async {
       final bytes = await serializer.dumpAll();
       final json = jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>;
@@ -131,6 +157,128 @@ void main() {
       expect(prediction['id'], 'mp1');
       expect(prediction['kind'], 'duelForecast');
       expect(prediction['score'], 0.4);
+    });
+  });
+
+  group('describeBackup (PreviewableBackupSerializer)', () {
+    test('dry-run parses: counts rows, reports metadata, never writes',
+        () async {
+      await seedCase();
+      final bytes = await serializer.dumpAll();
+
+      expect(serializer, isA<PreviewableBackupSerializer>());
+      final manifest = await serializer.describeBackup(bytes);
+      expect(manifest.appId, 'reckon');
+      expect(manifest.schemaVersion, db.schemaVersion);
+      expect(manifest.createdAt, isNotNull);
+      expect(manifest.tableCounts['cases'], 1);
+
+      // Dry-run guarantee: the seeded case is untouched.
+      expect(await db.select(db.cases).get(), hasLength(1));
+    });
+
+    test('rejects exactly what restoreAll rejects — wrong app, future '
+        'schema, missing cases', () async {
+      Uint8List blob(Map<String, dynamic> json) =>
+          Uint8List.fromList(utf8.encode(jsonEncode(json)));
+
+      expect(
+        () => serializer.describeBackup(blob({
+          'app': 'lullaby',
+          'schemaVersion': db.schemaVersion,
+          'cases': <dynamic>[],
+        })),
+        throwsA(isA<FormatException>()),
+      );
+      expect(
+        () => serializer.describeBackup(blob({
+          'app': 'reckon',
+          'schemaVersion': 999,
+          'cases': <dynamic>[],
+        })),
+        throwsA(isA<BackupSchemaException>()),
+      );
+      expect(
+        () => serializer.describeBackup(blob({
+          'app': 'reckon',
+          'schemaVersion': db.schemaVersion,
+        })),
+        throwsA(isA<FormatException>()),
+      );
+      // A profile that isn't an object would blow up restoreAll's parse —
+      // the shared gate must refuse it in preview too.
+      expect(
+        () => serializer.describeBackup(blob({
+          'app': 'reckon',
+          'schemaVersion': db.schemaVersion,
+          'profile': 'not-a-map',
+          'cases': <dynamic>[],
+        })),
+        throwsA(isA<FormatException>()),
+      );
+    });
+  });
+
+  group('legacy wire compatibility', () {
+    // What every shipped Reckon build before this one wrote: flat keys,
+    // generatedAt, NO createdAt.
+    Uint8List legacyBlob({bool withGeneratedAt = true}) {
+      final json = <String, dynamic>{
+        'app': 'reckon',
+        'schemaVersion': db.schemaVersion,
+        if (withGeneratedAt) 'generatedAt': now.toIso8601String(),
+        'profile': {
+          'sesBracket': 'middle',
+          'religiosity': null,
+          'relationshipStatus': null,
+        },
+        'cases': [
+          {
+            'id': 'c-legacy',
+            'createdAt': now.toIso8601String(),
+            'status': 'open',
+            'question': 'Old backup, new app?',
+            'optionA': 'Restore',
+            'optionB': 'Refuse',
+            'statedCriteria': <dynamic>[],
+            'stakes': 'high',
+            'regretHorizon': 'years',
+          },
+        ],
+      };
+      return Uint8List.fromList(utf8.encode(jsonEncode(json)));
+    }
+
+    test('an old envelope WITHOUT createdAt still restores', () async {
+      await serializer.restoreAll(legacyBlob());
+
+      final cases = await db.select(db.cases).get();
+      expect(cases, hasLength(1));
+      expect(cases.first.question, 'Old backup, new app?');
+      final profile = await db.select(db.userProfile).get();
+      expect(profile.single.sesBracket, 'middle');
+    });
+
+    test('an old envelope WITHOUT createdAt still previews — age falls '
+        'back to generatedAt', () async {
+      final manifest = await serializer.describeBackup(legacyBlob());
+      expect(manifest.tableCounts['cases'], 1);
+      // BackupEnvelope treats Reckon's legacy generatedAt as the stamp, so
+      // an old backup's age stays informative rather than unknown.
+      expect(manifest.createdAt, now);
+    });
+
+    test('an envelope with NO stamp at all previews with age unknown and '
+        'still restores', () async {
+      final blob = legacyBlob(withGeneratedAt: false);
+
+      final manifest = await serializer.describeBackup(blob);
+      expect(manifest.createdAt, isNull);
+      expect(formatBackupAge(manifest.createdAt, DateTime.now()),
+          'age unknown');
+
+      await serializer.restoreAll(blob);
+      expect(await db.select(db.cases).get(), hasLength(1));
     });
   });
 
