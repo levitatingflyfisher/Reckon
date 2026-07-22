@@ -217,6 +217,43 @@ void main() {
         throwsA(isA<FormatException>()),
       );
     });
+
+    test(
+        'rejects a malformed case that restore would reject — the shared '
+        'gate parses every case, not just the list shape', () async {
+      // `createdAt: 42` is not an ISO string: restoreAll's per-case parse
+      // throws FormatException. A shape-only check (cases is a List) would
+      // let the preview accept this blob and the restore then fail.
+      final blob = Uint8List.fromList(utf8.encode(jsonEncode({
+        'app': 'reckon',
+        'schemaVersion': db.schemaVersion,
+        'profile': null,
+        'cases': [
+          {
+            'id': 'c-bad',
+            'createdAt': 42,
+            'status': 'open',
+            'question': 'q',
+            'optionA': 'a',
+            'optionB': 'b',
+            'statedCriteria': <dynamic>[],
+            'stakes': 'high',
+            'regretHorizon': 'years',
+          },
+        ],
+      })));
+
+      await expectLater(
+        serializer.restoreAll(blob),
+        throwsA(isA<FormatException>()),
+        reason: 'restore must reject the unparseable case',
+      );
+      await expectLater(
+        serializer.describeBackup(blob),
+        throwsA(isA<FormatException>()),
+        reason: 'preview must reject exactly what restore rejects',
+      );
+    });
   });
 
   group('legacy wire compatibility', () {

@@ -49,9 +49,10 @@ All notable changes to Reckon will be documented in this file.
   `../ohStyle/openhearth_design` sibling is now the declared dependency
   for future deliberate convergence.
 - Backup envelope validation now goes through the shared
-  `sanctuary_backup_ui` v0.2.0 helper; preview and restore share one
-  validation gate, so the preview can never accept a file the restore
-  would reject.
+  `sanctuary_backup_ui` v0.2.0 helper; preview and restore share the
+  full payload parse — every case is parsed exactly as restore would
+  parse it (not just shape-checked), so the preview can never accept a
+  file the restore would then reject.
 
 ### Removed
 - The unused `permission_handler` dependency. The notification-permission

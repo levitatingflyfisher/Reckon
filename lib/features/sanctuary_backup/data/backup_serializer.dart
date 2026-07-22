@@ -65,10 +65,11 @@ class ReckonBackupSerializer
 
   /// The dry-run parse behind preview-before-restore and export
   /// verify-by-read-back: validates exactly like [restoreAll] (wrong app,
-  /// future schema, missing cases, malformed profile) — but never writes.
+  /// future schema, missing cases, malformed profile, any unparseable
+  /// case) — but never writes.
   @override
   Future<BackupManifest> describeBackup(Uint8List plaintext) async {
-    _requireBundle(_unwrap(plaintext).payload); // throws what restoreAll would
+    _parseBundle(_unwrap(plaintext)); // throws what restoreAll would
     return BackupEnvelope.describe(plaintext);
   }
 
@@ -83,11 +84,12 @@ class ReckonBackupSerializer
         currentSchemaVersion: _db.schemaVersion,
       );
 
-  /// The content gate [restoreAll] applies to the unwrapped payload —
-  /// shared with [describeBackup] so preview and restore can never drift:
-  /// describe can never pass what restore would reject.
-  static ({List<dynamic> cases, Map<String, dynamic>? profile})
-      _requireBundle(Map<String, Object?> payload) {
+  /// The full payload→[ExportBundle] parse [restoreAll] runs — shared with
+  /// [describeBackup] (which discards the result) so preview and restore can
+  /// never drift: every case a preview accepts has already parsed exactly as
+  /// restore would parse it, not merely shape-checked.
+  ExportBundle _parseBundle(UnwrappedBackup unwrapped) {
+    final payload = unwrapped.payload;
     final cases = payload['cases'];
     if (cases is! List<dynamic>) {
       throw const FormatException('Missing cases in backup payload');
@@ -96,7 +98,18 @@ class ReckonBackupSerializer
     if (profile is! Map<String, dynamic>?) {
       throw const FormatException('Malformed profile in backup payload');
     }
-    return (cases: cases, profile: profile);
+
+    return ExportBundle(
+      // createdAt already falls back to the legacy `generatedAt` spelling
+      // inside unwrap; a stampless blob restores dated now, as before.
+      generatedAt: unwrapped.createdAt ?? DateTime.now(),
+      profile: UserProfile(
+        sesBracket: profile?['sesBracket'] as String?,
+        religiosity: profile?['religiosity'] as String?,
+        relationshipStatus: profile?['relationshipStatus'] as String?,
+      ),
+      cases: cases.cast<Map<String, dynamic>>().map(_caseFromJson).toList(),
+    );
   }
 
   @override
@@ -105,26 +118,7 @@ class ReckonBackupSerializer
     // mismatched app (-> RestoreOutcome.corruptFile) and BackupSchemaException
     // for a future schema (-> tooNewBackup) — the same contract the old
     // hand-rolled checks implemented.
-    final unwrapped = _unwrap(data);
-    final parts = _requireBundle(unwrapped.payload);
-    final profileJson = parts.profile;
-
-    final bundle = ExportBundle(
-      // createdAt already falls back to the legacy `generatedAt` spelling
-      // inside unwrap; a stampless blob restores dated now, as before.
-      generatedAt: unwrapped.createdAt ?? DateTime.now(),
-      profile: UserProfile(
-        sesBracket: profileJson?['sesBracket'] as String?,
-        religiosity: profileJson?['religiosity'] as String?,
-        relationshipStatus: profileJson?['relationshipStatus'] as String?,
-      ),
-      cases: parts.cases
-          .cast<Map<String, dynamic>>()
-          .map(_caseFromJson)
-          .toList(),
-    );
-
-    await ImportService(_db).restoreAll(bundle);
+    await ImportService(_db).restoreAll(_parseBundle(_unwrap(data)));
   }
 
   Map<String, dynamic> _caseToJson(CaseExport e) => {
