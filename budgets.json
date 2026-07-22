@@ -1,4 +1,5 @@
 {
   "main_dart_js_gz_max_bytes": 1262702,
-  "apk_arm64_max_bytes": 170972461
+  "apk_arm64_max_bytes": 78266431,
+  "_apk_note": "2026-07-22 deliberate ratchet DOWN after the gradle packagingOptions slim: fresh arm64 build = 74539458 bytes (+5%), down from the ~156MB pre-slim baseline. APK teardown confirms libllm_inference_engine_jni + liblitertlm_jni are kept and the seven never-loaded MediaPipe task .so families are gone."
 }
