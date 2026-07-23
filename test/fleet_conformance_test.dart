@@ -17,6 +17,20 @@ void main() => runFleetConformance(const FleetAppConfig(
         // Reschedule reminders after reboot.
         'android.permission.RECEIVE_BOOT_COMPLETED',
       },
+      // C4 v2 — the release MERGED surface: source permissions plus
+      // what plugins and the manifest merge inject. Bites when an APK
+      // build has left a merged manifest under build/ (dev box).
+      mergedAndroidPermissions: {
+        'android.permission.ACCESS_NETWORK_STATE',
+        'android.permission.FOREGROUND_SERVICE',
+        'android.permission.INTERNET',
+        'android.permission.POST_NOTIFICATIONS',
+        'android.permission.RECEIVE_BOOT_COMPLETED',
+        'android.permission.SCHEDULE_EXACT_ALARM',
+        'android.permission.VIBRATE',
+        'android.permission.WAKE_LOCK',
+        'org.openhearth.reckon.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION',
+      },
       // Startup takes the silent freshness snapshot (startup_maintenance).
       expectStartupMaintenance: true,
       // Reckon's analysis_options is a recorded TIGHTER override of the
