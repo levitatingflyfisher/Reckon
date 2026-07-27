@@ -21,16 +21,27 @@ class GenerateReveal {
     required List<Poll> polls,
     required String chosenOption,
   }) async {
+    // Fingerprint of the poll series the reveal would narrate. A cached
+    // observation is only valid for the exact series it was generated over —
+    // if the user added a poll since (count or last poll changed), the cached
+    // narrative describes a stale timeline and must be regenerated.
+    final pollCount = polls.length;
+    final lastPollId = polls.isEmpty ? null : polls.last.id;
+
     // Reuse a previously generated observation if the user re-enters the
     // reveal (e.g. a `decided` case tapping "Set resolution date"): avoids a
     // redundant on-device LLM run and a duplicate prediction log.
     final prior = await _predictions.forCase(case_.id);
     for (final p in prior) {
-      // Reuse only a reveal generated for the SAME chosen option — otherwise a
-      // user who explores/commits option B would be shown the option-A
-      // narrative cached from the default selection.
+      // Reuse only a reveal generated for the SAME chosen option AND the same
+      // poll series — otherwise a user who explores/commits option B would be
+      // shown the option-A narrative cached from the default selection, or a
+      // narrative that predates their latest poll. (Legacy cache entries
+      // without a fingerprint fail the match and regenerate once.)
       if (p.kind == PredictionKind.revealObservation &&
-          p.payload['chosenOption'] == chosenOption) {
+          p.payload['chosenOption'] == chosenOption &&
+          p.payload['pollCount'] == pollCount &&
+          p.payload['lastPollId'] == lastPollId) {
         final text = p.payload['text'];
         if (text is String && text.isNotEmpty) {
           return RevealObservation(text: text);
@@ -58,6 +69,8 @@ class GenerateReveal {
       payload: {
         'text': observation.text,
         'chosenOption': chosenOption,
+        'pollCount': pollCount,
+        'lastPollId': lastPollId,
       },
     ));
 
