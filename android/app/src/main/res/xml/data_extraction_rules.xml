@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Opt out of platform backup and device-to-device transfer entirely: the
+     decision journal is plaintext SQLite and must never leave the device via
+     Google's infrastructure. The encrypted .ohbk export is the sanctioned
+     backup path. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" path="."/>
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" path="."/>
+    </device-transfer>
+</data-extraction-rules>
