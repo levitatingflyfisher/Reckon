@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/llm/anthropic_key_store.dart';
+import '../../../core/llm/stove_secret_store.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_card.dart';
 import '../../../shared/widgets/oh_text_field.dart';
@@ -34,6 +35,7 @@ class ForecastersSection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         const _AnthropicKeyCard(),
+        const _StovePhraseCard(),
         roster.when(
           loading: () => const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
@@ -91,6 +93,7 @@ String _kindLabel(ForecasterKind kind) => switch (kind) {
       ForecasterKind.localModel => 'Resident model',
       ForecasterKind.anthropicByok => 'Claude · your key',
       ForecasterKind.openaiCompat => 'HTTP endpoint',
+      ForecasterKind.stove => 'Household stove',
       ForecasterKind.bountyBot => 'Outside bot · imported',
     };
 
@@ -164,6 +167,8 @@ class _ForecasterEditorDialogState extends State<_ForecasterEditorDialog> {
   late final TextEditingController _persona;
   late final TextEditingController _model;
   late final TextEditingController _baseUrl;
+  late final TextEditingController _host;
+  late final TextEditingController _port;
   late ForecasterKind _kind;
 
   @override
@@ -177,6 +182,9 @@ class _ForecasterEditorDialogState extends State<_ForecasterEditorDialog> {
     _model = TextEditingController(text: f?.config['model'] as String? ?? '');
     _baseUrl =
         TextEditingController(text: f?.config['base_url'] as String? ?? '');
+    _host = TextEditingController(text: f?.config['host'] as String? ?? '');
+    _port = TextEditingController(
+        text: (f?.config['port'] as num?)?.toInt().toString() ?? '');
   }
 
   @override
@@ -185,6 +193,8 @@ class _ForecasterEditorDialogState extends State<_ForecasterEditorDialog> {
     _persona.dispose();
     _model.dispose();
     _baseUrl.dispose();
+    _host.dispose();
+    _port.dispose();
     super.dispose();
   }
 
@@ -202,12 +212,21 @@ class _ForecasterEditorDialogState extends State<_ForecasterEditorDialog> {
           'base_url': _baseUrl.text.trim(),
           if (_model.text.trim().isNotEmpty) 'model': _model.text.trim(),
         },
+      ForecasterKind.stove => {
+          'host': _host.text.trim(),
+          // The port is optional — blank means domovoi's stove default.
+          if (int.tryParse(_port.text.trim()) != null)
+            'port': int.parse(_port.text.trim()),
+        },
       // localModel needs no config; bountyBot keeps whatever import wrote.
       _ => widget.existing?.config ?? const <String, dynamic>{},
     };
     if (_kind == ForecasterKind.openaiCompat &&
         (config['base_url'] as String).isEmpty) {
       return; // an endpoint forecaster without an endpoint is nothing
+    }
+    if (_kind == ForecasterKind.stove && (config['host'] as String).isEmpty) {
+      return; // a stove forecaster without a host is nothing
     }
     final forecaster = widget.existing != null
         ? widget.existing!.copyWith(displayName: name, config: config)
@@ -249,6 +268,10 @@ class _ForecasterEditorDialogState extends State<_ForecasterEditorDialog> {
                     value: ForecasterKind.openaiCompat,
                     child: Text('HTTP endpoint'),
                   ),
+                  DropdownMenuItem(
+                    value: ForecasterKind.stove,
+                    child: Text('Household stove'),
+                  ),
                 ],
                 onChanged: (kind) =>
                     setState(() => _kind = kind ?? ForecasterKind.persona),
@@ -284,6 +307,21 @@ class _ForecasterEditorDialogState extends State<_ForecasterEditorDialog> {
                 controller: _model,
                 label: 'Model',
                 hint: 'as the server names it',
+              ),
+            ],
+            if (_kind == ForecasterKind.stove) ...[
+              OHTextField(
+                controller: _host,
+                label: 'Host',
+                hint: '192.168.1.30',
+              ),
+              const SizedBox(height: 12),
+              OHTextField(
+                controller: _port,
+                // Display hint only — the real default is domovoi's
+                // kStovePort, applied where the client is built.
+                label: 'Port',
+                hint: '4663 (the stove default)',
               ),
             ],
           ],
@@ -376,6 +414,129 @@ class _AnthropicKeyCard extends ConsumerWidget {
     await ref.read(anthropicKeyStoreProvider).setKey(entered);
     ref.invalidate(hasAnthropicKeyProvider);
     ref.invalidate(runnableForecastersProvider);
+  }
+}
+
+/// The household phrase pairing this device with the family's stove. The
+/// phrase never leaves secure storage; prompts to a stove forecaster go
+/// encrypted to the household's own machine and nowhere else.
+class _StovePhraseCard extends ConsumerWidget {
+  const _StovePhraseCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textTheme = Theme.of(context).textTheme;
+    final hasPhrase = ref.watch(hasStovePhraseProvider).valueOrNull ?? false;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: OHCard(
+        child: hasPhrase
+            ? Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Household phrase', style: textTheme.labelLarge),
+                        Text(
+                          'Stored on this device only — used for stove '
+                          'forecasters.',
+                          style: textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () async {
+                      await ref.read(stoveSecretStoreProvider).clearPhrase();
+                      ref.invalidate(hasStovePhraseProvider);
+                      ref.invalidate(runnableForecastersProvider);
+                    },
+                    child: const Text('Clear'),
+                  ),
+                ],
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Stove forecasters run on your household\'s own machine. '
+                    'Prompts go encrypted to it and nowhere else — both ends '
+                    'just share the same household phrase.',
+                    style: textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  OHButton(
+                    label: 'Add phrase',
+                    style: OHButtonStyle.secondary,
+                    expanded: true,
+                    onPressed: () => _promptForPhrase(context, ref),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Future<void> _promptForPhrase(BuildContext context, WidgetRef ref) async {
+    final entered = await showDialog<String>(
+      context: context,
+      builder: (_) => const _PhraseDialog(),
+    );
+    if (entered == null || entered.isEmpty) return;
+    await ref.read(stoveSecretStoreProvider).setPhrase(entered);
+    ref.invalidate(hasStovePhraseProvider);
+    ref.invalidate(runnableForecastersProvider);
+  }
+}
+
+/// Owns the controller so it is disposed with the dialog, not synchronously
+/// after `showDialog` returns (house pattern from the HF-token dialog).
+class _PhraseDialog extends StatefulWidget {
+  const _PhraseDialog();
+
+  @override
+  State<_PhraseDialog> createState() => _PhraseDialogState();
+}
+
+class _PhraseDialogState extends State<_PhraseDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Household phrase'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Type the same phrase the stove was started with. Stored '
+            'securely on this device only.',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          const SizedBox(height: 12),
+          OHTextField(controller: _controller, hint: 'the household phrase'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
+          child: const Text('Save'),
+        ),
+      ],
+    );
   }
 }
 

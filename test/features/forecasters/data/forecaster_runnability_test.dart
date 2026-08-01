@@ -6,6 +6,7 @@ import 'package:reckon/core/database/app_database.dart';
 import 'package:reckon/core/database/database_providers.dart';
 import 'package:reckon/core/llm/anthropic_key_store.dart';
 import 'package:reckon/core/llm/llm_providers.dart';
+import 'package:reckon/core/llm/stove_secret_store.dart';
 import 'package:reckon/core/llm/model_download_service.dart';
 import 'package:reckon/core/llm/model_spec.dart';
 import 'package:reckon/features/forecasters/data/forecaster_providers.dart';
@@ -95,6 +96,46 @@ void main() {
 
     final runnable = await c.read(runnableForecastersProvider.future);
     expect(runnable.map((f) => f.id), ['llamafile']);
+  });
+
+  test('a stove forecaster is runnable only with a host and a stored phrase',
+      () async {
+    final c = container();
+    final repo = c.read(forecasterRepositoryProvider);
+    await repo.all();
+    await repo.upsert(Forecaster(
+      id: 'stove',
+      displayName: 'Household stove',
+      kind: ForecasterKind.stove,
+      config: const {'host': '10.0.0.7'},
+      createdAt: DateTime(2026, 8, 2),
+    ));
+
+    expect(await c.read(runnableForecastersProvider.future), isEmpty,
+        reason: 'no household phrase stored yet');
+
+    FlutterSecureStorage.setMockInitialValues(
+        {'reckon.stove_household_phrase': 'legal winner thank year'});
+    c.invalidate(hasStovePhraseProvider);
+    final runnable = await c.read(runnableForecastersProvider.future);
+    expect(runnable.map((f) => f.id), ['stove']);
+  });
+
+  test('a stove forecaster without a host is not runnable even with a phrase',
+      () async {
+    FlutterSecureStorage.setMockInitialValues(
+        {'reckon.stove_household_phrase': 'legal winner thank year'});
+    final c = container();
+    final repo = c.read(forecasterRepositoryProvider);
+    await repo.all();
+    await repo.upsert(Forecaster(
+      id: 'stove-no-host',
+      displayName: 'Household stove',
+      kind: ForecasterKind.stove,
+      createdAt: DateTime(2026, 8, 2),
+    ));
+
+    expect(await c.read(runnableForecastersProvider.future), isEmpty);
   });
 
   test('disabled and bounty forecasters are never runnable', () async {

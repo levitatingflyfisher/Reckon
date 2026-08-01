@@ -1,7 +1,7 @@
 name: reckon
 description: Personal decision journal — Reckon Phase 1
 publish_to: 'none'
-version: 0.2.0+2
+version: 0.2.0+3
 
 environment:
   # flutter_gemma 0.13.x → grpc 5.x requires a recent Dart; CI builds on
@@ -62,6 +62,13 @@ dependencies:
   # downloads so Android's Doze/process-suspend can't kill an in-app transfer
   # when the screen sleeps (the partial is now resumable, but staying awake
   # avoids the interruption in the first place)
+
+  # Household AI control plane — the shared resumable-download engine, the
+  # model trust laws, and the encrypted stove protocol (sibling path dep,
+  # eloEngine precedent). Its barrel pulls dart:io, so web-compiled code
+  # reaches it only through platform-split variants (*_io.dart).
+  domovoi:
+    path: ../DomovoiDiscernment
 
   # Encrypted backup (.ohbk) — sibling path deps (eloEngine precedent).
   # SANCTUARY-BRIEF §3, §4.W2. Clone next to this repo; see README.

@@ -67,9 +67,11 @@ feature. Each is enforced in the code and recorded as an ADR.
    [ADR-0002](docs/adr/0002-pluggable-llm-backends.md),
    [ADR-0007](docs/adr/0007-forecaster-duel-alignment-scoring.md))
 3. **Nothing leaves the device unless you opt in — and it's checkable.** Ghost mode
-   makes no network call except downloading the model weights over HTTPS. BYOK sends
-   your case text to Anthropic under *your* key and nowhere else. The ReckonParty
-   relay only ever holds ciphertext. A bounty export exists only as a de-identified
+   makes no network call except downloading the model weights over HTTPS. A
+   household-stove forecaster sends its prompt to a model on your own desktop, as
+   encrypted frames keyed by the household phrase — it leaves the device but never
+   the house. BYOK sends your case text to Anthropic under *your* key and nowhere
+   else. The ReckonParty relay only ever holds ciphertext. A bounty export exists only as a de-identified
    file you reviewed in a preview and shared yourself — the app is never the
    transport. This is stated concretely in
    [docs/privacy-model.md](docs/privacy-model.md) and enforced in code.
@@ -102,8 +104,10 @@ before you rely on it. As of the July 2026 forecaster-duel build:
   profile stratification; the record computes **Clarity Score, calibration buckets,
   personal base rates, insight cards, and update quality** from closed cases.
 - **The forecaster duel.** A user-owned roster of forecasters — personas over the
-  resident model, your own Anthropic key (BYOK), any OpenAI-compatible endpoint
-  (llamafile/Ollama), and imported bounty bots — each gives a **sealed** forecast on
+  resident model, the household stove (a far larger model on the family's own
+  desktop, encrypted end to end and keyed by the household phrase), your own
+  Anthropic key (BYOK), any OpenAI-compatible endpoint (llamafile/Ollama), and
+  imported bounty bots — each gives a **sealed** forecast on
   an open case (you see only "N forecasts sealed" until your own reveal). At
   resolution every forecast is scored individually against how the decision felt,
   and the **deference map** (`/forecasters`) shows each forecaster's **earned

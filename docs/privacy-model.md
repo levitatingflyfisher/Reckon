@@ -39,6 +39,12 @@ subpoena of any server reveals nothing, because Reckon isn't talking to one.
 The forecaster duel is the one place a cloud model can run, and only for forecasters
 **you created**:
 
+- **The household stove.** A stove forecaster sends that case's decision brief to a
+  model on a machine **you** run (host and port you typed), as encrypted frames —
+  ChaCha20-Poly1305 under a key derived from the household phrase you store in secure
+  storage (`reckon.stove_household_phrase`). Nothing readable crosses the wire, the
+  key never crosses it at all, and the traffic stops at your own LAN. The wire
+  format and its guarantees are specified in domovoi's yellow paper.
 - **BYOK (bring your own key).** If you store your own Anthropic key (Settings) and add
   a BYOK forecaster, running a duel sends **that case's decision brief** (question,
   options, criteria, stakes) to the **Anthropic Messages API** under your account and

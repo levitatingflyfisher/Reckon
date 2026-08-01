@@ -368,7 +368,7 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: OHButton(
-                  label: 'Build my case →',
+                  label: 'Build my case',
                   style: OHButtonStyle.secondary,
                   expanded: true,
                   onPressed: _isGenerating ? null : _buildCaseManually,

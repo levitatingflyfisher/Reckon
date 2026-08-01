@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -56,6 +57,38 @@ class _FakeAdapter implements HttpClientAdapter {
     final body = Uint8List.fromList(payload.sublist(start));
     headers[HttpHeaders.contentLengthHeader] = ['${body.length}'];
     return ResponseBody.fromBytes(body, status, headers: headers);
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// Serves the payload in two chunks with a test-controlled gate between them,
+/// so a test can cancel deterministically mid-transfer.
+class _PacedAdapter implements HttpClientAdapter {
+  _PacedAdapter(this.payload);
+
+  final List<int> payload;
+
+  /// Held until the test releases it; the tail chunk flows only afterwards.
+  final Completer<void> gate = Completer<void>();
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    final half = payload.length ~/ 2;
+    Stream<Uint8List> body() async* {
+      yield Uint8List.fromList(payload.sublist(0, half));
+      await gate.future;
+      yield Uint8List.fromList(payload.sublist(half));
+    }
+
+    return ResponseBody(body(), HttpStatus.ok, headers: {
+      HttpHeaders.contentLengthHeader: ['${payload.length}'],
+    });
   }
 
   @override
@@ -208,6 +241,37 @@ void main() {
           reason: 'progress must survive a failed attempt');
       expect(await partOf().length(), have,
           reason: 'the partial must not be deleted or truncated on error');
+    });
+
+    test('cancelling the subscription stops the writer: no promote, .part '
+        'kept for resume', () async {
+      // Subscription cancellation is the UI's only pause button (dispose and
+      // re-download both call _sub.cancel()). It must actually stop the
+      // transfer — not leave a detached writer downloading gigabytes and
+      // promoting the file behind the user's back.
+      final adapter = _PacedAdapter(payload);
+      final dio = Dio()..httpClientAdapter = adapter;
+      final svc = ModelDownloadService(
+          dio: dio, documentsDirectory: () async => tempDir);
+
+      final firstChunk = Completer<void>();
+      final sub = svc.download(testSpec).listen((event) {
+        if (!firstChunk.isCompleted) firstChunk.complete();
+      }, onError: (Object _) {});
+      await firstChunk.future; // the transfer is genuinely underway
+      await sub.cancel();
+      // Release the tail — a writer that survived the cancel would now
+      // finish the download and promote the file.
+      adapter.gate.complete();
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+
+      expect(modelOf().existsSync(), isFalse,
+          reason: 'cancel must stop the transfer before promotion — a '
+              'promoted file means the writer ignored the cancel');
+      expect(partOf().existsSync(), isTrue,
+          reason: 'the partial must be kept so a later attempt can resume');
+      expect(await partOf().length(), lessThan(payload.length),
+          reason: 'no bytes should be written after the cancel');
     });
 
     test('a host that ignores Range (200) yields the correct file, not a '
