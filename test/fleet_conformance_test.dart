@@ -7,7 +7,13 @@ void main() => runFleetConformance(const FleetAppConfig(
       // Bundles its own type, so nothing falls back to a web font — a
       // character the bundled families cannot draw is a box on a
       // real phone. C7 sweeps lib/ for any.
-      checks: FleetAppConfig.withBundledFonts,
+      // C8: a bare IconButton.filled/.filledTonal would paint its glyph the
+      // color of its own fill under ohStyle's ambient iconTheme — invisible
+      // on a real phone. Filled icon buttons must go through OhIconButton.
+      checks: {
+        ...FleetAppConfig.withBundledFonts,
+        FleetCheck.c8IconButtons,
+      },
       // Tokens tier: canonical openhearth_design is the declared dependency;
       // the shipped look stays blessed app identity in lib/shared/theme/
       // (ReckonTheme/ReckonAccents), pinned by the golden sweeps.
