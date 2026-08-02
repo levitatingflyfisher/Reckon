@@ -103,6 +103,79 @@ void main() {
     expect(repo.roster.map((f) => f.id), ['persona-steelman-advocate']);
   });
 
+  testWidgets('adds a stove forecaster with host and port through the form',
+      (tester) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add forecaster'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Persona (resident model)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Household stove').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Name'), 'Family stove');
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Host'), '10.0.0.7');
+    await tester.enterText(find.widgetWithText(TextField, 'Port'), '4663');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Family stove'), findsOneWidget);
+    final added = repo.roster.last;
+    expect(added.kind, ForecasterKind.stove);
+    expect(added.config['host'], '10.0.0.7');
+    expect(added.config['port'], 4663);
+  });
+
+  testWidgets('a stove forecaster without a host is not saved',
+      (tester) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Add forecaster'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Persona (resident model)'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Household stove').last);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.widgetWithText(TextField, 'Name'), 'Family stove');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(repo.roster, hasLength(2), reason: 'nothing was added');
+  });
+
+  testWidgets('stove phrase card: add stores the phrase, then offers Clear',
+      (tester) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    // The calm promise: prompts go encrypted to the household's own machine.
+    expect(find.textContaining('nowhere else'), findsOneWidget);
+
+    await tester.tap(find.text('Add phrase'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+        find.byType(TextField).last, ' legal winner thank year ');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Clear'), findsOneWidget);
+    expect(
+        await const FlutterSecureStorage()
+            .read(key: 'reckon.stove_household_phrase'),
+        'legal winner thank year'); // trimmed
+
+    await tester.tap(find.text('Clear'));
+    await tester.pumpAndSettle();
+    expect(find.text('Add phrase'), findsOneWidget);
+  });
+
   testWidgets('BYOK key card: add stores the key, then offers Clear',
       (tester) async {
     await tester.pumpWidget(harness());

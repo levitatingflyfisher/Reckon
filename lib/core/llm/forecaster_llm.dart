@@ -7,11 +7,14 @@ import 'llm_providers.dart';
 import 'llm_service.dart';
 import 'openai_compat_client.dart';
 import 'openai_compat_llm_service.dart';
+import 'stove_llm_service.dart';
+import 'stove_secret_store.dart';
 
 /// Resolves the [LlmService] a forecaster runs on, or `null` when it cannot
 /// run here: bounty bots are import-only, BYOK needs a stored key,
-/// openaiCompat needs a base URL, and persona/localModel need the resident
-/// on-device model (absent on web, or before a download).
+/// openaiCompat needs a base URL, stove needs a host plus the stored
+/// household phrase (and is never buildable on web), and persona/localModel
+/// need the resident on-device model (absent on web, or before a download).
 ///
 /// The global [llmServiceProvider] is untouched — intake and the other
 /// AI surfaces keep their existing single-backend wiring; the duel resolves
@@ -48,6 +51,16 @@ Future<LlmService?> llmServiceForForecaster(
         baseUrl: baseUrl,
         model: forecaster.config['model'] as String? ?? 'default',
       ));
+    case ForecasterKind.stove:
+      final host = forecaster.config['host'] as String?;
+      if (host == null || host.isEmpty) return null;
+      final phrase = await ref.read(stoveSecretStoreProvider).getPhrase();
+      if (phrase == null || phrase.isEmpty) return null;
+      return buildStoveLlmService(
+        host: host,
+        port: (forecaster.config['port'] as num?)?.toInt(),
+        phrase: phrase,
+      );
     case ForecasterKind.bountyBot:
       return null;
   }

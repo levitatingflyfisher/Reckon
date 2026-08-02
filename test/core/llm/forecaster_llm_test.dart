@@ -132,4 +132,36 @@ void main() {
     final resolve = container().read(_resolverProvider);
     expect(await resolve(_forecaster(ForecasterKind.bountyBot)), isNull);
   });
+
+  test('stove without a stored household phrase resolves to null', () async {
+    final resolve = container().read(_resolverProvider);
+    expect(
+        await resolve(
+            _forecaster(ForecasterKind.stove, config: {'host': '10.0.0.7'})),
+        isNull);
+  });
+
+  test('stove without a host resolves to null', () async {
+    FlutterSecureStorage.setMockInitialValues(
+        {'reckon.stove_household_phrase': 'legal winner thank year'});
+    final resolve = container().read(_resolverProvider);
+    expect(await resolve(_forecaster(ForecasterKind.stove)), isNull);
+  });
+
+  test('stove with a host and a stored phrase builds the stove service',
+      () async {
+    FlutterSecureStorage.setMockInitialValues(
+        {'reckon.stove_household_phrase': 'legal winner thank year'});
+    final resolve = container().read(_resolverProvider);
+
+    final svc = await resolve(_forecaster(ForecasterKind.stove,
+        config: {'host': '10.0.0.7', 'port': 4663}));
+    expect(svc, isNotNull);
+    expect(svc!.modelVersion, 'household-stove');
+
+    // The port is optional — domovoi's default fills in.
+    final defaultPort = await resolve(
+        _forecaster(ForecasterKind.stove, config: {'host': '10.0.0.7'}));
+    expect(defaultPort, isNotNull);
+  });
 }

@@ -6,6 +6,7 @@ import '../../../core/llm/anthropic_key_store.dart';
 import '../../../core/llm/forecaster_llm.dart';
 import '../../../core/llm/llm_providers.dart';
 import '../../../core/llm/model_spec.dart';
+import '../../../core/llm/stove_secret_store.dart';
 import '../../predictions/data/prediction_providers.dart';
 import '../domain/entities/forecaster.dart';
 import '../domain/repositories/forecaster_repository.dart';
@@ -30,7 +31,9 @@ final enabledForecastersProvider = FutureProvider<List<Forecaster>>((ref) {
 /// Enabled forecasters that can run HERE, NOW — this gates the "Run the
 /// duel" button. Personas and the local model need the resident on-device
 /// model (never on web, and only once downloaded); BYOK needs a stored key;
-/// openaiCompat needs a base URL; bounty bots are import-only.
+/// openaiCompat needs a base URL; stove needs a host plus the stored
+/// household phrase (and never runs on web — the browser cannot reach a LAN
+/// http endpoint); bounty bots are import-only.
 ///
 /// Invalidate after roster edits, key changes, and model downloads.
 final runnableForecastersProvider =
@@ -48,6 +51,7 @@ final runnableForecastersProvider =
         await ref.watch(modelDownloadServiceProvider).isDownloaded(spec);
   }
   final hasKey = await ref.watch(hasAnthropicKeyProvider.future);
+  final hasStovePhrase = await ref.watch(hasStovePhraseProvider.future);
 
   return [
     for (final f in enabled)
@@ -56,6 +60,9 @@ final runnableForecastersProvider =
         ForecasterKind.anthropicByok => hasKey,
         ForecasterKind.openaiCompat =>
           (f.config['base_url'] as String?)?.isNotEmpty == true,
+        ForecasterKind.stove => !kIsWeb &&
+            hasStovePhrase &&
+            (f.config['host'] as String?)?.isNotEmpty == true,
         ForecasterKind.bountyBot => false,
       })
         f,

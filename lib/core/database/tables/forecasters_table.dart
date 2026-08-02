@@ -13,7 +13,7 @@ class Forecasters extends Table {
   TextColumn get displayName => text()();
 
   /// 'persona' | 'localModel' | 'anthropicByok' | 'openaiCompat' |
-  /// 'bountyBot' — the [ForecasterKind] name.
+  /// 'stove' | 'bountyBot' — the [ForecasterKind] name.
   TextColumn get kind => text()();
 
   /// JSON map of kind-specific, non-secret configuration (e.g. a persona's

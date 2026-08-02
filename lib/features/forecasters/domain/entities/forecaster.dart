@@ -15,6 +15,11 @@ enum ForecasterKind {
   /// `config['base_url']` + `config['model']`.
   openaiCompat,
 
+  /// The household stove: a home server reached over domovoi's encrypted
+  /// stove protocol — `config['host']` + optional `config['port']`; the
+  /// household phrase lives in secure storage, never in config.
+  stove,
+
   /// An outside bot whose responses arrive via reckonBounty import. Never
   /// called directly; it exists so imported forecasts earn a track record.
   bountyBot,
