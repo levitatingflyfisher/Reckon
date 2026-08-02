@@ -71,8 +71,7 @@ feature. Each is enforced in the code and recorded as an ADR.
    household-stove forecaster sends its prompt to a model on your own desktop, as
    encrypted frames keyed by the household phrase — it leaves the device but never
    the house. BYOK sends your case text to Anthropic under *your* key and nowhere
-   else. The ReckonParty
-   relay only ever holds ciphertext. A bounty export exists only as a de-identified
+   else. The ReckonParty relay only ever holds ciphertext. A bounty export exists only as a de-identified
    file you reviewed in a preview and shared yourself — the app is never the
    transport. This is stated concretely in
    [docs/privacy-model.md](docs/privacy-model.md) and enforced in code.
