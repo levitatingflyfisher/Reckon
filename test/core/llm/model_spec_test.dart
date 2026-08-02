@@ -1,3 +1,4 @@
+import 'package:domovoi/domovoi.dart' as domovoi;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:reckon/core/llm/model_spec.dart';
 
@@ -28,6 +29,27 @@ void main() {
                 'never a personal mirror');
         expect(spec.requiresToken, isFalse,
             reason: '${spec.id} must be ungated — Ghost mode takes no account');
+      }
+    });
+
+    test('every catalog entry passes domovoi\'s ModelTrust laws', () {
+      // The fleet-wide trust laws as one validator: https on huggingface.co,
+      // allowlisted org, ungated (requiresToken false), `.task` bundle. The
+      // hand-rolled assertions above are kept as documentation of the scars
+      // that produced each law; this is the binding check.
+      for (final spec in ReckonModelSpec.availableModels) {
+        final violations = domovoi.ModelTrust.check(domovoi.ModelSpec(
+          id: spec.id,
+          displayName: spec.displayName,
+          fileName: spec.fileName,
+          downloadUrl: spec.downloadUrl,
+          sizeBytes: spec.approximateSizeBytes,
+          modelType: spec.modelType,
+          description: spec.description,
+          requiresToken: spec.requiresToken,
+        ));
+        expect(violations, isEmpty,
+            reason: '${spec.id} breaks the model trust laws');
       }
     });
 
