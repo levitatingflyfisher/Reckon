@@ -63,6 +63,13 @@ dependencies:
   # when the screen sleeps (the partial is now resumable, but staying awake
   # avoids the interruption in the first place)
 
+  # Household AI control plane — the shared resumable-download engine, the
+  # model trust laws, and the encrypted stove protocol (sibling path dep,
+  # eloEngine precedent). Its barrel pulls dart:io, so web-compiled code
+  # reaches it only through platform-split variants (*_io.dart).
+  domovoi:
+    path: ../DomovoiDiscernment
+
   # Encrypted backup (.ohbk) — sibling path deps (eloEngine precedent).
   # SANCTUARY-BRIEF §3, §4.W2. Clone next to this repo; see README.
   sanctuary_auth_core:
