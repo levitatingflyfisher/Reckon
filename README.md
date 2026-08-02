@@ -32,8 +32,9 @@ to live. Reckon walks it through a protocol drawn from superforecasting practice
    cards, and update quality, computed honestly from your closed cases.
 
 **The duel.** Forecasters can compete on your open case: personas over the on-device
-model, your own Anthropic key, any OpenAI-compatible endpoint (a llamafile on your
-LAN), and imported outside bots. Their forecasts stay **sealed** until you reveal your
+model, your household's own stove (a model on your desktop, reached over an
+encrypted channel keyed by the household phrase), your own Anthropic key, any
+OpenAI-compatible endpoint (a llamafile on your LAN), and imported outside bots. Their forecasts stay **sealed** until you reveal your
 own decision, are scored individually when the case resolves, and accumulate into a
 **deference map** of earned weights — you included, on the same formula. Reckon never
 says "the model thinks you should…"; it shows you who has actually been right, and how

@@ -25,8 +25,8 @@ A **local-first personal decision journal for Android**. It runs a structured
 "inner-crowd" protocol over a real decision — conversational intake → blinded
 time-series re-polls → a reveal of your own drift → a delayed resolution check-in →
 a calibrated record — entirely on-device, with no account and a small on-device LLM.
-A roster of **forecasters** (personas on the local model, BYOK/OpenAI-compatible
-backends, imported bounty bots) can *duel* the user on open cases: sealed forecasts,
+A roster of **forecasters** (personas on the local model, the household stove
+via domovoi, BYOK/OpenAI-compatible backends, imported bounty bots) can *duel* the user on open cases: sealed forecasts,
 scored per-prediction at resolution, earning weight on a deference map. A second mode,
 **ReckonParty**, does group preference voting — one-shot anonymous parties or
 persistent groups with attributed ballots — over LAN or an optional zero-knowledge
