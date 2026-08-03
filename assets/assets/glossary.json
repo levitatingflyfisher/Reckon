@@ -1,0 +1,175 @@
+[
+  {
+    "id": "inner-crowd",
+    "title": "The Inner Crowd",
+    "oneLine": "Ask yourself twice, with enough time between that the second answer is genuinely independent.",
+    "paragraph": "Even your second guess at yourself is meaningfully different from your first, if you wait at least a few days. Averaging two independent estimates from the same brain beats either estimate alone. The trick is the waiting — immediate re-estimates are anchored on the first; delayed ones draw on different memories and reasoning.",
+    "example": "You lean 70% toward accepting a job offer on Monday. You force yourself not to revisit it until Thursday. On Thursday, without looking at your Monday answer, you lean 55%. The average — about 63% — is closer to your actual preference than either snapshot alone. That's why Reckon hides prior polls: to keep the samples independent.",
+    "sources": [
+      {
+        "authors": "Vul, E. & Pashler, H.",
+        "year": 2008,
+        "title": "Measuring the crowd within: probabilistic representations within individuals",
+        "venue": "Psychological Science, 19(7)",
+        "url": "https://doi.org/10.1111/j.1467-9280.2008.02136.x"
+      },
+      {
+        "authors": "Herzog, S. M. & Hertwig, R.",
+        "year": 2009,
+        "title": "The wisdom of many in one mind: improving individual judgments with dialectical bootstrapping",
+        "venue": "Psychological Science, 20(2)",
+        "url": "https://doi.org/10.1111/j.1467-9280.2009.02271.x"
+      }
+    ]
+  },
+  {
+    "id": "reference-class",
+    "title": "Reference Class",
+    "oneLine": "Your situation isn't as unique as it feels — thousands of people have faced the same fork.",
+    "paragraph": "Most decisions feel singular when you're inside them. They aren't. There are thousands of people who've faced the same fork in the road. Their outcomes, aggregated, are your starting prior. The key skill is finding the right reference class — people similar to you, not just people in your situation superficially.",
+    "example": "\"Should I go to law school?\" feels personal. But tens of thousands have made that exact choice with your background, your debt level, your career stage. Their satisfaction rates five years out are a better starting point than whatever your gut says today. Your gut is one data point. The reference class is ten thousand.",
+    "sources": [
+      {
+        "authors": "Kahneman, D. & Tversky, A.",
+        "year": 1979,
+        "title": "Intuitive prediction: biases and corrective procedures",
+        "venue": "TIMS Studies in Management Science, 12"
+      },
+      {
+        "authors": "Flyvbjerg, B.",
+        "year": 2008,
+        "title": "Curbing optimism bias and strategic misrepresentation in planning: reference class forecasting in practice",
+        "venue": "European Planning Studies, 16(1)",
+        "url": "https://doi.org/10.1080/09654310701747936"
+      }
+    ]
+  },
+  {
+    "id": "pre-mortem",
+    "title": "The Pre-Mortem",
+    "oneLine": "It's two years from now and this decision was a disaster. Write the first paragraph of the story.",
+    "paragraph": "\"What could go wrong\" stays abstract. \"What actually happened\" forces your brain to generate specific, vivid failure modes it would otherwise suppress. The pre-mortem flips the tense — you're no longer predicting risks, you're remembering them. That tiny framing shift unlocks failure scenarios that forecasting can't.",
+    "example": "Instead of asking \"what are the risks of this move to Denver?\" ask: \"It's 2028. We moved to Denver and it was a mistake. Why?\" You'll generate concrete answers — the job didn't pan out, we couldn't find community, the mountains stopped feeling special — that a risk inventory would never surface.",
+    "sources": [
+      {
+        "authors": "Klein, G.",
+        "year": 2007,
+        "title": "Performing a Project Premortem",
+        "venue": "Harvard Business Review, September 2007",
+        "url": "https://hbr.org/2007/09/performing-a-project-premortem"
+      },
+      {
+        "authors": "Mitchell, D. J., Russo, J. E., & Pennington, N.",
+        "year": 1989,
+        "title": "Back to the future: temporal perspective in the explanation of events",
+        "venue": "Journal of Behavioral Decision Making, 2(1)",
+        "url": "https://doi.org/10.1002/bdm.3960020103"
+      }
+    ]
+  },
+  {
+    "id": "dialectical-bootstrapping",
+    "title": "Dialectical Bootstrapping",
+    "oneLine": "Argue with yourself on purpose, then average the two estimates.",
+    "paragraph": "Make your best estimate. Then actively generate the case against it — \"what would have to be true for me to be wrong?\" Then re-estimate. Average the two. The second estimate draws on different memories and reasoning than the first, making the average better than either. It's the Inner Crowd compressed into a single session.",
+    "example": "You estimate there's an 80% chance the startup idea will find a market. Now argue the other side: what would have to be true for it to fail? You think of three specific reasons that carry weight. Your revised estimate is 55%. The true probability is probably somewhere around 68% — closer to your average than either extreme.",
+    "sources": [
+      {
+        "authors": "Herzog, S. M. & Hertwig, R.",
+        "year": 2009,
+        "title": "The wisdom of many in one mind: improving individual judgments with dialectical bootstrapping",
+        "venue": "Psychological Science, 20(2)",
+        "url": "https://doi.org/10.1111/j.1467-9280.2009.02271.x"
+      }
+    ]
+  },
+  {
+    "id": "calibration",
+    "title": "Calibration",
+    "oneLine": "The difference between being right and knowing when you're right.",
+    "paragraph": "A well-calibrated person who says \"I'm 70% confident\" is right about 70% of the time. Most people are overconfident — their 70% confidence predictions come true only 55% of the time. Knowing your calibration curve helps you know how much to trust yourself. Over time, Reckon builds that curve from your actual resolutions.",
+    "example": "You've closed 30 cases. Across your \"high confidence\" decisions, you were satisfied 65% of the time. Across your \"medium confidence\" decisions, also 65%. Your confidence wasn't tracking quality — which means you can safely discount your high-confidence intuitions by about 15 points. That's what a calibration curve buys you.",
+    "sources": [
+      {
+        "authors": "Lichtenstein, S., Fischhoff, B. & Phillips, L. D.",
+        "year": 1982,
+        "title": "Calibration of probabilities: the state of the art to 1980",
+        "venue": "In Kahneman, Slovic & Tversky (Eds.), Judgment under Uncertainty"
+      },
+      {
+        "authors": "Tetlock, P. E. & Gardner, D.",
+        "year": 2015,
+        "title": "Superforecasting: the art and science of prediction",
+        "venue": "Crown Publishers"
+      }
+    ]
+  },
+  {
+    "id": "reveal-effect",
+    "title": "The Reveal Effect",
+    "oneLine": "Seeing your own drift only works if the samples were genuinely independent.",
+    "paragraph": "When you can't see your prior answer, your re-poll is genuinely independent. When you aggregate those independent samples across time, you get a more accurate picture of your actual preference than any single session would produce. The reveal shows you the signal underneath the noise of any given day — but only if the poll that generated it wasn't contaminated by memory of the last one.",
+    "example": "You repolled three times over two weeks: 65, 52, 70. Had you been able to see each prior, you'd have anchored and drifted — probably 65, 64, 66. The independent samples reveal something truer: this decision is noisier than you thought, with your gut averaging around 62. The noise itself is useful information.",
+    "sources": [
+      {
+        "authors": "Vul, E. & Pashler, H.",
+        "year": 2008,
+        "title": "Measuring the crowd within: probabilistic representations within individuals",
+        "venue": "Psychological Science, 19(7)",
+        "url": "https://doi.org/10.1111/j.1467-9280.2008.02136.x"
+      },
+      {
+        "authors": "Tversky, A. & Kahneman, D.",
+        "year": 1974,
+        "title": "Judgment under uncertainty: heuristics and biases",
+        "venue": "Science, 185(4157)",
+        "url": "https://doi.org/10.1126/science.185.4157.1124"
+      }
+    ]
+  },
+  {
+    "id": "criteria-vs-reasoning",
+    "title": "Criteria vs. Reasoning",
+    "oneLine": "What you say matters versus what actually moves you.",
+    "paragraph": "People often state criteria at the start of a decision (\"career growth is most important\") and then reason from completely different criteria in practice (\"I keep coming back to my kids' school\"). The gap between stated and revealed criteria is often where the real decision lives. Reckon surfaces this mismatch by comparing what you listed upfront against what appears in your rationale.",
+    "example": "At intake you listed: comp, career growth, travel. But across eight polls, your rationale kept mentioning your mom's health. Your stated criteria don't include family proximity, yet family proximity is doing most of the work. That's not a mistake — that's the decision telling you what actually matters.",
+    "sources": [
+      {
+        "authors": "Nisbett, R. E. & Wilson, T. D.",
+        "year": 1977,
+        "title": "Telling more than we can know: verbal reports on mental processes",
+        "venue": "Psychological Review, 84(3)",
+        "url": "https://doi.org/10.1037/0033-295X.84.3.231"
+      },
+      {
+        "authors": "Haidt, J.",
+        "year": 2001,
+        "title": "The emotional dog and its rational tail: a social intuitionist approach to moral judgment",
+        "venue": "Psychological Review, 108(4)",
+        "url": "https://doi.org/10.1037/0033-295X.108.4.814"
+      }
+    ]
+  },
+  {
+    "id": "resulting",
+    "title": "Resulting",
+    "oneLine": "Judging decision quality by outcome is a mistake.",
+    "paragraph": "A good decision can have a bad outcome (bad luck). A bad decision can have a good outcome (good luck). Separating \"was this a good decision given what I knew?\" from \"did it turn out well?\" is the core discipline of anyone who makes decisions repeatedly and wants to improve. Reckon's satisfaction check-in is a deliberate separate question from decision quality.",
+    "example": "You took the riskier job and it went great. Resulting says: \"brilliant call.\" But at the time, a coin flip on the evidence you had would have given the same expected value. The outcome was luck. If you treat it as evidence your gut is sharp, you'll swing for the fences next time — and the luck won't repeat.",
+    "sources": [
+      {
+        "authors": "Baron, J. & Hershey, J. C.",
+        "year": 1988,
+        "title": "Outcome bias in decision evaluation",
+        "venue": "Journal of Personality and Social Psychology, 54(4)",
+        "url": "https://doi.org/10.1037/0022-3514.54.4.569"
+      },
+      {
+        "authors": "Duke, A.",
+        "year": 2018,
+        "title": "Thinking in Bets: making smarter decisions when you don't have all the facts",
+        "venue": "Portfolio"
+      }
+    ]
+  }
+]

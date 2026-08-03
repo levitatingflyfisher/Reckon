@@ -1,0 +1,35 @@
+{
+    "name": "Reckon",
+    "short_name": "Reckon",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#EAEEF1",
+    "theme_color": "#536B82",
+    "description": "A private, local-first decision journal. Think it through, log the call, learn from your own track record.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
