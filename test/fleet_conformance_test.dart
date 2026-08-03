@@ -4,6 +4,10 @@ import 'package:oh_fleet_conformance/oh_fleet_conformance.dart';
 /// canon lives in this one config (see oh_fleet_conformance's README).
 void main() => runFleetConformance(const FleetAppConfig(
       appId: 'reckon',
+      // Bundles its own type, so nothing falls back to a web font — a
+      // character the bundled families cannot draw is a box on a
+      // real phone. C7 sweeps lib/ for any.
+      checks: FleetAppConfig.withBundledFonts,
       // Tokens tier: canonical openhearth_design is the declared dependency;
       // the shipped look stays blessed app identity in lib/shared/theme/
       // (ReckonTheme/ReckonAccents), pinned by the golden sweeps.
