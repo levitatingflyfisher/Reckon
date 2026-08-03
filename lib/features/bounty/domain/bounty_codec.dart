@@ -260,8 +260,8 @@ class BountyCodec {
       p = rawP.toDouble();
     } else if (rawDist != null) {
       if (rawDist is! Map<String, dynamic> || rawDist.isEmpty) {
-        throw reject('"forecast.distribution" must be a non-empty object of '
-            'option → probability.');
+        throw reject('"forecast.distribution" must be a non-empty object '
+            'mapping each option to its probability.');
       }
       distribution = {};
       var sum = 0.0;
