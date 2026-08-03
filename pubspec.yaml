@@ -1,7 +1,7 @@
 name: reckon
 description: Personal decision journal — Reckon Phase 1
 publish_to: 'none'
-version: 0.2.0+2
+version: 0.2.0+3
 
 environment:
   # flutter_gemma 0.13.x → grpc 5.x requires a recent Dart; CI builds on
