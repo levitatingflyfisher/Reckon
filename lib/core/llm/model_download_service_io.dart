@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:domovoi/domovoi.dart' show resumableDownload;
+import 'package:domovoi/domovoi.dart'
+    show resumableDownload, resumableDownloadStream;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -99,67 +100,47 @@ class ModelDownloadService {
   ///
   /// Cancelling the subscription is the pause button, for real: it cancels
   /// the underlying transfer, keeps the `.part` for resume, and the file is
-  /// never promoted. (The previous implementation detached the writer from
+  /// never promoted. (An earlier implementation detached the writer from
   /// the stream, so a cancelled subscription left it downloading — and
   /// promoting — behind the user's back.)
   ///
+  /// Nothing hits the wire until someone subscribes: this is `async*`, and
+  /// domovoi's stream starts on first listen.
+  ///
   /// Throws [StateError] if [spec] requires a token and none is stored.
   /// Forwards [DioException] on network errors.
-  Stream<(int, int)> download(ReckonModelSpec spec) {
-    final controller = StreamController<(int, int)>();
-    final cancelToken = CancelToken();
+  Stream<(int, int)> download(ReckonModelSpec spec) async* {
+    final file = await modelFile(spec);
+    final part = await _partFile(spec);
 
-    Future<void> run() async {
-      final file = await modelFile(spec);
-      final part = await _partFile(spec);
-
-      if (spec.requiresToken) {
-        final token = await getHfToken();
-        if (token == null || token.isEmpty) {
-          throw StateError(
-            'This model requires a HuggingFace token — add one in Settings.',
-          );
-        }
-        // Base-option headers ride every request the engine makes (initial,
-        // 416 restart, Range-ignored restart), like the per-request header
-        // used to.
-        _dio.options.headers['Authorization'] = 'Bearer $token';
-      }
-
-      try {
-        await resumableDownload(
-          dio: _dio,
-          url: spec.downloadUrl,
-          partFile: part,
-          cancelToken: cancelToken,
-          onProgress: (received, total) =>
-              controller.add((received, total ?? -1)),
-          // Atomically promote the completed file to its final name. Only
-          // after this is [isDownloaded] allowed to return true.
-          promote: () async {
-            if (file.existsSync()) await file.delete();
-            await part.rename(file.path);
-          },
+    if (spec.requiresToken) {
+      final token = await getHfToken();
+      if (token == null || token.isEmpty) {
+        throw StateError(
+          'This model requires a HuggingFace token — add one in Settings.',
         );
-      } finally {
-        _dio.options.headers.remove('Authorization');
       }
+      // Base-option headers ride every request the engine makes (initial,
+      // 416 restart, Range-ignored restart), like the per-request header
+      // used to.
+      _dio.options.headers['Authorization'] = 'Bearer $token';
     }
 
-    controller
-      ..onListen = () {
-        unawaited(run().then((_) => controller.close(), onError: (Object e) {
-          controller.addError(e);
-          controller.close();
-        }));
-      }
-      ..onCancel = () {
-        // Subscription cancel = transfer cancel. The engine then ends the
-        // run quietly: partial kept, promote never called.
-        if (!cancelToken.isCancelled) cancelToken.cancel();
-      };
-
-    return controller.stream;
+    try {
+      yield* resumableDownloadStream(
+        dio: _dio,
+        url: spec.downloadUrl,
+        partFile: part,
+        // Atomically promote the completed file to its final name. Only
+        // after this is [isDownloaded] allowed to return true.
+        promote: () async {
+          if (file.existsSync()) await file.delete();
+          await part.rename(file.path);
+        },
+      );
+    } finally {
+      _dio.options.headers.remove('Authorization');
+    }
   }
 
   /// Deletes the local model file (and any leftover `.part`) for [spec].
