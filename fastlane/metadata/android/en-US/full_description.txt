@@ -1,0 +1,14 @@
+The killer feature is not any single technique. It is your own track record confronting you.
+
+Reckon is a decision journal built on a superforecasting "inner-crowd" protocol. The model never decides — it argues with itself so you can see the shape of the question. Your record is what earns weight.
+
+• Log a decision, your confidence, and your reasoning
+• An inner-crowd duel with distinct personas
+• A deference map earned from your own past accuracy
+• Group mode: everyone commits before anyone reveals
+• Bring your own key, or run a model entirely on the device
+
+Cloud models are strictly opt-in and bring-your-own-key. Nothing is sent anywhere unless you configure it and turn it on.
+
+Free and open source, MIT licensed.
+Source: https://github.com/levitatingflyfisher/Reckon
