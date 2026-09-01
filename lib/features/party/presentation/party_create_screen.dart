@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -99,10 +100,11 @@ class _PartyCreateScreenState extends ConsumerState<PartyCreateScreen> {
       if (!mounted) return;
       context.go('/party/${party.id}/vote');
     } catch (e) {
+      debugPrint('Reckon: starting a vote failed: $e');
       if (!mounted) return;
       setState(() => _creating = false);
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Couldn't create party: $e")));
+          .showSnackBar(SnackBar(content: Text("Couldn’t start the vote. ${ohFriendlyErrorMessage(e)}")));
     }
   }
 
@@ -110,105 +112,119 @@ class _PartyCreateScreenState extends ConsumerState<PartyCreateScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Group decision')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text('What are you deciding together?', style: textTheme.bodyLarge),
-          const SizedBox(height: 12),
-          OHTextField(
-            controller: _title,
-            hint: 'e.g. Where should we eat tonight?',
-            autofocus: true,
-          ),
-          const SectionHeader(label: 'Options'),
-          for (var i = 0; i < _options.length; i++)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
+      appBar: AppBar(title: const Text('Group vote')),
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16),
                 children: [
-                  Expanded(
-                    child: OHTextField(
-                      controller: _options[i],
-                      hint: 'Option ${i + 1}',
+                Text('What are you deciding together?', style: textTheme.bodyLarge),
+                const SizedBox(height: 12),
+                OHTextField(
+                  controller: _title,
+                  hint: 'e.g. Where should we eat tonight?',
+                  autofocus: true,
+                ),
+                const SectionHeader(label: 'Options'),
+                for (var i = 0; i < _options.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OHTextField(
+                            controller: _options[i],
+                            hint: 'Option ${i + 1}',
+                          ),
+                        ),
+                        if (_options.length > _minOptions)
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Remove option',
+                            onPressed: () => _removeOption(i),
+                          ),
+                      ],
                     ),
                   ),
-                  if (_options.length > _minOptions)
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      tooltip: 'Remove option',
-                      onPressed: () => _removeOption(i),
+                if (_options.length < _maxOptions)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: _addOption,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add option'),
                     ),
+                  ),
+                const SectionHeader(label: 'How to decide'),
+                SegmentedButton<VotingMethod>(
+                  segments: const [
+                    ButtonSegment(
+                      value: VotingMethod.approval,
+                      label: Text('Approval'),
+                      icon: Icon(Icons.done_all),
+                    ),
+                    ButtonSegment(
+                      value: VotingMethod.ranked,
+                      label: Text('Ranked'),
+                      icon: Icon(Icons.format_list_numbered),
+                    ),
+                  ],
+                  selected: {_method},
+                  onSelectionChanged: (s) => setState(() => _method = s.first),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _method == VotingMethod.approval
+                      ? 'Everyone ticks every option they’d be happy with. Most ticks wins.'
+                      : 'Everyone ranks the options. Resolved by instant-runoff so the '
+                          'least-disliked option wins.',
+                  style: textTheme.bodySmall,
+                ),
+                if (widget.groupId != null) ...[
+                  const SectionHeader(label: 'How serious is it?'),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Serious decision'),
+                    subtitle: const Text(
+                        'Results stay hidden until voting closes. Everyone votes '
+                        'blind, then you reveal together.'),
+                    value: _considered,
+                    onChanged: (v) => setState(() => _considered = v),
+                  ),
+                ],
+                  const SizedBox(height: 8),
+                OHButton(
+                  label: 'Join with a link',
+                  style: OHButtonStyle.text,
+                  expanded: true,
+                  onPressed: _creating ? null : () => context.push('/party/join'),
+                ),
+                if (widget.groupId == null)
+                  OHButton(
+                    label: 'Your groups',
+                    style: OHButtonStyle.text,
+                    expanded: true,
+                    onPressed: _creating ? null : () => context.push('/groups'),
+                  ),
                 ],
               ),
             ),
-          if (_options.length < _maxOptions)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: _addOption,
-                icon: const Icon(Icons.add),
-                label: const Text('Add option'),
+            // Pinned under the list so the one thing this screen is for
+            // is always on screen, at any text size.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              child: OHButton(
+                label: _creating ? 'Creating…' : 'Start voting',
+                expanded: true,
+                onPressed: _canCreate && !_creating ? _create : null,
               ),
-            ),
-          const SectionHeader(label: 'How to decide'),
-          SegmentedButton<VotingMethod>(
-            segments: const [
-              ButtonSegment(
-                value: VotingMethod.approval,
-                label: Text('Approval'),
-                icon: Icon(Icons.done_all),
-              ),
-              ButtonSegment(
-                value: VotingMethod.ranked,
-                label: Text('Ranked'),
-                icon: Icon(Icons.format_list_numbered),
-              ),
-            ],
-            selected: {_method},
-            onSelectionChanged: (s) => setState(() => _method = s.first),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _method == VotingMethod.approval
-                ? 'Everyone ticks every option they’d be happy with. Most ticks wins.'
-                : 'Everyone ranks the options. Resolved by instant-runoff so the '
-                    'least-disliked option wins.',
-            style: textTheme.bodySmall,
-          ),
-          if (widget.groupId != null) ...[
-            const SectionHeader(label: 'How serious is it?'),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Serious decision'),
-              subtitle: const Text(
-                  'Results stay hidden until voting closes — everyone votes '
-                  'blind, then you reveal together.'),
-              value: _considered,
-              onChanged: (v) => setState(() => _considered = v),
             ),
           ],
-          const SizedBox(height: 24),
-          OHButton(
-            label: _creating ? 'Creating…' : 'Start voting',
-            expanded: true,
-            onPressed: _canCreate && !_creating ? _create : null,
-          ),
-          const SizedBox(height: 8),
-          OHButton(
-            label: 'Join with a link',
-            style: OHButtonStyle.text,
-            expanded: true,
-            onPressed: _creating ? null : () => context.push('/party/join'),
-          ),
-          if (widget.groupId == null)
-            OHButton(
-              label: 'Your groups',
-              style: OHButtonStyle.text,
-              expanded: true,
-              onPressed: _creating ? null : () => context.push('/groups'),
-            ),
-        ],
+        ),
       ),
     );
   }

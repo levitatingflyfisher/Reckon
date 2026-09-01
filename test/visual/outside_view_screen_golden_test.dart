@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reckon/core/llm/llm_providers.dart';
 import 'package:reckon/shared/theme/reckon_theme.dart';
 import 'package:reckon/core/llm/llm_service.dart';
 import 'package:reckon/features/case/data/case_providers.dart';
@@ -71,6 +72,8 @@ void main() {
       theme: ReckonTheme.light(),
       home: ProviderScope(
         overrides: [
+          // The model is on disk: this sweep is of the generated view.
+          onDeviceModelReadyProvider.overrideWith((ref) async => true),
           caseByIdProvider.overrideWith((ref, id) async => _sampleCase),
           outsideViewForCaseProvider
               .overrideWith((ref, id) async => _sampleView),

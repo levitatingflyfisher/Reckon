@@ -99,6 +99,8 @@ void main() {
     expect(find.text('0 vote(s) · approval'), findsOneWidget);
 
     sync.pendingRemote[party.id] = [remoteBallot(party, 'remote-2')];
+    // The refresh action is worded (fleet top-bar ruling).
+    expect(find.text('Refresh'), findsOneWidget);
     await tester.tap(find.byIcon(Icons.refresh));
     await tester.pumpAndSettle();
 

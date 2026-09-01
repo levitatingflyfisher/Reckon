@@ -91,11 +91,12 @@ void main() {
       await pumpScoped(tester, groupId: 'g1');
       await fill(tester);
 
+      // The grouped form is taller than the test viewport; Start voting is
+      // pinned below it, so only the toggle needs scrolling to.
+      await tester.scrollUntilVisible(find.text('Serious decision'), 100,
+          scrollable: find.byType(Scrollable).first);
       await tester.tap(find.text('Serious decision'));
       await tester.pump();
-      // The grouped form is taller than the test viewport.
-      await tester.scrollUntilVisible(find.text('Start voting'), 100,
-          scrollable: find.byType(Scrollable).first);
       await tester.tap(find.text('Start voting'));
       await tester.pumpAndSettle();
 

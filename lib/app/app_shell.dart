@@ -35,7 +35,7 @@ class AppShell extends StatelessWidget {
           NavigationDestination(
               icon: Icon(Icons.insights_outlined), label: 'Record'),
           NavigationDestination(
-              icon: Icon(Icons.menu_book_outlined), label: 'Techniques'),
+              icon: Icon(Icons.menu_book_outlined), label: 'Learn'),
           NavigationDestination(
               icon: Icon(Icons.settings_outlined), label: 'Settings'),
         ],

@@ -18,6 +18,9 @@ class LocalNotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
   bool _initialized = false;
 
+  /// The phone can schedule the check-in reminders (given permission).
+  bool get canScheduleReminders => true;
+
   final _selections = StreamController<String>.broadcast();
 
   /// Emits the payload of a notification the user tapped while the app was
@@ -77,13 +80,13 @@ class LocalNotificationService {
     await _plugin.zonedSchedule(
       id,
       'Time to check in',
-      'One of your open cases is ready for a re-poll.',
+      'One of your open decisions is ready for you to weigh in again.',
       _absolute(when),
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'reckon_repoll',
-          'Re-poll reminders',
-          channelDescription: 'Gentle check-ins on your open cases',
+          'Weigh-in reminders',
+          channelDescription: 'Gentle reminders to weigh in on your open decisions',
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),

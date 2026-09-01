@@ -28,7 +28,7 @@ class CitationList extends StatelessWidget {
       children: [
         Text('Sources', style: textTheme.labelLarge),
         const SizedBox(height: 2),
-        Text('Curated — independent of the model.',
+        Text('Curated, independent of the model.',
             style: textTheme.bodySmall),
         const SizedBox(height: 8),
         for (final c in citations) _CitationRow(citation: c, onOpen: onOpen),

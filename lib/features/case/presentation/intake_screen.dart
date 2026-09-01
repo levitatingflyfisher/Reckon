@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -45,9 +45,21 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
   /// invoking `generateChatResponseAsync` before the user has typed
   /// anything leaves the stream open-ended on some Gemma builds, which
   /// would pin `_isGenerating` to true and disable Send forever.
+  /// A blank form for writing a decision down by hand, with no interview.
+  static const _emptyDraft = CaseDraft(
+    question: '',
+    optionA: '',
+    optionB: '',
+    stakes: Stakes.medium,
+    regretHorizon: RegretHorizon.months,
+    deadline: null,
+    statedCriteria: [],
+    category: null,
+  );
+
   static const _opener = IntakeTurn(
     role: IntakeRole.assistant,
-    content: "What's the decision you're trying to make?",
+    content: "What’s the decision you’re trying to make?",
   );
 
   /// Block the intake conversation until we know a model is installed.
@@ -56,11 +68,11 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
   /// surfacing a raw StateError in the chat bubble, show a dedicated
   /// "download a model first" screen with a direct Settings link.
   Future<void> _gateOnModel() async {
-    // The web build has no on-device model runtime, so there is nothing to
+    // A build with no on-device model runtime (the web PWA) has nothing to
     // gate on — short-circuit to the "not ready" state, which renders the
-    // web-specific friendly message below. This also avoids the secure-storage
-    // read in the native path, keeping web startup off that dependency.
-    if (kIsWeb) {
+    // no-runtime message below. This also avoids the secure-storage read in
+    // the native path, keeping web startup off that dependency.
+    if (!ref.read(onDeviceModelSupportedProvider)) {
       if (mounted) setState(() => _modelReady = false);
       return;
     }
@@ -146,6 +158,7 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
       // Only point to Settings if the model file is actually missing; otherwise
       // surface the real failure rather than sending the user to re-download a
       // model they already have.
+      debugPrint('Reckon: the on-device model failed to start: $e');
       final downloaded = await ref
           .read(modelDownloadServiceProvider)
           .isDownloaded(ref.read(activeModelSpecProvider));
@@ -180,9 +193,9 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
           setState(() {
             _transcript.add(const IntakeTurn(
               role: IntakeRole.assistant,
-              content: "I wasn't able to structure your case automatically. "
-                  "You can try describing your decision again, or tap the "
-                  "back button and create a new case.",
+              content: "I wasn’t able to write your decision up automatically. "
+                  'You can describe it again, or choose Write it up myself '
+                  'below and fill in the form.',
             ));
           });
         }
@@ -223,158 +236,182 @@ class _IntakeScreenState extends ConsumerState<IntakeScreen> {
     final textTheme = Theme.of(context).textTheme;
     if (_modelReady == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('New case')),
-        body: const Center(child: CircularProgressIndicator()),
+        appBar: AppBar(title: const Text('New decision')),
+        body: const OhPage(
+          padding: EdgeInsets.zero,
+          child: Center(child: CircularProgressIndicator()),
+        ),
       );
     }
     if (_modelReady == false) {
       return Scaffold(
-        appBar: AppBar(title: const Text('New case')),
-        body: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: kIsWeb
-                  ? [
-                      Text(
-                        'AI-guided intake is coming to the web soon.',
-                        style: textTheme.titleLarge,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        "Reckon interviews you with an on-device model, which "
-                        "the browser version can't run yet. Install the Android "
-                        "app to open a case — your journal, glossary, and "
-                        "settings all work here in the meantime.",
-                        style: textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      OHButton(
-                        label: 'Back to journal',
-                        expanded: true,
-                        onPressed: () => context.go('/'),
-                      ),
-                    ]
-                  : [
-                      Text(
-                        'Reckon needs an on-device model before it can open a '
-                        'case.',
-                        style: textTheme.titleLarge,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        "Head to Settings, pick a model, and tap Download. It "
-                        "stays on your phone — nothing leaves the device.",
-                        style: textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      OHButton(
-                        label: 'Open Settings',
-                        expanded: true,
-                        onPressed: () => context.go('/settings'),
-                      ),
-                    ],
+        appBar: AppBar(title: const Text('New decision')),
+        body: OhPage(
+          padding: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: !ref.watch(onDeviceModelSupportedProvider)
+                    ? [
+                        Text(
+                          'Write your decision down',
+                          style: textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 12),
+                        // Left-aligned: a paragraph, not a headline.
+                        Text(
+                          "Reckon’s interviewer is a language model that runs "
+                          "on your phone, and this browser can’t run one. You "
+                          'can still write the decision and its two options '
+                          'down yourself, and they are kept in this browser. '
+                          'The outside view and the forecasters need the '
+                          'Android app.',
+                          style: textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 24),
+                        OHButton(
+                          label: 'Write it down myself',
+                          expanded: true,
+                          onPressed: () =>
+                              context.go('/case-summary', extra: _emptyDraft),
+                        ),
+                        const SizedBox(height: 8),
+                        OHButton(
+                          label: 'Back to Home',
+                          style: OHButtonStyle.text,
+                          expanded: true,
+                          onPressed: () => context.go('/'),
+                        ),
+                      ]
+                    : [
+                        Text(
+                          'The interviewer needs an on-device model',
+                          style: textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Head to Settings, pick a model, and tap Download. '
+                          'It stays on your phone; nothing leaves the device. '
+                          'Or write the decision down yourself now.',
+                          style: textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 24),
+                        OHButton(
+                          label: 'Open Settings',
+                          expanded: true,
+                          onPressed: () => context.go('/settings'),
+                        ),
+                        const SizedBox(height: 8),
+                        OHButton(
+                          label: 'Write it down myself',
+                          style: OHButtonStyle.secondary,
+                          expanded: true,
+                          onPressed: () =>
+                              context.go('/case-summary', extra: _emptyDraft),
+                        ),
+                      ],
+              ),
             ),
           ),
         ),
       );
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('New case')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                children: [
-                  for (final turn in _transcript)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Align(
-                        alignment: turn.role == IntakeRole.user
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 320),
+      appBar: AppBar(title: const Text('New decision')),
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  children: [
+                    for (final turn in _transcript)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Align(
+                          alignment: turn.role == IntakeRole.user
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 320),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: turn.role == IntakeRole.user
+                                    ? Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer
+                                    : Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child:
+                                  Text(turn.content, style: textTheme.bodyLarge),
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (_isGenerating && _streamingBuf.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
                           child: Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: turn.role == IntakeRole.user
-                                  ? Theme.of(context)
-                                      .colorScheme
-                                      .primaryContainer
-                                  : Theme.of(context)
-                                      .colorScheme
-                                      .surfaceContainerHighest,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child:
-                                Text(turn.content, style: textTheme.bodyLarge),
+                                Text(_streamingBuf, style: textTheme.bodyLarge),
                           ),
                         ),
                       ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: OHTextField(
+                      controller: _input,
+                      hint: 'Type your answer…',
+                      onSubmitted: _sendUserTurn,
                     ),
-                  if (_isGenerating && _streamingBuf.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child:
-                              Text(_streamingBuf, style: textTheme.bodyLarge),
-                        ),
-                      ),
-                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  OHButton(
+                    label: 'Send',
+                    onPressed: _isGenerating
+                        ? null
+                        : () => _sendUserTurn(_input.text.trim()),
+                  ),
                 ],
               ),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: OHTextField(
-                    controller: _input,
-                    hint: 'Type your answer...',
-                    onSubmitted: _sendUserTurn,
+              // Always-available escape hatch: once the user has said anything,
+              // they can finish and save the case themselves — they're never
+              // stranded waiting on the small model to emit a clean structured
+              // result.
+              if (_transcript.any((t) => t.role == IntakeRole.user))
+                Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: OHButton(
+                    label: 'Write it up myself',
+                    style: OHButtonStyle.secondary,
+                    expanded: true,
+                    onPressed: _isGenerating ? null : _buildCaseManually,
                   ),
                 ),
-                const SizedBox(width: 12),
-                OHButton(
-                  label: 'Send',
-                  onPressed: _isGenerating
-                      ? null
-                      : () => _sendUserTurn(_input.text.trim()),
-                ),
-              ],
-            ),
-            // Always-available escape hatch: once the user has said anything,
-            // they can finish and save the case themselves — they're never
-            // stranded waiting on the small model to emit a clean structured
-            // result.
-            if (_transcript.any((t) => t.role == IntakeRole.user))
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: OHButton(
-                  label: 'Build my case',
-                  style: OHButtonStyle.secondary,
-                  expanded: true,
-                  onPressed: _isGenerating ? null : _buildCaseManually,
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

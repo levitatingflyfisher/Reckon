@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sanctuary_backup_ui/sanctuary_backup_ui.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -15,6 +16,7 @@ import '../../export/data/export_providers.dart';
 import '../../export/data/share_export.dart';
 import '../../export/domain/formatters.dart';
 import '../../forecasters/presentation/forecaster_settings_section.dart';
+import '../../../core/llm/model_error.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -23,53 +25,73 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final selected = ref.watch(activeModelSpecProvider);
+    final modelRuntime = ref.watch(onDeviceModelSupportedProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text('On-device model', style: textTheme.titleLarge),
-          const SizedBox(height: 4),
-          Text(
-            'Pick one. The active model runs all of Reckon\'s on-device '
-            'reasoning. Changing the selection takes effect the next time '
-            'the model is invoked.',
-            style: textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 12),
-          for (final spec in ReckonModelSpec.availableModels)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _ModelCard(
-                spec: spec,
-                isSelected: spec.id == selected.id,
-              ),
-            ),
-          const _HfTokenTile(),
-          const SizedBox(height: 12),
-          const ForecastersSection(),
-          const SizedBox(height: 24),
-          Text('Appearance', style: textTheme.titleLarge),
-          const SizedBox(height: 8),
-          const _ThemePicker(),
-          const SizedBox(height: 24),
-          Text('Your data', style: textTheme.titleLarge),
-          const SizedBox(height: 8),
-          const _ExportCard(),
-          const SizedBox(height: 12),
-          const _BackupCard(),
-          const BackupSettingsSection(),
-          const SizedBox(height: 24),
-          const ListTile(
-            title: Text('Auth tier'),
-            subtitle: Text('Ghost (local only)'),
-          ),
-          const ListTile(
-            title: Text('About'),
-            subtitle: Text('Reckon — Phase 1 build'),
-          ),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        actions: const [
+          OhBarActions(children: [ReckonThemeToggle()]),
         ],
+      ),
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text('On-device model', style: textTheme.titleLarge),
+            const SizedBox(height: 4),
+            if (!modelRuntime) ...[
+              // No runtime on this build (web): a download would buy nothing.
+              Text(
+                "This browser version can’t run an on-device model, so there "
+                'is nothing to download here. Install the Android app to use '
+                "Reckon’s interviewer.",
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 24),
+            ] else ...[
+              Text(
+                'Pick one. The active model runs all of Reckon’s on-device '
+                'reasoning. Changing the selection takes effect the next time '
+                'the model is invoked.',
+                style: textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              for (final spec in ReckonModelSpec.availableModels)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _ModelCard(
+                    spec: spec,
+                    isSelected: spec.id == selected.id,
+                  ),
+                ),
+              const _HfTokenTile(),
+              const SizedBox(height: 12),
+            ],
+            const ForecastersSection(),
+            const SizedBox(height: 24),
+            Text('Appearance', style: textTheme.titleLarge),
+            const SizedBox(height: 8),
+            const _ThemePicker(),
+            const SizedBox(height: 24),
+            Text('Your data', style: textTheme.titleLarge),
+            const SizedBox(height: 8),
+            const _ExportCard(),
+            const SizedBox(height: 12),
+            const _BackupCard(),
+            const BackupSettingsSection(),
+            const SizedBox(height: 24),
+            const ListTile(
+              title: Text('Account'),
+              subtitle: Text('None. Everything stays on this device.'),
+            ),
+            const ListTile(
+              title: Text('About'),
+              subtitle: Text('A private decision journal. Free and open source.'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -162,15 +184,16 @@ class _ExportCardState extends ConsumerState<_ExportCard> {
       await shareExport(
         content: content,
         fileName: 'reckon-export-$stamp.$ext',
-        subject: 'Reckon export — $stamp',
+        subject: 'Reckon export $stamp',
         text: 'My Reckon data (generated $stamp)',
       );
     } catch (e) {
+      debugPrint('Reckon: exporting failed: $e');
       // On web, delivery isn't wired up yet and throws an UnsupportedError with
       // a user-facing message; show that verbatim instead of "Export failed:".
       final message = e is UnsupportedError
           ? (e.message ?? 'Export is not available here yet.')
-          : 'Export failed: $e';
+          : "Couldn’t export your data. ${ohFriendlyErrorMessage(e)}";
       messenger.showSnackBar(SnackBar(content: Text(message)));
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -186,7 +209,7 @@ class _ExportCardState extends ConsumerState<_ExportCard> {
         children: [
           Text(
             'Share a plain, unencrypted copy of everything Reckon knows '
-            'about you: cases, polls, outside views, and resolutions — for '
+            'about you (decisions, weigh-ins, outside views and resolutions) for '
             'reading elsewhere, not for safekeeping. Stays on your device '
             'unless you share it. For a restorable backup, see Encrypted '
             'backup below.',
@@ -235,8 +258,8 @@ class _BackupCard extends StatelessWidget {
     return OHCard(
       child: Text(
         'An encrypted, restorable backup of everything above, protected by '
-        '12 recovery words only you hold — nobody else, not even this app, '
-        'can read it without them. Different from a ReckonParty join link: '
+        '12 recovery words only you hold. Nobody else, not even this app, '
+        'can read it without them. Different from a group-vote link: '
         'those share a decision with someone else; these words recover '
         'your data on a new device.',
         style: textTheme.bodyMedium,
@@ -253,16 +276,17 @@ class _ThemePicker extends ConsumerWidget {
     final textTheme = Theme.of(context).textTheme;
     final colors = Theme.of(context).colorScheme;
     final current = ref.watch(themePreferenceProvider).valueOrNull ??
-        ThemePreference.light;
+        ThemePreference.system;
 
     return OHCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Reckon ships three themes. Light is the daytime default; '
-            'Evening is warm-dark for reflective check-ins; Late night is '
-            'neutral high-contrast for long reading or low ambient light.',
+            'Reckon follows your phone unless you pick. The theme button '
+            'at the top of each main screen switches between Follow phone, '
+            'Light and Dark; Late night is here for long reading in low '
+            'light.',
             style: textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -400,10 +424,11 @@ class _ModelCardState extends ConsumerState<_ModelCard> {
       },
       onError: (Object e) {
         unawaited(WakelockPlus.disable());
+        debugPrint('Reckon: model download failed: $e');
         if (mounted) {
           setState(() {
             _downloading = false;
-            _downloadError = e.toString();
+            _downloadError = modelDownloadErrorMessage(e);
           });
         }
       },
@@ -412,23 +437,15 @@ class _ModelCardState extends ConsumerState<_ModelCard> {
 
   Future<void> _delete() async {
     final sizeMb = (widget.spec.approximateSizeBytes / 1e6).round();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete model?'),
-        content: Text(
-          '${widget.spec.displayName} (~$sizeMb MB) will be removed from this '
-          'device. You can download it again later.',
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel')),
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Delete')),
-        ],
-      ),
+    // The one delete that still asks (fleet ruling): a model file is a
+    // gigabyte-scale download no Undo can hand back without re-fetching.
+    final confirmed = await showOhConfirm(
+      context,
+      title: 'Delete ${widget.spec.displayName}?',
+      message: 'It frees about $sizeMb MB on this device. You can download '
+          'it again later.',
+      confirmLabel: 'Delete model',
+      destructive: true,
     );
     if (confirmed != true || !mounted) return;
 

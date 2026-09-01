@@ -8,6 +8,6 @@ class AiUnavailableOnWeb implements Exception {
 
   @override
   String toString() =>
-      'AiUnavailableOnWeb: Reckon\'s AI features are not available in the '
+      'AiUnavailableOnWeb: Reckon’s AI features are not available in the '
       'web version yet.';
 }

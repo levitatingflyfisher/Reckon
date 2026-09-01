@@ -55,7 +55,7 @@ class PartySyncService {
     required String relayBaseUrl,
   }) async {
     final party = await _local.getParty(partyId);
-    if (party == null) throw StateError('No local party "$partyId" to share');
+    if (party == null) throw StateError('No local party “$partyId” to share');
 
     final gen = await PartyCrypto.generate();
     final info = PartySyncInfo(baseUrl: relayBaseUrl, keyString: gen.keyString);

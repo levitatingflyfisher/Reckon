@@ -56,6 +56,7 @@ If you write one, put it in `docs/tutorials/`.
 - **[Vision](../VISION.md)** — the one idea, the design commitments, the honest scorecard.
 - **[White paper](whitepaper.md)** — why an on-device-AI decision journal, why
   local-first here, and how it differs from a cloud incumbent.
+- **[Personas](explanation/personas.md)**: who agents play when they test the UI, with scenarios.
 - **[Concepts](concepts.md)** — the inner-crowd protocol, blinding, the outside view,
   calibration, and the domain model.
 - **[Architecture overview](architecture/OVERVIEW.md)** — the layers and data flow,

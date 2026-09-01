@@ -13,6 +13,10 @@ class LocalNotificationService {
 
   Stream<String> get selections => _selections.stream;
 
+  /// A browser has no OS alarm Reckon can schedule against, so there is
+  /// nothing to ask permission for and nothing to warn about.
+  bool get canScheduleReminders => false;
+
   Future<void> init() async {}
 
   Future<String?> initialLaunchPayload() async => null;

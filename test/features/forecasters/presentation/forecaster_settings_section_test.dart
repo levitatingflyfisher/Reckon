@@ -103,6 +103,40 @@ void main() {
     expect(repo.roster.map((f) => f.id), ['persona-steelman-advocate']);
   });
 
+  testWidgets(
+      'a deliberate delete offers an Undo that never expires and brings '
+      'the same forecaster back', (tester) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+    // Bench it first, so Undo has to restore more than the name.
+    await tester.tap(find.byType(Switch).first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Base-rate skeptic'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    // No second question: the Delete button was the decision.
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(find.textContaining('Deleted'), findsOneWidget);
+
+    // Fleet ruling: the offer stays until the person acts.
+    await tester.pump(const Duration(hours: 1));
+    expect(find.text('Undo'), findsOneWidget);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Base-rate skeptic'), findsOneWidget);
+    final back =
+        repo.roster.singleWhere((f) => f.id == 'persona-base-rate-skeptic');
+    expect(back.enabled, isFalse);
+    expect(back.config, {'persona': 'A stance.'});
+    expect(back.createdAt, DateTime(2026, 7, 11));
+    expect(find.text('Undo'), findsNothing);
+  });
+
   testWidgets('adds a stove forecaster with host and port through the form',
       (tester) async {
     await tester.pumpWidget(harness());

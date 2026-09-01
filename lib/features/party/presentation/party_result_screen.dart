@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
@@ -81,45 +82,52 @@ class _PartyResultScreenState extends ConsumerState<PartyResultScreen> {
         title: const Text('Result'),
         actions: [
           if (isSynced)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Check for new votes',
-              onPressed: _pull,
-            ),
+            OhBarActions(children: [
+              OhBarAction(
+                icon: Icons.refresh,
+                label: 'Refresh',
+                onPressed: _pull,
+              ),
+            ]),
         ],
       ),
-      body: partyAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (party) {
-          if (party == null) {
-            return const Center(child: Text('This party no longer exists.'));
-          }
-          final labels = {for (final o in party.options) o.id: o.label};
-          return resultAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
-            data: (result) => ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(party.title,
-                    style: Theme.of(context).textTheme.headlineMedium),
-                const SizedBox(height: 16),
-                // Considered mode: while voting is open, nobody — host
-                // included — sees a running score. Blind first; closing is
-                // the mutual reveal.
-                if (party.resultsSealed)
-                  _SealedView(ballotCount: _ballotCount(result))
-                else if (result is ApprovalResult)
-                  _ApprovalView(result: result, labels: labels)
-                else if (result is RankedResult)
-                  _RankedView(result: result, labels: labels),
-                const SizedBox(height: 24),
-                _Actions(party: party, labels: labels, result: result),
-              ],
-            ),
-          );
-        },
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: partyAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load this vote"),
+          data: (party) {
+            if (party == null) {
+              return const Center(child: Text('This vote no longer exists.'));
+            }
+            final labels = {for (final o in party.options) o.id: o.label};
+            return resultAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t count the votes"),
+              data: (result) => ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(party.title,
+                      style: Theme.of(context).textTheme.headlineMedium),
+                  const SizedBox(height: 16),
+                  // Considered mode: while voting is open, nobody — host
+                  // included — sees a running score. Blind first; closing is
+                  // the mutual reveal.
+                  if (party.resultsSealed)
+                    _SealedView(ballotCount: _ballotCount(result))
+                  else if (result is ApprovalResult)
+                    _ApprovalView(result: result, labels: labels)
+                  else if (result is RankedResult)
+                    _RankedView(result: result, labels: labels),
+                  const SizedBox(height: 24),
+                  _Actions(party: party, labels: labels, result: result),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -182,7 +190,7 @@ class _ApprovalView extends StatelessWidget {
         if (result.isContested)
           Padding(
             padding: const EdgeInsets.only(top: 4),
-            child: Text('Close call — the group is split.',
+            child: Text('Close call: the group is split.',
                 style: textTheme.bodySmall),
           ),
         const SizedBox(height: 12),
@@ -255,7 +263,7 @@ class _RankedView extends StatelessWidget {
               if (result.isContested)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Text('Took several rounds — a divided group.',
+                  child: Text('Took several rounds: a divided group.',
                       style: textTheme.bodySmall),
                 ),
             ],
@@ -319,7 +327,7 @@ class _Actions extends ConsumerWidget {
       final w = r.winnerId;
       buf.writeln('Winner: ${w == null ? '—' : labels[w] ?? w}');
     }
-    buf.write('\nDecided with ReckonParty.');
+    buf.write('\nDecided together with Reckon.');
     return buf.toString();
   }
 
@@ -373,7 +381,7 @@ class _Actions extends ConsumerWidget {
             },
           ),
         OHButton(
-          label: 'Turn this into a Reckon case',
+          label: 'Turn this into a Reckon decision',
           style: OHButtonStyle.text,
           expanded: true,
           onPressed: () => context.go('/intake'),

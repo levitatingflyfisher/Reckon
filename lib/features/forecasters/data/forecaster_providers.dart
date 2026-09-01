@@ -44,7 +44,7 @@ final runnableForecastersProvider =
   // Await the persisted selection FIRST: reading the sync spec provider too
   // early falls back to the default spec (same trap as intake's gate).
   var residentReady = false;
-  if (!kIsWeb) {
+  if (ref.watch(onDeviceModelSupportedProvider)) {
     final selectedId = await ref.watch(selectedModelIdProvider.future);
     final spec = ReckonModelSpec.byId(selectedId);
     residentReady =

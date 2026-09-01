@@ -13,6 +13,41 @@ void main() => runFleetConformance(const FleetAppConfig(
       checks: {
         ...FleetAppConfig.withBundledFonts,
         FleetCheck.c8IconButtons,
+        // C10: no raw exception text on screen; failures go through
+        // OhErrorState / ohFriendlyErrorMessage (details behind a tap).
+        FleetCheck.c10RawErrors,
+        // C11, strict: a tooltip is not a bar command's name; every bar
+        // action shows its word (OhBarAction / OhBarOverflow).
+        FleetCheck.c11StrictBarLabels,
+        // C9: every routed screen has a way in.
+        FleetCheck.c9Routes,
+        // C12: the accent must not read as an error.
+        FleetCheck.c12AccentVsError,
+        // C5-primaryScreens: each screen below is swept at 360 dp x 1.3
+        // (primary action reachable) and 320 dp x 3.0 (no overflow) in
+        // test/a11y/primary_action_sweep_test.dart.
+        FleetCheck.c5PrimaryScreens,
+      },
+      // Reckon builds its ColorScheme from ReckonTheme._scheme(seed:, primary:)
+      // helper arguments C12 cannot resolve, so the rendered primaries are
+      // recorded here: ember500 (light), ember400 (Dark) and sage400
+      // (Late night). test/shared/theme/reckon_contrast_test.dart pins that
+      // these are the theme primaries.
+      accentColors: [
+        FleetAccent.light(0xFFAD522E, label: 'ember500 (ReckonTheme.light)'),
+        FleetAccent.dark(0xFFE17E4D, label: 'ember400 (ReckonTheme.hearthDark)'),
+        FleetAccent.dark(0xFF8FA07E, label: 'sage400 (ReckonTheme.night)'),
+      ],
+      primaryActionScreens: {
+        'HomeScreen',
+        'AuthTierScreen',
+        'ModelOnboardingScreen',
+        'FirstCasePromptScreen',
+        'CaseSummaryScreen',
+        'RepollScreen',
+        'ResolutionCheckInScreen',
+        'PartyCreateScreen',
+        'PartyVoteScreen',
       },
       // Tokens tier: canonical openhearth_design is the declared dependency;
       // the shipped look stays blessed app identity in lib/shared/theme/

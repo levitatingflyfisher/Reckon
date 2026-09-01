@@ -68,8 +68,8 @@ class ComputeInsightCards {
         cards.add(InsightCard(
           title: 'Drift vs steadiness',
           body: driftyRate > steadyRate
-              ? 'Cases where your lean drifted >20 points ended up feeling better on average than cases where it held steady.'
-              : 'Cases where your lean held steady ended up feeling better on average than cases where it drifted >20 points.',
+              ? 'Decisions where your lean drifted more than 20 points ended up feeling better on average than decisions where it held steady.'
+              : 'Decisions where your lean held steady ended up feeling better on average than decisions where it drifted more than 20 points.',
         ));
       }
     }
@@ -91,7 +91,7 @@ class ComputeInsightCards {
       cards.add(const InsightCard(
         title: 'Criteria vs rationale',
         body:
-            'Your rationales at re-poll time often mention different things than the criteria you named at intake. Worth noticing.',
+            'Your reasons when you weigh in often mention different things than the criteria you named at the start. Worth noticing.',
       ));
     }
 

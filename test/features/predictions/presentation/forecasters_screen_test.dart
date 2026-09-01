@@ -112,7 +112,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('YOUR UPDATES'), findsOneWidget);
+    expect(find.text('Your updates'), findsOneWidget);
     expect(find.textContaining('toward the option you ended up glad about'),
         findsOneWidget);
   });
@@ -137,8 +137,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-        find.textContaining('Not enough resolved decisions'), findsOneWidget);
-    expect(find.textContaining('resolve 3 more'), findsOneWidget);
+        find.textContaining('Not enough closed decisions'), findsOneWidget);
+    expect(find.textContaining('Close 3 more'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNothing);
   });
 

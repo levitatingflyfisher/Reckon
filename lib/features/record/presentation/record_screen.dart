@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +9,7 @@ import '../../../shared/widgets/oh_card.dart';
 import '../../../shared/widgets/section_header.dart';
 import '../data/record_providers.dart';
 import '../domain/entities/calibration_report.dart';
+import '../../../core/theme/theme_preference.dart';
 
 class RecordScreen extends ConsumerWidget {
   const RecordScreen({super.key});
@@ -21,143 +23,155 @@ class RecordScreen extends ConsumerWidget {
     final calibration = ref.watch(calibrationReportProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Record')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const SectionHeader(label: 'CLARITY SCORE'),
-          clarity.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text('Error: $e'),
-            data: (score) {
-              if (!score.hasEnoughData) {
-                return OHCard(
-                  child: Text(
-                    'Your record is still young. It gets more useful after a few closed cases.',
-                    style: textTheme.bodyLarge,
-                  ),
-                );
-              }
-              return OHCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${score.value}',
-                        style: textTheme.displayLarge),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Across ${score.caseCount} closed case${score.caseCount == 1 ? '' : 's'}.',
-                      style: textTheme.bodyMedium,
+      appBar: AppBar(
+        title: const Text('Record'),
+        actions: const [
+          OhBarActions(children: [ReckonThemeToggle()]),
+        ],
+      ),
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const SectionHeader(label: 'Clarity score'),
+            clarity.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t work out your clarity score"),
+              data: (score) {
+                if (!score.hasEnoughData) {
+                  return OHCard(
+                    child: Text(
+                      'Your record is still young. It gets more useful after a few closed decisions.',
+                      style: textTheme.bodyLarge,
                     ),
-                  ],
-                ),
-              );
-            },
-          ),
-          const SectionHeader(label: 'CALIBRATION'),
-          calibration.when(
-            loading: () => const SizedBox.shrink(),
-            error: (e, _) => Text('Error: $e'),
-            data: (report) {
-              if (!report.hasEnoughData) {
-                return Text(
-                  'Calibration charts appear after ${5 - report.sampleCount} more closed case${5 - report.sampleCount == 1 ? '' : 's'}.',
-                  style: textTheme.bodyMedium,
-                );
-              }
-              return _CalibrationView(report: report);
-            },
-          ),
-          const SectionHeader(label: 'PATTERNS'),
-          insights.when(
-            loading: () => const SizedBox.shrink(),
-            error: (e, _) => Text('Error: $e'),
-            data: (cards) {
-              if (cards.isEmpty) {
-                return Text(
-                  'Patterns appear after you have several closed cases to compare.',
-                  style: textTheme.bodyMedium,
-                );
-              }
-              return Column(
-                children: cards
-                    .map((c) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: OHCard(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(c.title, style: textTheme.labelLarge),
-                                const SizedBox(height: 8),
-                                Text(c.body, style: textTheme.bodyLarge),
-                              ],
-                            ),
-                          ),
-                        ))
-                    .toList(),
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          OHCard(
-            onTap: () => context.push('/forecasters'),
-            child: Row(
-              children: [
-                Icon(Icons.balance,
-                    color: Theme.of(context).colorScheme.primary),
-                const SizedBox(width: 12),
-                Expanded(
+                  );
+                }
+                return OHCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Forecasters', style: textTheme.labelLarge),
+                      Text('${score.value}',
+                          style: textTheme.displayLarge),
+                      const SizedBox(height: 8),
                       Text(
-                        'Who has earned weight on your decisions — you included?',
-                        style: textTheme.bodySmall,
+                        'Across ${score.caseCount} closed decision${score.caseCount == 1 ? '' : 's'}.',
+                        style: textTheme.bodyMedium,
                       ),
                     ],
                   ),
-                ),
-                const Icon(Icons.chevron_right),
-              ],
-            ),
-          ),
-          const SectionHeader(label: 'HISTORY'),
-          closed.when(
-            loading: () => const SizedBox.shrink(),
-            error: (e, _) => Text('Error: $e'),
-            data: (cases) {
-              if (cases.isEmpty) {
-                return Text(
-                  'No closed cases yet.',
-                  style: textTheme.bodyMedium,
                 );
-              }
-              return Column(
-                children: cases
-                    .map((c) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: OHCard(
-                            onTap: () => context.push('/case/${c.id}'),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(c.question,
-                                    style: textTheme.titleLarge),
-                                const SizedBox(height: 4),
-                                Text(
-                                  DateFormat.yMMMd().format(c.createdAt),
-                                  style: textTheme.bodySmall,
-                                ),
-                              ],
+              },
+            ),
+            const SectionHeader(label: 'Calibration'),
+            calibration.when(
+              loading: () => const SizedBox.shrink(),
+              error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t work out your calibration"),
+              data: (report) {
+                if (!report.hasEnoughData) {
+                  return Text(
+                    'Calibration charts appear after ${5 - report.sampleCount} more closed decision${5 - report.sampleCount == 1 ? '' : 's'}.',
+                    style: textTheme.bodyMedium,
+                  );
+                }
+                return _CalibrationView(report: report);
+              },
+            ),
+            const SectionHeader(label: 'Patterns'),
+            insights.when(
+              loading: () => const SizedBox.shrink(),
+              error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load your patterns"),
+              data: (cards) {
+                if (cards.isEmpty) {
+                  return Text(
+                    'Patterns appear after you have several closed decisions to compare.',
+                    style: textTheme.bodyMedium,
+                  );
+                }
+                return Column(
+                  children: cards
+                      .map((c) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: OHCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(c.title, style: textTheme.labelLarge),
+                                  const SizedBox(height: 8),
+                                  Text(c.body, style: textTheme.bodyLarge),
+                                ],
+                              ),
                             ),
-                          ),
-                        ))
-                    .toList(),
-              );
-            },
-          ),
-        ],
+                          ))
+                      .toList(),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+            OHCard(
+              onTap: () => context.push('/forecasters'),
+              child: Row(
+                children: [
+                  Icon(Icons.balance,
+                      color: Theme.of(context).colorScheme.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Forecasters', style: textTheme.labelLarge),
+                        Text(
+                          'Who has earned weight on your decisions, you included?',
+                          style: textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right),
+                ],
+              ),
+            ),
+            const SectionHeader(label: 'History'),
+            closed.when(
+              loading: () => const SizedBox.shrink(),
+              error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load your history"),
+              data: (cases) {
+                if (cases.isEmpty) {
+                  return Text(
+                    'No closed decisions yet.',
+                    style: textTheme.bodyMedium,
+                  );
+                }
+                return Column(
+                  children: cases
+                      .map((c) => Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: OHCard(
+                              onTap: () => context.push('/case/${c.id}'),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(c.question,
+                                      style: textTheme.titleLarge),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    DateFormat.yMMMd().format(c.createdAt),
+                                    style: textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

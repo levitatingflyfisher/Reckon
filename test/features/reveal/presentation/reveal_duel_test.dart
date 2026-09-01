@@ -114,7 +114,7 @@ void main() {
     ]));
     await tester.pumpAndSettle();
 
-    expect(find.text('THE DUEL'), findsOneWidget);
+    expect(find.text('Forecasters'), findsOneWidget);
     expect(find.text('Base-rate skeptic'), findsOneWidget);
     expect(find.text('Steelman advocate'), findsOneWidget);
     expect(find.textContaining('30'), findsOneWidget);
@@ -136,7 +136,7 @@ void main() {
 
     // "I've decided" only navigates here; the user can still press back and
     // keep re-polling. Until the decision commits, no lean or rationale.
-    expect(find.text('THE DUEL'), findsNothing);
+    expect(find.text('Forecasters'), findsNothing);
     expect(find.text('Base-rate skeptic'), findsNothing);
     expect(find.textContaining('lean 30'), findsNothing);
     expect(find.textContaining('lean 80'), findsNothing);
@@ -158,6 +158,6 @@ void main() {
     await tester.pumpWidget(harness(const []));
     await tester.pumpAndSettle();
 
-    expect(find.text('THE DUEL'), findsNothing);
+    expect(find.text('Forecasters'), findsNothing);
   });
 }

@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 
 import 'reckon_accents.dart';
 import 'reckon_tokens.dart';
 
-/// The three Reckon themes. A theme is a user-owned preference — the app
-/// never flips it based on system dark-mode (see `ThemePreference`).
+/// The three Reckon themes. The app follows the phone by default (light by
+/// day, [hearthDark] when the phone is dark); see `ThemePreference`.
 ///
-///   * [light]      — ember terracotta on linen. Daytime default.
-///   * [hearthDark] — warm brown-black, ember accent. Evening.
+///   * [light]      — ember terracotta on linen.
+///   * [hearthDark] — warm brown-black, ember accent. The Dark choice.
 ///   * [night]      — neutral high-contrast dark, sage accent. Late night.
 ///
 /// ## Why this is app code, not the shared package
@@ -18,13 +19,21 @@ import 'reckon_tokens.dart';
 /// differently in nearly every respect (color scheme slots, type ladder,
 /// component themes, radii), so reproducing this exact rendering through
 /// `OhTheme.*(appAccent: …)` + `copyWith` would mean re-implementing
-/// `ThemeData`'s internals. Instead the construction lives here, byte-for-byte
-/// equal to what shipped; the golden sweeps in `test/visual/` pin it.
-/// Converging on the canonical builders is a deliberate future visual change,
-/// not a refactor.
+/// `ThemeData`'s internals. Instead the construction lives here; the golden
+/// sweeps in `test/visual/` pin it. What it takes from the package is the
+/// colour language: each theme attaches `OhColorRoles` (warmth = Reckon's
+/// accent) and its error slots are the urgency roles, measured on Reckon's
+/// own grounds by `test/shared/theme/reckon_contrast_test.dart`. Converging
+/// on the canonical builders is a deliberate future visual change, not a
+/// refactor.
 abstract final class ReckonTheme {
   /// Ember terracotta on linen.
   static ThemeData light() => _build(
+        roles: OhColorRoles.light.copyWith(
+          warmth: ReckonAccents.ember500,
+          warmthPressed: ReckonAccents.ember600,
+          onWarmth: ReckonPalette.linen50,
+        ),
         _scheme(
           brightness: Brightness.light,
           seed: ReckonAccents.ember500,
@@ -40,6 +49,11 @@ abstract final class ReckonTheme {
 
   /// Warm brown-black, still ember-family.
   static ThemeData hearthDark() => _build(
+        roles: OhColorRoles.hearthDark.copyWith(
+          warmth: ReckonAccents.ember400,
+          warmthPressed: ReckonAccents.ember300,
+          onWarmth: ReckonPalette.linen900,
+        ),
         _scheme(
           brightness: Brightness.dark,
           seed: ReckonAccents.ember400,
@@ -55,6 +69,11 @@ abstract final class ReckonTheme {
 
   /// Neutral high-contrast dark with sage accent.
   static ThemeData night() => _build(
+        roles: OhColorRoles.night.copyWith(
+          warmth: ReckonPalette.sage400,
+          warmthPressed: ReckonPalette.sage300,
+          onWarmth: ReckonPalette.nightBg,
+        ),
         _scheme(
           brightness: Brightness.dark,
           seed: ReckonPalette.sage400,
@@ -101,13 +120,25 @@ abstract final class ReckonTheme {
     );
   }
 
-  static ThemeData _build(ColorScheme scheme) {
+  /// [roles] is the fleet colour language (`OhColorRoles`) with Reckon's
+  /// accent as warmth. It is attached as a theme extension so the shared
+  /// widgets (OhErrorState, OhUndoBar, showOhConfirm) and Reckon's own
+  /// labels read urgency, secondary text and chrome from it, and the
+  /// scheme's error slots are its urgency roles, never a second red.
+  static ThemeData _build(ColorScheme base, {required OhColorRoles roles}) {
+    final scheme = base.copyWith(
+      error: roles.urgency,
+      onError: roles.onUrgency,
+      errorContainer: roles.urgencySurface,
+      onErrorContainer: roles.urgency,
+    );
     final text = ReckonTypography.textTheme(scheme.onSurface);
     const pill = RoundedRectangleBorder(borderRadius: ReckonRadii.pill);
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
+      extensions: [roles],
       scaffoldBackgroundColor: scheme.surface,
       textTheme: text,
       splashFactory: InkRipple.splashFactory,

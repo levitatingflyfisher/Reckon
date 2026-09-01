@@ -82,8 +82,8 @@
     "sources": [
       {"author": "National Marriage Project", "title": "Divorce and Post-Divorce Satisfaction", "url": "https://nationalmarriageproject.org"}
     ],
-    "common_criteria": ["personal wellbeing", "children's stability", "financial security", "hope for repair", "safety"],
-    "common_regret_patterns": "Initiators who didn't attempt couples therapy report the highest retrospective regret. When abuse or addiction is present, regret rates drop sharply — the ending is rarely questioned.",
+    "common_criteria": ["personal wellbeing", "children’s stability", "financial security", "hope for repair", "safety"],
+    "common_regret_patterns": "Initiators who didn’t attempt couples therapy report the highest retrospective regret. When abuse or addiction is present, regret rates drop sharply; the ending is rarely questioned.",
     "uncertainty_level": "medium",
     "last_updated": "2026-04-01"
   },
@@ -134,13 +134,13 @@
     "id": "location-move-closer-family",
     "category": "location",
     "subcategory": "moving closer to family",
-    "base_rate_description": "Movers who relocate to be within an hour of extended family report high satisfaction (~70-80%) when the move is driven by positive pull (childcare help, aging-parent proximity) rather than negative push (financial necessity). Quality of the specific family relationships dominates outcome — moving near a supportive parent correlates with high satisfaction; moving near a high-conflict family does not.",
+    "base_rate_description": "Movers who relocate to be within an hour of extended family report high satisfaction (~70-80%) when the move is driven by positive pull (childcare help, aging-parent proximity) rather than negative push (financial necessity). Quality of the specific family relationships dominates outcome: moving near a supportive parent correlates with high satisfaction; moving near a high-conflict family does not.",
     "stratification_variables": ["family relationship quality", "career flexibility", "cost of living in destination", "partner family ties"],
     "sources": [
       {"author": "Pew Research", "title": "Where Americans Live", "url": "https://www.pewresearch.org"}
     ],
-    "common_criteria": ["childcare support", "aging parent care", "children's relationship with grandparents", "career impact", "cost of living"],
-    "common_regret_patterns": "Couples who moved toward one partner's family without an honest conversation about expectations (how often to visit, caregiving load) report higher friction at 1-2 years. Career regret is most acute for the partner whose field is thin in the new city.",
+    "common_criteria": ["childcare support", "aging parent care", "children’s relationship with grandparents", "career impact", "cost of living"],
+    "common_regret_patterns": "Couples who moved toward one partner’s family without an honest conversation about expectations (how often to visit, caregiving load) report higher friction at 1-2 years. Career regret is most acute for the partner whose field is thin in the new city.",
     "uncertainty_level": "high",
     "last_updated": "2026-04-01"
   },
@@ -205,8 +205,8 @@
     "id": "education-school-choice",
     "category": "education",
     "subcategory": "choosing a school for a child",
-    "base_rate_description": "Cross-sectional research on school choice shows parents who actively chose their child's school (public-choice, charter, private, homeschool) report higher satisfaction than those who defaulted to assigned zoning, independent of the actual academic outcomes. Parental involvement and peer-group quality predict student outcomes more than which school type is selected.",
-    "stratification_variables": ["child's specific learning needs", "commute burden", "peer group quality", "parental involvement capacity", "cost"],
+    "base_rate_description": "Cross-sectional research on school choice shows parents who actively chose their child’s school (public-choice, charter, private, homeschool) report higher satisfaction than those who defaulted to assigned zoning, independent of the actual academic outcomes. Parental involvement and peer-group quality predict student outcomes more than which school type is selected.",
+    "stratification_variables": ["child’s specific learning needs", "commute burden", "peer group quality", "parental involvement capacity", "cost"],
     "sources": [
       {"author": "Brookings", "title": "School Choice and Parental Satisfaction", "url": "https://www.brookings.edu"}
     ],
@@ -255,7 +255,7 @@
       {"author": "InterNations", "title": "Expat Insider Survey", "url": "https://www.internations.org/expat-insider/"},
       {"author": "Journal of International Business Studies", "title": "Expatriate Adjustment", "url": "https://www.jibs.net"}
     ],
-    "common_criteria": ["career or financial opportunity", "adventure and growth", "partner and children's wellbeing", "proximity to family back home", "long-term settlement intent"],
+    "common_criteria": ["career or financial opportunity", "adventure and growth", "partner and children’s wellbeing", "proximity to family back home", "long-term settlement intent"],
     "common_regret_patterns": "Moves made for a single job without a plan to build local roots, or over a reluctant partner, drive the highest early-return regret. Underestimating the 6-18 month trough leads people to quit just before adjustment would have arrived.",
     "uncertainty_level": "high",
     "last_updated": "2026-06-18"
@@ -264,7 +264,7 @@
     "id": "health-major-lifestyle-change",
     "category": "health",
     "subcategory": "quitting drinking, smoking, or a major habit",
-    "base_rate_description": "Most people attempting to quit a major habit relapse on early attempts — smoking quit attempts succeed perhaps 5-10% unaided per try, much higher with support and medication — but cumulative success across repeated attempts is high, and the number of prior attempts predicts eventual success rather than failure. Retrospective satisfaction among those who sustained the change for a year is very high and rarely reversed.",
+    "base_rate_description": "Most people attempting to quit a major habit relapse on early attempts. Smoking quit attempts succeed perhaps 5-10% unaided per try, much higher with support and medication, but cumulative success across repeated attempts is high, and the number of prior attempts predicts eventual success rather than failure. Retrospective satisfaction among those who sustained the change for a year is very high and rarely reversed.",
     "stratification_variables": ["use of structured support or medication", "social environment and triggers", "replacement routines in place", "number of prior attempts", "underlying mental-health load"],
     "sources": [
       {"author": "US Surgeon General", "title": "Smoking Cessation: A Report", "url": "https://www.hhs.gov/surgeongeneral/reports-and-publications/"},
@@ -279,13 +279,13 @@
     "id": "family-eldercare-arrangement",
     "category": "family",
     "subcategory": "caring for an aging parent",
-    "base_rate_description": "Family caregiving decisions (in-home care, moving a parent in, or assisted living) involve a well-documented tradeoff: in-home and co-residence preserve relationship closeness but carry high caregiver burnout, while quality facility care reduces caregiver strain but carries guilt that fades over time as the parent's care needs are met. Caregiver satisfaction is highest when siblings share the load explicitly and when the parent's own wishes were discussed in advance.",
-    "stratification_variables": ["parent's care-level needs", "sibling load-sharing", "caregiver's own job and family", "financial resources for paid care", "parent's stated preferences"],
+    "base_rate_description": "Family caregiving decisions (in-home care, moving a parent in, or assisted living) involve a well-documented tradeoff: in-home and co-residence preserve relationship closeness but carry high caregiver burnout, while quality facility care reduces caregiver strain but carries guilt that fades over time as the parent’s care needs are met. Caregiver satisfaction is highest when siblings share the load explicitly and when the parent’s own wishes were discussed in advance.",
+    "stratification_variables": ["parent’s care-level needs", "sibling load-sharing", "caregiver’s own job and family", "financial resources for paid care", "parent’s stated preferences"],
     "sources": [
       {"author": "AARP / NAC", "title": "Caregiving in the US", "url": "https://www.aarp.org/caregiving/"},
       {"author": "Family Caregiver Alliance", "title": "Caregiver Statistics", "url": "https://www.caregiver.org"}
     ],
-    "common_criteria": ["parent's safety and care quality", "parent's dignity and wishes", "caregiver burnout", "financial cost", "fairness among siblings"],
+    "common_criteria": ["parent’s safety and care quality", "parent’s dignity and wishes", "caregiver burnout", "financial cost", "fairness among siblings"],
     "common_regret_patterns": "Solo caregivers who took on co-residence without sibling support or respite report the deepest burnout and resentment. Decisions made in crisis after a fall or hospitalization, with no prior family conversation, produce the most second-guessing regardless of which option was chosen.",
     "uncertainty_level": "medium",
     "last_updated": "2026-06-18"

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,43 +38,47 @@ class BountyScreen extends ConsumerWidget {
     final caseAsync = ref.watch(caseByIdProvider(caseId));
     return Scaffold(
       appBar: AppBar(title: const Text('Ask outside bots')),
-      body: caseAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (case_) {
-          if (case_ == null) {
-            return const Center(child: Text('Not found'));
-          }
-          if (case_.status != CaseStatus.open) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(
-                  'This decision is already decided — outside forecasts can '
-                  'only be added while a case is open.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ),
-            );
-          }
-          return DefaultTabController(
-            length: 2,
-            child: Column(
-              children: [
-                const TabBar(tabs: [Tab(text: 'Ask'), Tab(text: 'Import')]),
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      _AskTab(case_: case_),
-                      _ImportTab(case_: case_),
-                    ],
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: caseAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load this decision"),
+          data: (case_) {
+            if (case_ == null) {
+              return const Center(child: Text('Not found'));
+            }
+            if (case_.status != CaseStatus.open) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'This decision is already made. Outside forecasts can '
+                    'only be added while a decision is open.',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
                 ),
-              ],
-            ),
-          );
-        },
+              );
+            }
+            return DefaultTabController(
+              length: 2,
+              child: Column(
+                children: [
+                  const TabBar(tabs: [Tab(text: 'Ask'), Tab(text: 'Import')]),
+                  Expanded(
+                    child: TabBarView(
+                      children: [
+                        _AskTab(case_: case_),
+                        _ImportTab(case_: case_),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -153,13 +158,14 @@ class _AskTabState extends ConsumerState<_AskTab>
       await shareExport(
         content: _requestJson(),
         fileName: 'reckon-bounty-request-$shortId.json',
-        subject: 'Reckon bounty request',
+        subject: 'Reckon question for outside bots',
         text: 'A de-identified decision question (reckonBounty v0.1).',
       );
     } catch (e) {
+      debugPrint('Reckon: sharing the question file failed: $e');
       final message = e is UnsupportedError
           ? (e.message ?? 'Sharing is not available here yet.')
-          : 'Share failed: $e';
+          : "Couldn’t share the file. ${ohFriendlyErrorMessage(e)}";
       messenger.showSnackBar(SnackBar(content: Text(message)));
     }
   }
@@ -204,7 +210,7 @@ class _AskTabState extends ConsumerState<_AskTab>
         ] else ...[
           Text(
             _redaction == 'local-llm'
-                ? 'Drafted by the on-device model — read it over before '
+                ? 'Drafted by the on-device model. Read it over before '
                     'sharing.'
                 : 'No on-device model here, so redact by hand: strip names, '
                     'employers, and places.',
@@ -230,7 +236,7 @@ class _AskTabState extends ConsumerState<_AskTab>
             style: textTheme.bodyMedium,
           ),
           Text(
-            'Options travel as-is — answers come back keyed to their text.',
+            'Options travel as they are; answers come back keyed to their text.',
             style: textTheme.bodySmall,
           ),
           const SizedBox(height: 16),
@@ -303,7 +309,7 @@ class _ImportTabState extends ConsumerState<_ImportTab>
               '${result.imported == 1 ? '' : 's'} sealed'
               '${result.duplicates > 0 ? ' · ${result.duplicates} already imported' : ''}'
           : result.duplicates > 0
-              ? 'Already imported — every bot in that paste has answered.'
+              ? 'Already imported: every bot in that paste has answered.'
               : 'Nothing imported.';
       messenger.showSnackBar(SnackBar(content: Text(text)));
     } on FormatException catch (e) {
@@ -324,7 +330,7 @@ class _ImportTabState extends ConsumerState<_ImportTab>
       padding: const EdgeInsets.all(16),
       children: [
         Text(
-          'Paste the answer file a bot (or a friend running one) sent back — '
+          'Paste the answer file a bot (or a friend running one) sent back: '
           'one response or a whole array.',
           style: textTheme.bodyMedium,
         ),
@@ -334,9 +340,9 @@ class _ImportTabState extends ConsumerState<_ImportTab>
           controller: _paste,
           minLines: 6,
           maxLines: 12,
-          style: textTheme.bodySmall!.copyWith(fontFamily: 'monospace'),
+          style: OhTypography.code(color: textTheme.bodySmall?.color),
           decoration: const InputDecoration(
-            labelText: 'BountyResponse JSON',
+            labelText: 'Answer file (JSON)',
             alignLabelWithHint: true,
           ),
         ),
@@ -356,8 +362,8 @@ class _ImportTabState extends ConsumerState<_ImportTab>
           ),
         const SizedBox(height: 8),
         Text(
-          'Imported forecasts stay sealed until you decide — same rule as '
-          'the duel.',
+          'Imported forecasts stay sealed until you decide, the same rule '
+          'as every other forecaster.',
           style: textTheme.bodySmall,
         ),
         if (_parseError != null) ...[

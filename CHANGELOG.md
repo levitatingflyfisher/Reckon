@@ -4,6 +4,30 @@ All notable changes to Reckon will be documented in this file.
 
 ## [Unreleased]
 
+### Changed (fleet rollout, 2026-09)
+- Words on screen: decision (not case), weigh in (not re-poll), the
+  forecasters (not the duel), outside bots (not bounty), group vote (not
+  party), and Settings says "Account: None" instead of "Ghost". Learn is
+  called Learn on its tab, its title bar and everywhere else.
+- The theme follows the phone by default; Light, Dark and Late night are
+  one tap away in each tab's top bar. Old Daytime/Evening/Late night picks
+  carry over (Daytime stays Light).
+- Every screen's content is capped at 640 dp and centred on wide screens.
+- Failures show a plain sentence with the details behind a tap, never the
+  raw exception.
+- Deleting a forecaster offers Undo that stays until you act; deleting a
+  model file asks first, naming the act.
+- Section labels are 13 px, sentence case, at 4.5:1 or better in every
+  theme.
+- The re-poll, check-in and group-vote screens keep their main button on
+  screen at large text; Home's group-vote door is a worded button.
+- Web: a decision can be written down by hand; the outside view and the
+  reveal say plainly that they need the on-device model.
+- Backup: on web the recovery words are stored under Reckon's own keys;
+  Home shows a dismissible line until backup is set up.
+- Fonts come from openhearth_design; the app ships no font files.
+- Typography: no spaced em dashes, curly apostrophes and quotes.
+
 ### Added
 - Fleet conformance suite (`test/fleet_conformance_test.dart` via the
   shared `oh_fleet_conformance` package): Reckon's recorded posture —

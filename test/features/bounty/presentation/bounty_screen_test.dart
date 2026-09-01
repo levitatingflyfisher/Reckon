@@ -217,7 +217,7 @@ void main() {
         .pumpWidget(harness(case_: _case(status: CaseStatus.decided)));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('already decided'), findsOneWidget);
+    expect(find.textContaining('already made'), findsOneWidget);
     expect(find.text('Import forecasts'), findsNothing);
     expect(find.text('Copy request JSON'), findsNothing);
   });

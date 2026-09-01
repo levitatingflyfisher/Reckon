@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -52,10 +53,11 @@ class _PartyJoinScreenState extends ConsumerState<PartyJoinScreen> {
       if (!mounted) return;
       context.go('/party/${party.id}/vote');
     } catch (e) {
+      debugPrint('Reckon: joining failed: $e');
       if (!mounted) return;
       setState(() => _joining = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Couldn't join: $e")),
+        SnackBar(content: Text("Couldn’t join. ${ohFriendlyErrorMessage(e)}")),
       );
     }
   }
@@ -89,30 +91,33 @@ class _PartyJoinScreenState extends ConsumerState<PartyJoinScreen> {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Join a party')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text('Got a link to a group decision?', style: textTheme.bodyLarge),
-          const SizedBox(height: 12),
-          OHTextField(
-            controller: _link,
-            hint: 'Paste the join link',
-            autofocus: true,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'The link includes the key to decrypt the party. It stays on your '
-            'device — the relay never sees it.',
-            style: textTheme.bodySmall,
-          ),
-          const SizedBox(height: 24),
-          OHButton(
-            label: _joining ? 'Joining…' : 'Join',
-            expanded: true,
-            onPressed: _canJoin ? _join : null,
-          ),
-        ],
+      appBar: AppBar(title: const Text('Join a group vote')),
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Text('Got a link to a group vote?', style: textTheme.bodyLarge),
+            const SizedBox(height: 12),
+            OHTextField(
+              controller: _link,
+              hint: 'Paste the join link',
+              autofocus: true,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'The link includes the key that unlocks the vote. It stays on your '
+              'device; the relay never sees it.',
+              style: textTheme.bodySmall,
+            ),
+            const SizedBox(height: 24),
+            OHButton(
+              label: _joining ? 'Joining…' : 'Join',
+              expanded: true,
+              onPressed: _canJoin ? _join : null,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -145,7 +150,7 @@ class _DisplayNameDialogState extends State<_DisplayNameDialog> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text('Add your name so the group knows who voted. It stays '
-              'inside the group — never on any server.'),
+              'inside the group, never on any server.'),
           const SizedBox(height: 12),
           TextField(
             controller: _name,

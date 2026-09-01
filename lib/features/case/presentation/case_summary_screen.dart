@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,6 +11,7 @@ import '../../../shared/widgets/oh_text_field.dart';
 import '../data/case_providers.dart';
 import '../domain/entities/case.dart';
 import '../domain/entities/criterion.dart';
+import '../../../core/llm/llm_providers.dart';
 
 class CaseDraft {
   const CaseDraft({
@@ -87,47 +89,51 @@ class _CaseSummaryScreenState extends ConsumerState<CaseSummaryScreen> {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Does this look right?')),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: ListView(
-                children: [
-                  Text(
-                    'Edit anything that isn’t quite right, then save it.',
-                    style: textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 18),
-                  _label('The decision'),
-                  OHTextField(controller: _question, hint: 'What are you deciding?'),
-                  const SizedBox(height: 16),
-                  _label('Option A'),
-                  OHTextField(controller: _optionA, hint: 'The first option'),
-                  const SizedBox(height: 16),
-                  _label('Option B'),
-                  OHTextField(controller: _optionB, hint: 'The second option'),
-                  const SizedBox(height: 20),
-                  _label('Stakes'),
-                  _chips<Stakes>(
-                    Stakes.values, _stakes, (v) => setState(() => _stakes = v)),
-                  const SizedBox(height: 16),
-                  _label('When will you know if it was right?'),
-                  _chips<RegretHorizon>(RegretHorizon.values, _horizon,
-                      (v) => setState(() => _horizon = v)),
-                  const SizedBox(height: 16),
-                  _label('Category (optional)'),
-                  OHTextField(controller: _category, hint: 'e.g. career, home'),
-                ],
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: ListView(
+                  children: [
+                    Text(
+                      'Edit anything that isn’t quite right, then save it.',
+                      style: textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 18),
+                    _label('The decision'),
+                    OHTextField(controller: _question, hint: 'What are you deciding?'),
+                    const SizedBox(height: 16),
+                    _label('Option A'),
+                    OHTextField(controller: _optionA, hint: 'The first option'),
+                    const SizedBox(height: 16),
+                    _label('Option B'),
+                    OHTextField(controller: _optionB, hint: 'The second option'),
+                    const SizedBox(height: 20),
+                    _label('Stakes'),
+                    _chips<Stakes>(
+                      Stakes.values, _stakes, (v) => setState(() => _stakes = v)),
+                    const SizedBox(height: 16),
+                    _label('When will you know if it was right?'),
+                    _chips<RegretHorizon>(RegretHorizon.values, _horizon,
+                        (v) => setState(() => _horizon = v)),
+                    const SizedBox(height: 16),
+                    _label('Category (optional)'),
+                    OHTextField(controller: _category, hint: 'e.g. career, home'),
+                  ],
+                ),
               ),
-            ),
-            OHButton(
-              label: _saving ? 'Saving…' : 'Save this decision',
-              expanded: true,
-              onPressed: _saving ? null : _confirm,
-            ),
-          ],
+              OHButton(
+                key: const Key('case-summary-save'),
+                label: _saving ? 'Saving…' : 'Save this decision',
+                expanded: true,
+                onPressed: _saving ? null : _confirm,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -179,7 +185,10 @@ class _CaseSummaryScreenState extends ConsumerState<CaseSummaryScreen> {
     );
 
     final notif = ref.read(localNotificationServiceProvider);
-    final granted = await notif.requestPermissions();
+    // A browser can't schedule reminders at all: don't ask, and don't
+    // warn that they are off.
+    final canRemind = notif.canScheduleReminders;
+    final granted = canRemind && await notif.requestPermissions();
     if (granted) {
       final schedule = computeRepollSchedule(
         now: DateTime.now(),
@@ -204,15 +213,15 @@ class _CaseSummaryScreenState extends ConsumerState<CaseSummaryScreen> {
     if (!mounted) return;
     // A decision journal lives on its nudges. If notification permission was
     // denied, say so plainly rather than silently dropping every reminder.
-    if (!granted) {
+    if (canRemind && !granted) {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Reminders are off'),
           content: const Text(
-            "Reckon's gentle re-poll check-ins won't fire without notification "
-            'permission. Your case is saved either way — you can turn '
-            'notifications on later in system settings.',
+            "Reckon’s reminders to weigh in won’t arrive without "
+            'notification permission. Your decision is saved either way; '
+            'you can turn notifications on later in system settings.',
           ),
           actions: [
             TextButton(
@@ -223,6 +232,15 @@ class _CaseSummaryScreenState extends ConsumerState<CaseSummaryScreen> {
         ),
       );
       if (!mounted) return;
+    }
+    // The stratification questions only feed the outside view, which needs
+    // the on-device model; without one ready (web, or nothing downloaded),
+    // go straight to the decision.
+    final modelReady = await ref.read(onDeviceModelReadyProvider.future);
+    if (!mounted) return;
+    if (!modelReady) {
+      context.go('/case/${case_.id}');
+      return;
     }
     context.go('/stratification', extra: case_.id);
   }

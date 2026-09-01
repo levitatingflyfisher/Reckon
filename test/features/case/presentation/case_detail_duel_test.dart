@@ -119,7 +119,7 @@ void main() {
         runnable: [_persona('persona-base-rate-skeptic', 'Base-rate skeptic')]));
     await tester.pumpAndSettle();
 
-    expect(find.text('Run the duel'), findsOneWidget);
+    expect(find.text('Ask the forecasters'), findsOneWidget);
     expect(find.textContaining('sealed'), findsNothing); // nothing sealed yet
   });
 
@@ -128,7 +128,7 @@ void main() {
     await tester.pumpWidget(harness(runnable: const []));
     await tester.pumpAndSettle();
 
-    expect(find.text('Run the duel'), findsNothing);
+    expect(find.text('Ask the forecasters'), findsNothing);
   });
 
   testWidgets(
@@ -138,7 +138,7 @@ void main() {
         runnable: [_persona('persona-base-rate-skeptic', 'Base-rate skeptic')]));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Run the duel'));
+    await tester.tap(find.text('Ask the forecasters'));
     await tester.pumpAndSettle();
 
     // Both enabled personas dueled.
@@ -185,13 +185,13 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Run the duel'));
+    await tester.tap(find.text('Ask the forecasters'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining("couldn't run"), findsOneWidget,
+    expect(find.textContaining("couldn’t run"), findsOneWidget,
         reason: 'the user must learn why nothing was sealed — a silently '
             'resetting spinner loops the same failure forever');
-    expect(find.text('Run the duel'), findsOneWidget,
+    expect(find.text('Ask the forecasters'), findsOneWidget,
         reason: 'the button must come back for a retry');
   });
 }

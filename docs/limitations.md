@@ -17,8 +17,9 @@ split and [feature status](reference/feature-status.md) for the per-area detail.
 ## Platform and reach
 
 - **Android-only for the real experience.** The on-device model runs on Android's
-  MediaPipe runtime (`flutter_gemma`), minSdk 24. There is no iOS build and only a web
-  scaffold; neither can run the on-device path.
+  MediaPipe runtime (`flutter_gemma`), minSdk 24. There is no iOS build. The web
+  build can't run the on-device path: a decision can be written down by hand there,
+  but the interviewer, the outside view and the reveal observation need Android.
 - **First use requires a model download.** Before intake or the reveal work, the chosen
   model must download — a few hundred MB (Gemma 3 1B) to ~4 GB (Phi-4 Mini) over HTTPS.
   It's resumable and recovers from a stale partial, but a new user on cellular will feel
@@ -100,7 +101,7 @@ split and [feature status](reference/feature-status.md) for the per-area detail.
   beyond Ghost** — see [feature status](reference/feature-status.md).
 - **Voice input and a full PWA** were product goals; the on-device dependency and the
   Android-only runtime mean they are not delivered today (the web PWA's one AI path is
-  the duel via BYOK / OpenAI-compatible forecasters).
+  the forecasters via BYOK / OpenAI-compatible endpoints).
 
 If a limitation here surprises you against the code, the code wins — file it, because
 the docs were written to match reality and reality moves.

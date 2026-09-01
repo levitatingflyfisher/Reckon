@@ -83,7 +83,8 @@ dependencies:
   # lib/shared/theme/ (ReckonTheme/ReckonAccents — zero visual change,
   # pinned by the goldens); this dependency is the declared convergence
   # point for deliberately adopting canonical tokens in a future pass.
-  # Fonts are bundled by this app (assets section below).
+  # Lora/Nunito come from this package as package fonts (fleet font
+  # ruling); the app bundles no font files of its own.
   openhearth_design:
     path: ../ohStyle/openhearth_design
 
@@ -124,26 +125,6 @@ flutter:
   assets:
     - assets/reference_classes.json
     - assets/glossary.json
-
-  fonts:
-    - family: Lora
-      fonts:
-        - asset: assets/fonts/Lora-Regular.ttf
-        - asset: assets/fonts/Lora-Italic.ttf
-          style: italic
-        - asset: assets/fonts/Lora-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Lora-Bold.ttf
-          weight: 700
-    - family: Nunito
-      fonts:
-        - asset: assets/fonts/Nunito-Regular.ttf
-        - asset: assets/fonts/Nunito-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/Nunito-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/Nunito-Bold.ttf
-          weight: 700
 
 # The launcher / PWA icon: the slate "scales" balance mark (matching the
 # symbol used for Reckon on the OpenHearth landing page). Slate — #536B82

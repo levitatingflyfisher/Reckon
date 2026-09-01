@@ -63,7 +63,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Encrypted Backup'), findsOneWidget);
+      expect(find.text('Backup'), findsOneWidget);
       expect(find.text('Set up encrypted backup'), findsOneWidget);
     });
 
@@ -86,7 +86,7 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Export backup'), findsOneWidget);
       expect(find.text('Restore from backup'), findsOneWidget);
-      expect(find.text('Reset identity'), findsOneWidget);
+      expect(find.text('Remove recovery words'), findsOneWidget);
     });
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -30,71 +31,77 @@ class GroupHomeScreen extends ConsumerWidget {
           data: (g) => Text(g?.name ?? 'Group'),
         ),
       ),
-      body: groupAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (group) {
-          if (group == null) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Text('This group is not on this device. Join one of '
-                    'its shared decisions to adopt it.'),
-              ),
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: groupAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load this group"),
+          data: (group) {
+            if (group == null) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Text('This group is not on this device. Join one of '
+                      'its shared decisions to adopt it.'),
+                ),
+              );
+            }
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                const SectionHeader(label: 'Members'),
+                membersAsync.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load the members"),
+                  data: (members) => members.isEmpty
+                      ? Text(
+                          'No named members yet. Names arrive with votes.',
+                          style: textTheme.bodySmall,
+                        )
+                      : Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final m in members)
+                              Chip(
+                                avatar: const Icon(Icons.person_outline,
+                                    size: 18),
+                                label: Text(m.displayName),
+                              ),
+                          ],
+                        ),
+                ),
+                const SizedBox(height: 16),
+                OHButton(
+                  label: 'New decision',
+                  icon: Icons.how_to_vote,
+                  expanded: true,
+                  onPressed: () =>
+                      context.push('/party/create?groupId=$groupId'),
+                ),
+                const SectionHeader(label: 'Decisions'),
+                partiesAsync.when(
+                  loading: () => const SizedBox.shrink(),
+                  error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load the group’s decisions"),
+                  data: (parties) => parties.isEmpty
+                      ? Text('No decisions yet.', style: textTheme.bodySmall)
+                      : Column(
+                          children: [
+                            for (final p in parties)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _DecisionTile(party: p),
+                              ),
+                          ],
+                        ),
+                ),
+              ],
             );
-          }
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              const SectionHeader(label: 'Members'),
-              membersAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (e, _) => Text('Error: $e'),
-                data: (members) => members.isEmpty
-                    ? Text(
-                        'No named members yet — names arrive with votes.',
-                        style: textTheme.bodySmall,
-                      )
-                    : Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final m in members)
-                            Chip(
-                              avatar: const Icon(Icons.person_outline,
-                                  size: 18),
-                              label: Text(m.displayName),
-                            ),
-                        ],
-                      ),
-              ),
-              const SizedBox(height: 16),
-              OHButton(
-                label: 'New decision',
-                icon: Icons.how_to_vote,
-                expanded: true,
-                onPressed: () =>
-                    context.push('/party/create?groupId=$groupId'),
-              ),
-              const SectionHeader(label: 'Decisions'),
-              partiesAsync.when(
-                loading: () => const SizedBox.shrink(),
-                error: (e, _) => Text('Error: $e'),
-                data: (parties) => parties.isEmpty
-                    ? Text('No decisions yet.', style: textTheme.bodySmall)
-                    : Column(
-                        children: [
-                          for (final p in parties)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _DecisionTile(party: p),
-                            ),
-                        ],
-                      ),
-              ),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -121,7 +128,7 @@ class _DecisionTile extends StatelessWidget {
                   party.closed
                       ? 'Closed'
                       : party.resultsSealed
-                          ? 'Voting — results sealed'
+                          ? 'Voting, results sealed'
                           : 'Voting',
                   style: textTheme.bodySmall,
                 ),

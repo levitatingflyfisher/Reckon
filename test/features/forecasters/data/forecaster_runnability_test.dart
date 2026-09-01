@@ -32,8 +32,10 @@ void main() {
 
   tearDown(() => db.close());
 
-  ProviderContainer container({Set<String> downloaded = const {}}) {
+  ProviderContainer container(
+      {Set<String> downloaded = const {}, bool runtime = true}) {
     final c = ProviderContainer(overrides: [
+      onDeviceModelSupportedProvider.overrideWithValue(runtime),
       appDatabaseProvider.overrideWithValue(db),
       selectedModelIdProvider.overrideWith((ref) async => null),
       modelDownloadServiceProvider
@@ -56,6 +58,14 @@ void main() {
   test('personas are NOT runnable before the model is downloaded', () async {
     final runnable =
         await container().read(runnableForecastersProvider.future);
+    expect(runnable, isEmpty);
+  });
+
+  test('personas are NOT runnable on a build with no on-device runtime',
+      () async {
+    final defaultId = ReckonModelSpec.byId(null).id;
+    final runnable = await container(downloaded: {defaultId}, runtime: false)
+        .read(runnableForecastersProvider.future);
     expect(runnable, isEmpty);
   });
 

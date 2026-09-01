@@ -46,7 +46,7 @@ class LanHostController {
   Future<HostedLanParty> start(String partyId) async {
     if (_host != null) throw StateError('Already hosting a party');
     final party = await _local.getParty(partyId);
-    if (party == null) throw StateError('No local party "$partyId" to host');
+    if (party == null) throw StateError('No local party “$partyId” to host');
 
     final gen = await PartyCrypto.generate();
     // A grouped party is hosted with its manifest inside the blob, so LAN

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
@@ -80,16 +81,17 @@ class _PartyVoteScreenState extends ConsumerState<PartyVoteScreen> {
       if (!pushed) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
-              "Saved on this device — couldn't reach the party host. Your "
+              "Saved on this device. Couldn’t reach the person hosting the vote. Your "
               'vote counts here; it just may not show up remotely.'),
         ));
       }
       context.go('/party/${party.id}/result');
     } catch (e) {
+      debugPrint('Reckon: sending a vote failed: $e');
       if (!mounted) return;
       setState(() => _submitting = false);
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Couldn't submit: $e")));
+          .showSnackBar(SnackBar(content: Text("Couldn’t send your vote. ${ohFriendlyErrorMessage(e)}")));
     }
   }
 
@@ -100,79 +102,88 @@ class _PartyVoteScreenState extends ConsumerState<PartyVoteScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Your vote')),
-      body: partyAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (party) {
-          if (party == null) {
-            return const Center(child: Text('This party no longer exists.'));
-          }
-          _ensureInit(party);
-          final labels = {for (final o in party.options) o.id: o.label};
-
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(party.title, style: textTheme.headlineMedium),
-                    const SizedBox(height: 8),
-                    Text(
-                      party.votingMethod == VotingMethod.approval
-                          ? 'Tick every option you’d be happy with.'
-                          : 'Drag to rank — most preferred at the top.',
-                      style: textTheme.bodyMedium,
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: partyAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load this vote"),
+          data: (party) {
+            if (party == null) {
+              return const Center(child: Text('This vote no longer exists.'));
+            }
+            _ensureInit(party);
+            final labels = {for (final o in party.options) o.id: o.label};
+  
+            return Column(
+              children: [
+                // At large text the question and instructions can outgrow
+                // the screen; they scroll in at most half of it, and the
+                // ballot keeps the rest.
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(party.title, style: textTheme.headlineMedium),
+                        const SizedBox(height: 8),
+                        Text(
+                          party.votingMethod == VotingMethod.approval
+                              ? 'Tick every option you’d be happy with.'
+                              : 'Drag to rank, most preferred at the top.',
+                          style: textTheme.bodyMedium,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: party.votingMethod == VotingMethod.approval
-                    ? _ApprovalBallot(
-                        party: party,
-                        selected: _approved,
-                        onToggle: (id, on) => setState(() {
-                          on ? _approved.add(id) : _approved.remove(id);
-                        }),
-                      )
-                    : ReorderableListView(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        // onReorder is kept (vs the newer onReorderItem) so the
-                        // widget compiles across the supported Flutter range.
-                        // ignore: deprecated_member_use
-                        onReorder: (oldI, newI) => setState(() {
-                          if (newI > oldI) newI -= 1;
-                          final id = _rankOrder.removeAt(oldI);
-                          _rankOrder.insert(newI, id);
-                        }),
-                        children: [
-                          for (var i = 0; i < _rankOrder.length; i++)
-                            ListTile(
-                              key: ValueKey(_rankOrder[i]),
-                              leading: CircleAvatar(child: Text('${i + 1}')),
-                              title: Text(labels[_rankOrder[i]] ?? '?'),
-                              trailing: const Icon(Icons.drag_handle),
-                            ),
-                        ],
-                      ),
-              ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: OHButton(
-                    label: _submitting ? 'Submitting…' : 'Submit vote',
-                    expanded: true,
-                    onPressed: _canSubmit(party) && !_submitting
-                        ? () => _submit(party)
-                        : null,
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+                Expanded(
+                  child: party.votingMethod == VotingMethod.approval
+                      ? _ApprovalBallot(
+                          party: party,
+                          selected: _approved,
+                          onToggle: (id, on) => setState(() {
+                            on ? _approved.add(id) : _approved.remove(id);
+                          }),
+                        )
+                      : ReorderableListView(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          // onReorder is kept (vs the newer onReorderItem) so the
+                          // widget compiles across the supported Flutter range.
+                          // ignore: deprecated_member_use
+                          onReorder: (oldI, newI) => setState(() {
+                            if (newI > oldI) newI -= 1;
+                            final id = _rankOrder.removeAt(oldI);
+                            _rankOrder.insert(newI, id);
+                          }),
+                          children: [
+                            for (var i = 0; i < _rankOrder.length; i++)
+                              ListTile(
+                                key: ValueKey(_rankOrder[i]),
+                                leading: CircleAvatar(child: Text('${i + 1}')),
+                                title: Text(labels[_rankOrder[i]] ?? '?'),
+                                trailing: const Icon(Icons.drag_handle),
+                              ),
+                          ],
+                        ),
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: OHButton(
+                      label: _submitting ? 'Submitting…' : 'Submit vote',
+                      expanded: true,
+                      onPressed: _canSubmit(party) && !_submitting
+                          ? () => _submit(party)
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -77,104 +78,121 @@ class _RepollScreenState extends ConsumerState<RepollScreen> {
   Widget build(BuildContext context) {
     final caseAsync = ref.watch(caseByIdProvider(widget.caseId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Re-poll')),
-      body: caseAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (case_) {
-          if (case_ == null) return const Center(child: Text('Not found'));
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                OHCard(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(case_.question,
-                          style: Theme.of(context).textTheme.headlineMedium),
-                      const SizedBox(height: 8),
-                      Text('Stakes: ${case_.stakes.name}',
-                          style: Theme.of(context).textTheme.bodyMedium),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Where are you leaning today?',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 12),
-                LeanSlider(
-                  value: _lean,
-                  onChanged: (v) => setState(() => _lean = v),
-                  optionA: case_.optionA,
-                  optionB: case_.optionB,
-                ),
-                const SizedBox(height: 24),
-                OHTextField(
-                  controller: _rationale,
-                  label: 'Rationale (optional)',
-                  maxLines: 4,
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  children: Confidence.values
-                      .map((c) => ChoiceChip(
-                            label: Text(c.name),
-                            selected: _confidence == c,
-                            onSelected: (_) => setState(() => _confidence = c),
-                          ))
-                      .toList(),
-                ),
-                if (_mismatch?.mismatch == true) ...[
-                  const SizedBox(height: 16),
-                  OHCard(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.lightbulb_outline),
-                        const SizedBox(width: 12),
-                        Expanded(
+      appBar: AppBar(title: const Text('Weigh in')),
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: caseAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load this decision"),
+          data: (case_) {
+            if (case_ == null) return const Center(child: Text('Not found'));
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // The form scrolls; Save and Done stay pinned under it so
+                  // they are reachable at large text on a small phone.
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                        OHCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Worth noticing',
-                                  style: Theme.of(context).textTheme.labelLarge),
-                              const SizedBox(height: 4),
-                              Text(_mismatch!.observation,
+                              Text(case_.question,
+                                  style: Theme.of(context).textTheme.headlineMedium),
+                              const SizedBox(height: 8),
+                              Text('Stakes: ${case_.stakes.name}',
                                   style: Theme.of(context).textTheme.bodyMedium),
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => setState(() => _mismatch = null),
+                        const SizedBox(height: 24),
+                        Text(
+                          'Where are you leaning today?',
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
-                      ],
+                        const SizedBox(height: 12),
+                        LeanSlider(
+                          value: _lean,
+                          onChanged: (v) => setState(() => _lean = v),
+                          optionA: case_.optionA,
+                          optionB: case_.optionB,
+                        ),
+                        const SizedBox(height: 24),
+                        OHTextField(
+                          controller: _rationale,
+                          label: 'Rationale (optional)',
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8,
+                          children: Confidence.values
+                              .map((c) => ChoiceChip(
+                                    label: Text(c.name),
+                                    selected: _confidence == c,
+                                    onSelected: (_) => setState(() => _confidence = c),
+                                  ))
+                              .toList(),
+                        ),
+                        if (_mismatch?.mismatch == true) ...[
+                          const SizedBox(height: 16),
+                          OHCard(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.lightbulb_outline),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Worth noticing',
+                                          style: Theme.of(context).textTheme.labelLarge),
+                                      const SizedBox(height: 4),
+                                      Text(_mismatch!.observation,
+                                          style: Theme.of(context).textTheme.bodyMedium),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
+                                  tooltip: 'Dismiss',
+                                  onPressed: () => setState(() => _mismatch = null),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        ],
+                      ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  OHButton(
+                    key: const Key('repoll-save'),
+                    label: _saved
+                        ? 'Saved'
+                        : (_saving ? 'Saving…' : 'Save'),
+                    expanded: true,
+                    onPressed: (_saving || _saved) ? null : _save,
+                  ),
+                  const SizedBox(height: 8),
+                  OHButton(
+                    label: 'Done',
+                    style: OHButtonStyle.text,
+                    onPressed: () => context.go('/case/${widget.caseId}'),
+                  ),
                 ],
-                const Spacer(),
-                OHButton(
-                  label: _saved
-                      ? 'Saved'
-                      : (_saving ? 'Saving...' : 'Save'),
-                  expanded: true,
-                  onPressed: (_saving || _saved) ? null : _save,
-                ),
-                const SizedBox(height: 8),
-                OHButton(
-                  label: 'Done',
-                  style: OHButtonStyle.text,
-                  onPressed: () => context.go('/case/${widget.caseId}'),
-                ),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }

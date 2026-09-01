@@ -65,7 +65,7 @@ class ReckonModelSpec {
     modelType: 'qwen',
     description:
         'Alibaba • 0.5B params • smallest + fastest, for low-end devices. '
-        'Open weights (litert-community) — no token needed.',
+        'Open weights (litert-community), no token needed.',
   );
 
   /// Qwen 2.5 1.5B Instruct — **the default**. A genuine MediaPipe ZIP `.task`
@@ -83,7 +83,7 @@ class ReckonModelSpec {
     modelType: 'qwen',
     description:
         'Alibaba • 1.5B params • stronger reasoning than the 0.5B models. '
-        'Open weights (litert-community) — no token needed.',
+        'Open weights (litert-community), no token needed.',
   );
 
   /// Phi-4 Mini Instruct — LiteRT .task on the trusted litert-community org.
@@ -98,7 +98,7 @@ class ReckonModelSpec {
     modelType: 'phi',
     description:
         'Microsoft • 3.8B params • strongest reasoning, heaviest. '
-        'Open weights (litert-community) — no token needed. ~4 GB.',
+        'Open weights (litert-community), no token needed. ~4 GB.',
   );
 
   /// The full roster exposed to the UI, default first.

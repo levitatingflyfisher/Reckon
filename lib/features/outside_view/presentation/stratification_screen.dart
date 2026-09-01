@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -39,41 +40,44 @@ class _StratificationScreenState extends ConsumerState<StratificationScreen> {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('A few quick questions')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'These help us choose a reference class that matches your situation. You can skip any.',
-              style: textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 24),
-            _PickerRow(
-              label: 'SES bracket',
-              value: _ses,
-              options: const ['working class', 'middle', 'upper-middle', 'wealthy'],
-              onChanged: (v) => setState(() => _ses = v),
-            ),
-            _PickerRow(
-              label: 'Religiosity',
-              value: _religiosity,
-              options: const ['none', 'occasional', 'weekly', 'deeply practicing'],
-              onChanged: (v) => setState(() => _religiosity = v),
-            ),
-            _PickerRow(
-              label: 'Relationship status',
-              value: _relationship,
-              options: const ['single', 'dating', 'partnered', 'married'],
-              onChanged: (v) => setState(() => _relationship = v),
-            ),
-            const Spacer(),
-            OHButton(
-              label: 'Continue',
-              expanded: true,
-              onPressed: _save,
-            ),
-          ],
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'These help us choose a reference class that matches your situation. You can skip any.',
+                style: textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 24),
+              _PickerRow(
+                label: 'SES bracket',
+                value: _ses,
+                options: const ['working class', 'middle', 'upper-middle', 'wealthy'],
+                onChanged: (v) => setState(() => _ses = v),
+              ),
+              _PickerRow(
+                label: 'Religiosity',
+                value: _religiosity,
+                options: const ['none', 'occasional', 'weekly', 'deeply practicing'],
+                onChanged: (v) => setState(() => _religiosity = v),
+              ),
+              _PickerRow(
+                label: 'Relationship status',
+                value: _relationship,
+                options: const ['single', 'dating', 'partnered', 'married'],
+                onChanged: (v) => setState(() => _relationship = v),
+              ),
+              const Spacer(),
+              OHButton(
+                label: 'Continue',
+                expanded: true,
+                onPressed: _save,
+              ),
+            ],
+          ),
         ),
       ),
     );

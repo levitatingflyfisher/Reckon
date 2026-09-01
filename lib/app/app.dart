@@ -7,6 +7,7 @@ import 'package:sanctuary_backup_ui/sanctuary_backup_ui.dart';
 import '../core/notifications/local_notification_service.dart';
 import '../core/notifications/notification_providers.dart';
 import '../core/theme/theme_preference.dart';
+import '../shared/theme/reckon_theme.dart';
 import 'router.dart';
 
 class ReckonApp extends ConsumerStatefulWidget {
@@ -60,22 +61,17 @@ class _ReckonAppState extends ConsumerState<ReckonApp> {
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(routerProvider);
-    // Tri-theme: the user picks one; we don't auto-switch off system.
-    // Default to Light when the preference hasn't loaded / isn't set.
-    final pref =
-        ref.watch(themePreferenceProvider).valueOrNull ?? ThemePreference.light;
+    // Follow the phone by default (fleet ruling); Light, Dark and Late
+    // night are explicit choices. Wide screens are capped per screen by
+    // OhPage, not by an app-wide box.
+    final pref = ref.watch(themePreferenceProvider).valueOrNull ??
+        ThemePreference.system;
     return MaterialApp.router(
       title: 'Reckon',
-      theme: pref.build(),
+      theme: ReckonTheme.light(),
+      darkTheme: pref.darkTheme(),
+      themeMode: pref.themeMode,
       routerConfig: router,
-      builder: (context, child) {
-        final inner = child ?? const SizedBox.shrink();
-        if (MediaQuery.of(context).size.width <= 760) return inner;
-        return ColoredBox(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          child: Center(child: SizedBox(width: 760, child: inner)),
-        );
-      },
     );
   }
 }

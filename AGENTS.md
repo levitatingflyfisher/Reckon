@@ -93,7 +93,8 @@ The short version, by concern:
 | **ReckonParty groups** (rosters, considered mode) | `lib/features/party/` — `Group`/`GroupMember` domain + repos, `/groups` & `/group/:id` screens |
 | **The relay server** | `relay/` (a standalone Dart/shelf app; see `relay/README.md`) |
 | **Notifications** | `lib/core/notifications/` |
-| **Design system / theme** | `lib/shared/theme/` (blessed app identity: `ReckonTheme`, `ReckonAccents`, tokens), `lib/shared/widgets/`, `lib/core/theme/` |
+| **Design system / theme** | `lib/shared/theme/` (blessed app identity: `ReckonTheme`, `ReckonAccents`, tokens; each theme attaches openhearth_design's `OhColorRoles`, measured on Reckon's grounds by `test/shared/theme/reckon_contrast_test.dart`; Lora/Nunito come from the package, not app files), `lib/shared/widgets/`, `lib/core/theme/` (follow-phone default, light/dark/Late night, `ReckonThemeToggle`) |
+| **Words on screen** | decision / weigh in / forecasters / outside bots / group vote. Identifiers keep case / repoll / duel / bounty / party; `test/app/plain_words_test.dart` holds screens, notifications and Learn to the plain words |
 | **Routing / app shell** | `lib/app/` |
 
 Docs are organized [Diátaxis](https://diataxis.fr/)-style — see

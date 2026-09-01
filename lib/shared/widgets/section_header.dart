@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 
-import '../theme/reckon_tokens.dart';
-
-/// Small-caps section label. In the OpenHearth grammar, the accent is
-/// reserved for interactive affordances — section labels use the
-/// secondary-text ramp instead.
+/// A section label: the word that names what every number or field under it
+/// is, so it has to read. Sentence case, 13 px bold (the ladder's
+/// `OhTypography.labelSm`), in the theme's label role, which clears 4.5:1 on
+/// Reckon's scaffold and card in all three themes (reckon_contrast_test).
+///
+/// It stays out of the accent: in the OpenHearth colour language warmth is
+/// for the one primary action, and chrome is neutral.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.label, this.trailing});
 
@@ -18,9 +21,14 @@ class SectionHeader extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              label.toUpperCase(),
-              style: ReckonTypography.labelSm(color: ReckonPalette.linen500),
+            child: Semantics(
+              header: true,
+              child: Text(
+                label,
+                style: OhTypography.labelSm(
+                  color: OhColorRoles.of(context).textLabel,
+                ),
+              ),
             ),
           ),
           if (trailing != null) trailing!,

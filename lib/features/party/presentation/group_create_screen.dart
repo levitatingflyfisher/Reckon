@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -65,10 +66,11 @@ class _GroupCreateScreenState extends ConsumerState<GroupCreateScreen> {
       if (!mounted) return;
       context.go('/group/${group.id}');
     } catch (e) {
+      debugPrint('Reckon: creating a group failed: $e');
       if (!mounted) return;
       setState(() => _creating = false);
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Couldn't create group: $e")));
+          .showSnackBar(SnackBar(content: Text("Couldn’t create the group. ${ohFriendlyErrorMessage(e)}")));
     }
   }
 
@@ -77,33 +79,36 @@ class _GroupCreateScreenState extends ConsumerState<GroupCreateScreen> {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('New group')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const SectionHeader(label: 'Name the group'),
-          OHTextField(
-            controller: _name,
-            hint: 'e.g. The household',
-            autofocus: true,
-          ),
-          const SectionHeader(label: 'Your name in this group'),
-          OHTextField(
-            controller: _displayName,
-            hint: 'What the others will see on your votes',
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Both names stay on your devices — they only ever travel inside '
-            'encrypted decisions shared with the group.',
-            style: textTheme.bodySmall,
-          ),
-          const SizedBox(height: 24),
-          OHButton(
-            label: _creating ? 'Creating…' : 'Create group',
-            expanded: true,
-            onPressed: _canCreate ? _create : null,
-          ),
-        ],
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            const SectionHeader(label: 'Name the group'),
+            OHTextField(
+              controller: _name,
+              hint: 'e.g. The household',
+              autofocus: true,
+            ),
+            const SectionHeader(label: 'Your name in this group'),
+            OHTextField(
+              controller: _displayName,
+              hint: 'What the others will see on your votes',
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Both names stay on your devices. They only ever travel inside '
+              'encrypted decisions shared with the group.',
+              style: textTheme.bodySmall,
+            ),
+            const SizedBox(height: 24),
+            OHButton(
+              label: _creating ? 'Creating…' : 'Create group',
+              expanded: true,
+              onPressed: _canCreate ? _create : null,
+            ),
+          ],
+        ),
       ),
     );
   }

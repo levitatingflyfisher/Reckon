@@ -5,13 +5,16 @@ import 'llm_providers.dart';
 import 'llm_service.dart';
 import 'private_mode_impl.dart';
 
+/// Native: flutter_gemma can load and run a downloaded model on this device.
+const bool hasOnDeviceModelRuntime = true;
+
 /// Native: resolve the selected [ReckonModelSpec], verify its file is on disk,
 /// install it into flutter_gemma's runtime, and wrap the resulting
 /// [InferenceModel] in [PrivateModeImpl].
 ///
 /// Installing the .task model and creating the native InferenceModel takes
 /// several seconds and pins the file on disk, so the caller's provider is kept
-/// alive across route changes (Home → Techniques → Home) rather than torn down.
+/// alive across route changes (Home → Learn → Home) rather than torn down.
 ///
 /// Throws if the model has not been downloaded yet — UI gates on
 /// [ModelDownloadService.isDownloaded] before triggering this.
@@ -24,7 +27,7 @@ Future<LlmService> buildLlmService(Ref ref) async {
   final file = await downloadService.modelFile(spec);
   if (!file.existsSync()) {
     throw StateError(
-      'Model "${spec.id}" has not been downloaded yet. '
+      'Model “${spec.id}” has not been downloaded yet. '
       'Download it from Settings before using Private mode.',
     );
   }

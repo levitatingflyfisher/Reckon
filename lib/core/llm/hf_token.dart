@@ -43,7 +43,7 @@ class _HfTokenDialogState extends State<_HfTokenDialog> {
         children: [
           Text(
             '${widget.spec.displayName} is gated on HuggingFace. Paste a '
-            'read-only access token — stored securely on this device only.',
+            'read-only access token. It is stored securely on this device only.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),

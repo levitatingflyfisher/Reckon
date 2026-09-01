@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:sanctuary_backup_ui/sanctuary_backup_ui.dart';
 
 import '../../../shared/widgets/oh_card.dart';
 import '../data/case_providers.dart';
 import '../domain/entities/case.dart';
+import '../../../core/theme/theme_preference.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -19,51 +22,78 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Reckon'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.groups_outlined),
-            tooltip: 'Group decision',
-            onPressed: () => context.push('/party/create'),
-          ),
+          OhBarActions(children: [
+            // The only door into group voting (ReckonParty), so it carries
+            // its word, not just a glyph and a tooltip touch never shows.
+            OhBarAction(
+              icon: Icons.groups_outlined,
+              label: 'Group vote',
+              onPressed: () => context.push('/party/create'),
+            ),
+            const ReckonThemeToggle(),
+          ]),
         ],
       ),
-      body: casesAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (cases) {
-          if (cases.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'No open cases yet.',
-                      style: textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Tap + to open your first decision.',
-                      style: textTheme.bodyLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Unfinished backup setup, dismissible (fleet first-run
+            // ruling): the journal lives only on this phone until then.
+            const BackupSetupReminder(),
+            Expanded(
+              child: casesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, st) => OhErrorState.fromError(e,
+                    stackTrace: st, title: "Couldn’t load your decisions"),
+                data: (cases) {
+                  if (cases.isEmpty) {
+                    // Scrolls so the message survives 320 dp at 3x text; the
+                    // bottom inset keeps it clear of the New case button.
+                    return Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(32, 32, 32, 96),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'No open decisions yet.',
+                              style: textTheme.headlineMedium,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Choose New decision to start your first one.',
+                              style: textTheme.bodyLarge,
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: cases.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => _CaseTile(case_: cases[i]),
+                  );
+                },
               ),
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: cases.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => _CaseTile(case_: cases[i]),
-          );
-        },
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push('/intake'),
         icon: const Icon(Icons.add),
-        label: const Text('New case'),
+        // The label stops growing at 2x so the button stays whole on a
+        // 320 dp phone at 3x (the FAB widens with its label; it does not
+        // ellipsize). The page's own text scales fully.
+        label: MediaQuery.withClampedTextScaling(
+          maxScaleFactor: 2.0,
+          child: const Text('New decision'),
+        ),
       ),
     );
   }
@@ -90,10 +120,14 @@ class _CaseTile extends StatelessWidget {
             style: textTheme.bodyLarge,
           ),
           const SizedBox(height: 8),
-          Row(
+          // Wraps, so the date drops under the chip at large text instead
+          // of running off a 320 dp screen.
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               _StatusChip(status: case_.status),
-              const SizedBox(width: 8),
               if (deadline != null)
                 Text('by ${fmt.format(deadline)}', style: textTheme.bodySmall),
             ],
@@ -123,12 +157,14 @@ class _StatusChip extends StatelessWidget {
         color: colors.primaryContainer,
         borderRadius: BorderRadius.circular(8),
       ),
+      // The theme's label style, so the chip is set in Nunito like the rest
+      // of the chrome (a bare TextStyle fell back to the platform face).
       child: Text(
         label,
-        style: TextStyle(
-            color: colors.onPrimaryContainer,
-            fontSize: 12,
-            fontWeight: FontWeight.w600),
+        style: Theme.of(context)
+            .textTheme
+            .labelMedium
+            ?.copyWith(color: colors.onPrimaryContainer),
       ),
     );
   }

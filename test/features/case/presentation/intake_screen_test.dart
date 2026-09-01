@@ -19,7 +19,7 @@ class _FakeDownloadService extends ModelDownloadService {
 }
 
 void main() {
-  const opener = "What's the decision you're trying to make?";
+  const opener = "What’s the decision you’re trying to make?";
 
   Widget harness({
     required String? selectedId,
@@ -60,5 +60,26 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(opener), findsOneWidget);
+  });
+
+  testWidgets(
+      'with no on-device runtime (web) the gate says so instead of asking '
+      'for a download, even if storage claims a model is present',
+      (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        onDeviceModelSupportedProvider.overrideWithValue(false),
+        selectedModelIdProvider.overrideWith((ref) async => null),
+        modelDownloadServiceProvider.overrideWithValue(
+            _FakeDownloadService({ReckonModelSpec.byId(null).id})),
+      ],
+      child: const MaterialApp(home: IntakeScreen()),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text(opener), findsNothing);
+    expect(find.textContaining('needs an on-device model'), findsNothing);
+    expect(find.textContaining("this browser can’t run one"), findsOneWidget);
+    expect(find.text('Write it down myself'), findsOneWidget);
   });
 }

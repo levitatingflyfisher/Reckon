@@ -18,7 +18,7 @@ forecaster-duel build. This is the honest per-area breakdown behind the
 | Resolution date + check-in | Live | `features/reveal/presentation/resolution_*` |
 | Outside view + stratification | Live | `features/outside_view/` |
 | Record: Clarity Score, calibration, base rates, insight cards, update quality | Live | `features/record/domain/usecases/` |
-| Technique glossary | Live | `features/glossary/`, `assets/glossary.json` |
+| Learn tab (technique entries) | Live | `features/glossary/`, `assets/glossary.json` |
 | Deference map (`/forecasters`; `/model-scorecard` redirects to it) | Live | `features/predictions/` |
 | Export (Markdown / JSON, plaintext) | Live | `features/export/` |
 | Encrypted backup (.ohbk export/import, restorable) | Live | `features/sanctuary_backup/`, `features/export/data/import_service.dart` |
@@ -30,7 +30,7 @@ forecaster-duel build. This is the honest per-area breakdown behind the
 | Area | Status | Where |
 |---|---|---|
 | Forecaster roster (add / edit / enable / delete; lazy default personas) | Live | `features/forecasters/`, Settings § Forecasters |
-| Run the duel (sealed, idempotent, sentinel-guarded) | Live | `features/forecasters/domain/usecases/run_duel.dart`, case detail |
+| Ask the forecasters (the duel: sealed, idempotent, sentinel-guarded) | Live | `features/forecasters/domain/usecases/run_duel.dart`, decision detail |
 | Sealed chip on open cases · duel table at the reveal | Live | `features/case/`, `features/reveal/` |
 | Per-prediction alignment scoring at resolution | Live | `features/predictions/data/prediction_repository_impl.dart` |
 | Deference map (earned weights, n ≥ 5 gate, user entry on-read) | Live | `features/predictions/domain/usecases/compute_forecaster_weights.dart` |
@@ -93,7 +93,7 @@ Only `AuthTier.ghost` is implemented ([ADR-0003](../adr/0003-local-first-ghost-t
 | Cloud backend for the core loop | The duel runs BYOK/OpenAI-compatible per-forecaster; intake/outside view/reveal have no cloud switch |
 | Per-member calibration in groups | Deference map is personal-record only |
 | Cross-device sync / account recovery | Depends on the unbuilt Token/Named tiers |
-| iOS build / full PWA | On-device model is Android-only; the web PWA's only AI path is the duel via BYOK/OpenAI-compatible forecasters |
+| iOS build / full PWA | On-device model is Android-only; on web a decision can be written down by hand, and the only AI path is the forecasters via BYOK/OpenAI-compatible endpoints |
 | Voice input | Product goal, not delivered |
 
 ## Known engineering debts

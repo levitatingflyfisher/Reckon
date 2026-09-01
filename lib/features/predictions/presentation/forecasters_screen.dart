@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/widgets/oh_card.dart';
@@ -26,42 +27,47 @@ class ForecastersScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Forecasters')),
-      body: weights.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (map) => ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Text(
-              'Every forecaster that duels your decisions — you included — '
-              'earns weight from its record on the cases you resolved. '
-              'Nothing here is a verdict; it is who has been worth '
-              'listening to, so far, on your decisions.',
-              style: textTheme.bodyMedium,
-            ),
-            if (!map.hasEnoughData) ...[
-              const SizedBox(height: 16),
-              OHCard(
-                child: Text(
-                  'Not enough resolved decisions to say — '
-                  'resolve ${_needed(map)} more and the earned weights '
-                  'appear here.',
-                  style: textTheme.bodyLarge,
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: weights.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load the forecasters"),
+          data: (map) => ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              Text(
+                'Every forecaster that forecasts your decisions, you included, '
+                'earns weight from its record on the decisions you closed. '
+                'Nothing here is a verdict; it is who has been worth '
+                'listening to, so far, on your decisions.',
+                style: textTheme.bodyMedium,
+              ),
+              if (!map.hasEnoughData) ...[
+                const SizedBox(height: 16),
+                OHCard(
+                  child: Text(
+                    'Not enough closed decisions to say. Close '
+                    '${_needed(map)} more and the earned weights '
+                    'appear here.',
+                    style: textTheme.bodyLarge,
+                  ),
                 ),
+              ],
+              if (map.entries.isNotEmpty) ...[
+                const SectionHeader(label: 'Earned weight'),
+                for (final entry in map.entries)
+                  _WeightTile(entry: entry, comparable: map.hasEnoughData),
+              ],
+              const SectionHeader(label: 'Your updates'),
+              updates.when(
+                loading: () => const SizedBox.shrink(),
+                error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load your updates"),
+                data: (q) => _UpdatesCard(quality: q),
               ),
             ],
-            if (map.entries.isNotEmpty) ...[
-              const SectionHeader(label: 'EARNED WEIGHT'),
-              for (final entry in map.entries)
-                _WeightTile(entry: entry, comparable: map.hasEnoughData),
-            ],
-            const SectionHeader(label: 'YOUR UPDATES'),
-            updates.when(
-              loading: () => const SizedBox.shrink(),
-              error: (e, _) => Text('Error: $e'),
-              data: (q) => _UpdatesCard(quality: q),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -148,7 +154,7 @@ class _WeightTileState extends State<_WeightTile> {
               ),
               const SizedBox(height: 4),
               Text(
-                'earned weight — mean ${_signed(mean)} over '
+                'earned weight: mean ${_signed(mean)} over '
                 '${entry.sampleCount} scored',
                 style: textTheme.bodySmall,
                 overflow: TextOverflow.ellipsis,
@@ -157,7 +163,7 @@ class _WeightTileState extends State<_WeightTile> {
               const SizedBox(height: 4),
               Text(
                 widget.comparable
-                    ? 'Too few scored forecasts to compare — '
+                    ? 'Too few scored forecasts to compare. '
                         '${ForecasterWeightEntry.minSampleCount - entry.sampleCount} more '
                         'and this record earns a weight.'
                     : '${entry.sampleCount} scored so far.',
@@ -214,22 +220,22 @@ class _UpdatesCard extends StatelessWidget {
       final needed = 5 - quality.sampleCount;
       return OHCard(
         child: Text(
-          'Appears after $needed more resolved '
-          'decision${needed == 1 ? '' : 's'} with at least two polls — '
-          're-poll while a case is open and this fills in.',
+          'Appears after $needed more closed '
+          'decision${needed == 1 ? '' : 's'} with at least two weigh-ins. '
+          'Weigh in while a decision is open and this fills in.',
           style: textTheme.bodyMedium,
         ),
       );
     }
     final String reading;
     if (mean >= 0.1) {
-      reading = 'When you re-polled, you tended to move toward the option '
+      reading = 'When you weighed in again, you tended to move toward the option '
           'you ended up glad about. Your updates are working.';
     } else if (mean <= -0.1) {
-      reading = 'Your re-polls often drifted toward options you later '
-          'regretted — worth noticing next time your lean starts to move.';
+      reading = 'Your weigh-ins often drifted toward options you later '
+          'regretted. Worth noticing next time your lean starts to move.';
     } else {
-      reading = 'Your re-polls moved neither toward nor away from the '
+      reading = 'Your weigh-ins moved neither toward nor away from the '
           'options you were glad about.';
     }
     return OHCard(
@@ -244,7 +250,7 @@ class _UpdatesCard extends StatelessWidget {
           Text(reading, style: textTheme.bodyLarge),
           const SizedBox(height: 4),
           Text(
-            'Across ${quality.sampleCount} decisions with two or more polls.',
+            'Across ${quality.sampleCount} decisions with two or more weigh-ins.',
             style: textTheme.bodySmall,
           ),
         ],

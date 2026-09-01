@@ -19,8 +19,8 @@ to live. Reckon walks it through a protocol drawn from superforecasting practice
 1. **Intake.** A conversational interview (run by the on-device model) turns your
    dilemma into a crisp two-option case with stated criteria, stakes, and a regret
    horizon.
-2. **Blinded re-polls.** Over the following days or weeks, Reckon asks where you lean
-   now — **without showing you your previous answers**, so anchoring can't quietly
+2. **Blinded weigh-ins** (re-polls). Over the following days or weeks, Reckon asks
+   where you lean now — **without showing you your previous answers**, so anchoring can't quietly
    pull you back to yesterday's position.
 3. **Outside view.** It pulls a base rate from a reference-class database and (with the
    model) synthesises an outside view, stratified by your profile.
@@ -31,7 +31,8 @@ to live. Reckon walks it through a protocol drawn from superforecasting practice
 6. **Record.** Your **Clarity Score**, calibration, personal base rates, insight
    cards, and update quality, computed honestly from your closed cases.
 
-**The duel.** Forecasters can compete on your open case: personas over the on-device
+**The forecasters** (the "duel" in the code). Forecasters can compete on your open
+decision: personas over the on-device
 model, your household's own stove (a model on your desktop, reached over an
 encrypted channel keyed by the household phrase), your own Anthropic key, any
 OpenAI-compatible endpoint (a llamafile on your LAN), and imported outside bots. Their forecasts stay **sealed** until you reveal your
@@ -46,7 +47,7 @@ on-device and always passes through an editable preview before anything leaves �
 bots' responses paste back in as sealed forecasts that earn a track record like any
 other forecaster.
 
-There is also **ReckonParty** — a group-decision mode (approval or ranked-choice
+There is also **group vote** (ReckonParty in the code) — a group-decision mode (approval or ranked-choice
 voting) that syncs over your LAN or an optional zero-knowledge relay, no account
 required. One-shot parties stay anonymous; **persistent groups** give a household a
 named circle, attributed votes, a shared decision history, and **considered mode** —
@@ -65,13 +66,22 @@ dart run build_runner build --delete-conflicting-outputs   # generate Drift/Rive
 flutter run                                                 # on an attached Android device
 ```
 
+**On screen, Reckon says** *decision* (the code's `case`), *weigh in* (re-poll),
+*forecasters* (the duel), *outside bots* (bounty) and *group vote* (party);
+`test/app/plain_words_test.dart` holds the words to that. The theme follows the phone
+(Light, Dark or Late night are one tap away in the top bar).
+
+In the web build the on-device model can't run, but a decision can still be written
+down by hand; the interviewer, the outside view and the on-device forecasters need
+Android.
+
 On first use, pick a model in onboarding and let it download (a few hundred MB to
 ~4 GB depending on the model — Wi-Fi recommended). After that, everything works
 offline. Full instructions: [docs/how-to/build-and-run.md](docs/how-to/build-and-run.md).
 
 ### Encrypted backup — sibling packages
 
-Reckon's encrypted `.ohbk` backup (Settings → Encrypted Backup) is built on two shared
+Reckon's encrypted `.ohbk` backup (Settings → Backup) is built on two shared
 packages consumed by **sibling path dependency** (`../packages/...`, same pattern as
 `eloEngine`). Clone them next to this repo so the paths resolve:
 

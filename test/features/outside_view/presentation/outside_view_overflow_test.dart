@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:reckon/core/llm/llm_providers.dart';
 import 'package:reckon/core/llm/llm_service.dart';
 import 'package:reckon/features/case/data/case_providers.dart';
 import 'package:reckon/features/case/domain/entities/case.dart';
@@ -65,6 +67,8 @@ void main() {
 
     await tester.pumpWidget(ProviderScope(
       overrides: [
+        // The model is on disk: this sweep is of the generated view.
+        onDeviceModelReadyProvider.overrideWith((ref) async => true),
         caseByIdProvider.overrideWith((ref, id) async => _case),
         outsideViewForCaseProvider.overrideWith((ref, id) async => _view),
         getOutsideViewProvider.overrideWith((ref) async => GetOutsideView(
@@ -88,6 +92,21 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
 
     expect(tester.takeException(), isNull);
+
+    // The one button's words are whole: OHButton used to ellipsize a long
+    // label at large text ("I’ll live wi…").
+    final label = find.textContaining('live with it');
+    expect(label, findsOneWidget);
+    for (final e in find
+        .descendant(of: label, matching: find.byType(RichText))
+        .evaluate()
+        .followedBy(label.evaluate())) {
+      final ro = e.renderObject;
+      if (ro is RenderParagraph) {
+        expect(ro.didExceedMaxLines, isFalse,
+            reason: 'label cut: ${ro.text.toPlainText()}');
+      }
+    }
   });
 }
 

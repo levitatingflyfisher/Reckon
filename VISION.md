@@ -117,8 +117,19 @@ before you rely on it. As of the July 2026 forecaster-duel build:
   request file — redaction drafted on-device, always behind an editable preview —
   and paste outside bots' responses back in as sealed duel forecasts that score at
   resolution like everyone else.
-- Technique glossary and Markdown/JSON export.
-- Deadline-aware local notifications for re-polls and resolution check-ins.
+- The Learn tab (the technique entries) and Markdown/JSON export.
+- **Plain words on screen** (fleet jargon ruling): decision, weigh in, forecasters,
+  outside bots, group vote; the code keeps case / repoll / duel / bounty / party.
+  `test/app/plain_words_test.dart` fails when a coinage returns to a screen.
+- **Theme follows the phone** by default, with Light, Dark and Late night one tap away
+  in each tab's top bar; stored picks from the old Daytime/Evening/Late night picker
+  migrate on read (`test/core/theme/theme_preference_test.dart`).
+- **Every screen is capped at 640 dp** (`OhPage`) and swept at 360 dp × 1.3 with its
+  primary action reachable and its label whole, plus 320 dp × 3.0 with no overflow
+  (`test/a11y/primary_action_sweep_test.dart`, C5-primaryScreens).
+- **No raw exception on screen**: failures are `OhErrorState` with the error behind
+  Details (conformance C10, plus the sites C10 cannot see).
+- Deadline-aware local notifications for weigh-ins (re-polls) and resolution check-ins.
 - **Multi-model on-device backend** (Gemma 3 1B / Qwen 2.5 1.5B / Phi-4 Mini via
   `flutter_gemma` + MediaPipe) with **resumable, 416-recovering downloads**.
 - **ReckonParty**: create / join / vote (approval + ranked-choice) / result, wired
@@ -145,8 +156,9 @@ before you rely on it. As of the July 2026 forecaster-duel build:
 - **Bounty transport beyond files.** Export is share/copy; import is paste. No
   directory fetch, no payments (the request's bounty rail is `none`).
 - **iOS / full-fat PWA.** The on-device model needs Android's native MediaPipe. The
-  web PWA now has its first real AI path — duels via BYOK or an OpenAI-compatible
-  endpoint — but intake's on-device model remains Android-only.
+  web PWA's AI path is the forecasters via BYOK or an OpenAI-compatible endpoint; a
+  decision can be written down by hand there (no interviewer), and the interviewer,
+  the outside view and the reveal observation remain Android-only.
 
 The Ghost decision loop is real, and the duel now keeps score honestly. Anything with
 an *account*, a *deployed server*, or *money* attached is still ahead of us. Keep that

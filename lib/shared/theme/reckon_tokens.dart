@@ -61,98 +61,142 @@ abstract final class ReckonRadii {
 ///     things you write and the things you're deciding read as prose.
 ///   * **Nunito** (sans) — UI chrome: buttons, labels, captions, section heads.
 ///
-/// Font files are bundled by this app (`pubspec.yaml` → `flutter.fonts`);
-/// these styles reference the families by name.
+/// The font files come from openhearth_design as package fonts; these
+/// styles name the families with `package:` so they resolve there.
 abstract final class ReckonTypography {
   static const serif = 'Lora';
   static const sans = 'Nunito';
 
+  /// The fonts are openhearth_design's package fonts (fleet font ruling);
+  /// the app bundles no copies. Every style passes this so its family
+  /// resolves to `packages/openhearth_design/Lora` / `.../Nunito`.
+  static const fontPackage = 'openhearth_design';
+
+  /// [base] set in the serif italic: quoted or reflective prose (the reveal
+  /// observation, a technique's one-line gist). Passes the family and the
+  /// package together; `copyWith` keeps the base style's package, so a
+  /// pre-prefixed family would be prefixed twice.
+  static TextStyle? serifItalic(TextStyle? base) => base?.copyWith(
+    fontFamily: serif,
+    package: fontPackage,
+    fontStyle: FontStyle.italic,
+  );
+
   /// Small-caps section label (used by `SectionHeader`). Sans, tracked out.
   static TextStyle labelSm({Color? color}) => TextStyle(
-        fontFamily: sans,
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1.4,
-        height: 1.2,
-        color: color,
-      );
+    fontFamily: sans,
+    package: fontPackage,
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    letterSpacing: 1.4,
+    height: 1.2,
+    color: color,
+  );
 
   /// The full [TextTheme]. Serif owns display/headline/title and the large
   /// body ramp (journal text); sans owns the medium/small body and all labels.
   static TextTheme textTheme(Color onSurface) {
     const t = TextTheme(
       displayLarge: TextStyle(
-          fontFamily: serif,
-          fontSize: 40,
-          fontWeight: FontWeight.w700,
-          height: 1.12),
+        fontFamily: serif,
+        package: fontPackage,
+        fontSize: 40,
+        fontWeight: FontWeight.w700,
+        height: 1.12,
+      ),
       displayMedium: TextStyle(
-          fontFamily: serif,
-          fontSize: 32,
-          fontWeight: FontWeight.w700,
-          height: 1.15),
+        fontFamily: serif,
+        package: fontPackage,
+        fontSize: 32,
+        fontWeight: FontWeight.w700,
+        height: 1.15,
+      ),
       displaySmall: TextStyle(
-          fontFamily: serif,
-          fontSize: 26,
-          fontWeight: FontWeight.w600,
-          height: 1.2),
+        fontFamily: serif,
+        package: fontPackage,
+        fontSize: 26,
+        fontWeight: FontWeight.w600,
+        height: 1.2,
+      ),
       headlineMedium: TextStyle(
-          fontFamily: serif,
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-          height: 1.25),
+        fontFamily: serif,
+        package: fontPackage,
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        height: 1.25,
+      ),
       headlineSmall: TextStyle(
-          fontFamily: serif,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          height: 1.3),
+        fontFamily: serif,
+        package: fontPackage,
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        height: 1.3,
+      ),
       titleLarge: TextStyle(
-          fontFamily: serif,
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          height: 1.3),
+        fontFamily: serif,
+        package: fontPackage,
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+        height: 1.3,
+      ),
       titleMedium: TextStyle(
-          fontFamily: sans,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          height: 1.35),
+        fontFamily: sans,
+        package: fontPackage,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
+      ),
       titleSmall: TextStyle(
-          fontFamily: sans,
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          height: 1.35),
+        fontFamily: sans,
+        package: fontPackage,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        height: 1.35,
+      ),
       // Journal/decision body reads as serif prose.
       bodyLarge: TextStyle(
-          fontFamily: serif,
-          fontSize: 18,
-          fontWeight: FontWeight.w400,
-          height: 1.5),
+        fontFamily: serif,
+        package: fontPackage,
+        fontSize: 18,
+        fontWeight: FontWeight.w400,
+        height: 1.5,
+      ),
       bodyMedium: TextStyle(
-          fontFamily: sans,
-          fontSize: 15,
-          fontWeight: FontWeight.w400,
-          height: 1.45),
+        fontFamily: sans,
+        package: fontPackage,
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        height: 1.45,
+      ),
       bodySmall: TextStyle(
-          fontFamily: sans,
-          fontSize: 13,
-          fontWeight: FontWeight.w400,
-          height: 1.4),
+        fontFamily: sans,
+        package: fontPackage,
+        fontSize: 13,
+        fontWeight: FontWeight.w400,
+        height: 1.4,
+      ),
       labelLarge: TextStyle(
-          fontFamily: sans,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          height: 1.2),
+        fontFamily: sans,
+        package: fontPackage,
+        fontSize: 15,
+        fontWeight: FontWeight.w600,
+        height: 1.2,
+      ),
       labelMedium: TextStyle(
-          fontFamily: sans,
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          height: 1.2),
+        fontFamily: sans,
+        package: fontPackage,
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        height: 1.2,
+      ),
       labelSmall: TextStyle(
-          fontFamily: sans,
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.4,
-          height: 1.2),
+        fontFamily: sans,
+        package: fontPackage,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.4,
+        height: 1.2,
+      ),
     );
     return t.apply(bodyColor: onSurface, displayColor: onSurface);
   }

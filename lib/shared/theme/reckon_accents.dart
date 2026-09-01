@@ -10,11 +10,17 @@ import 'dart:ui';
 /// diverged hues as Reckon's identity** — so they are named for Reckon now
 /// (*ember*), not for the shared hearth ramp they no longer belong to.
 abstract final class ReckonAccents {
-  /// Light-theme primary. Formerly the fork's `hearth500`.
-  static const ember500 = Color(0xFFB85C38);
+  /// Light-theme primary. Formerly the fork's `hearth500` (#B85C38, which
+  /// gave button labels and accent text only 4.25:1). Darkened the least
+  /// OKLCH lightness (-0.032, same hue and chroma) that clears 4.5:1 on
+  /// linen50 and linen100 (fleet contrast floor; reckon_contrast_test).
+  static const ember500 = Color(0xFFAD522E);
 
-  /// Evening-theme (hearthDark) primary. Formerly the fork's `hearth400`.
-  static const ember400 = Color(0xFFD2703F);
+  /// Evening-theme (hearthDark) primary. Formerly the fork's `hearth400`
+  /// (#D2703F, 3.80:1 as text on the evening card). Lightened the least
+  /// OKLCH lightness (+0.044, same hue and chroma) that clears 4.5:1 on the
+  /// evening ground and card, and under its dark button labels.
+  static const ember400 = Color(0xFFE17E4D);
 
   /// Lighter ember tint (formerly the fork's `hearth300`). Kept because it is
   /// part of the same blessed ramp, available for tints/containers.

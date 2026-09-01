@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -10,6 +11,7 @@ import '../../../core/llm/llm_providers.dart';
 import '../../../core/llm/model_spec.dart';
 import '../../../shared/widgets/oh_button.dart';
 import '../../../shared/widgets/oh_card.dart';
+import '../../../core/llm/model_error.dart';
 
 /// First-class onboarding step that picks and downloads an on-device model.
 /// Follows the Ghost tier selection and precedes the first-case prompt —
@@ -49,6 +51,12 @@ class _ModelOnboardingScreenState
   }
 
   Future<void> _autoAdvanceIfReady() async {
+    // No runtime (the web build): nothing to check and nothing worth
+    // fetching. The build method shows one honest card instead of the picker.
+    if (!ref.read(onDeviceModelSupportedProvider)) {
+      if (mounted) setState(() => _checking = false);
+      return;
+    }
     final svc = ref.read(modelDownloadServiceProvider);
     for (final spec in ReckonModelSpec.availableModels) {
       if (await svc.isDownloaded(spec)) {
@@ -92,10 +100,11 @@ class _ModelOnboardingScreenState
       },
       onError: (Object e) {
         unawaited(WakelockPlus.disable());
+        debugPrint('Reckon: model download failed: $e');
         if (mounted) {
           setState(() {
             _downloading = false;
-            _error = e.toString();
+            _error = modelDownloadErrorMessage(e);
           });
         }
       },
@@ -107,72 +116,159 @@ class _ModelOnboardingScreenState
     final textTheme = Theme.of(context).textTheme;
     if (_checking) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: OhPage(
+          padding: EdgeInsets.zero,
+          child: Center(child: CircularProgressIndicator()),
+        ),
       );
     }
 
+    if (!ref.watch(onDeviceModelSupportedProvider)) {
+      return _NoRuntimeStep(onContinue: () => context.go('/'));
+    }
+
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: SafeArea(
+          // The choices scroll; progress, error and the actions are pinned
+          // below so Download stays on screen at large text on small phones.
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 24),
-              Text('Pick a brain.', style: textTheme.displayMedium),
-              const SizedBox(height: 12),
-              Text(
-                'Reckon thinks on your device, not in a data center. Pick '
-                'the small language model it uses. You can change this '
-                'later in Settings.',
-                style: textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 24),
-              for (final spec in ReckonModelSpec.availableModels)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ModelChoice(
-                    spec: spec,
-                    isSelected: spec.id == _selected.id,
-                    disabled: _downloading,
-                    onTap: () => setState(() => _selected = spec),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 24),
+                      Text('Pick a brain.', style: textTheme.displayMedium),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Reckon thinks on your device, not in a data center. Pick '
+                        'the small language model it uses. You can change this '
+                        'later in Settings.',
+                        style: textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 24),
+                      for (final spec in ReckonModelSpec.availableModels)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _ModelChoice(
+                            spec: spec,
+                            isSelected: spec.id == _selected.id,
+                            disabled: _downloading,
+                            onTap: () => setState(() => _selected = spec),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-              const Spacer(),
-              if (_downloading) ...[
-                LinearProgressIndicator(value: _progress),
-                const SizedBox(height: 6),
-                Text(
-                  'Downloading ${_selected.displayName}… '
-                  '${(_progress * 100).toStringAsFixed(0)}%',
-                  style: textTheme.bodySmall,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_downloading) ...[
+                      LinearProgressIndicator(value: _progress),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Downloading ${_selected.displayName}… '
+                        '${(_progress * 100).toStringAsFixed(0)}%',
+                        style: textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                    if (_error != null) ...[
+                      Text(
+                        _error!,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    // The selected card names the model; the button carries
+                    // only the verb and the cost so it fits in one line at
+                    // large text instead of ellipsizing mid-name.
+                    OHButton(
+                      label: _downloading
+                          ? 'Downloading…'
+                          : 'Download '
+                              '(~${(_selected.approximateSizeBytes / 1e6).round()} MB)',
+                      expanded: true,
+                      onPressed: _downloading ? null : _download,
+                    ),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: TextButton(
+                        onPressed: _downloading
+                            ? null
+                            : () => context.go('/onboarding/first-case'),
+                        child: const Text('Skip for now'),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
-              ],
-              if (_error != null) ...[
-                Text(
-                  _error!,
-                  style: textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Shown instead of the model picker on a build that cannot run a local
+/// model (the web PWA). Offering a ~1.6 GB download there would cost the user
+/// time and data for a file nothing can load.
+class _NoRuntimeStep extends StatelessWidget {
+  const _NoRuntimeStep({required this.onContinue});
+
+  final VoidCallback onContinue;
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Scaffold(
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 48, 24, 16),
+                  child: OHCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('No model to download here',
+                            style: textTheme.titleLarge),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Reckon’s interviewer runs a language model on your "
+                          "device, and this browser version can’t run one. "
+                          'You can still write decisions down yourself here. '
+                          'The Android app adds the interviewer, the outside '
+                          'view and the forecasters.',
+                          style: textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-              ],
-              OHButton(
-                label: _downloading
-                    ? 'Downloading…'
-                    : 'Download ${_selected.displayName} '
-                        '(~${(_selected.approximateSizeBytes / 1e6).round()} MB)',
-                expanded: true,
-                onPressed: _downloading ? null : _download,
               ),
-              const SizedBox(height: 8),
-              Center(
-                child: TextButton(
-                  onPressed: _downloading
-                      ? null
-                      : () => context.go('/onboarding/first-case'),
-                  child: const Text('Skip for now'),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: OHButton(
+                  label: 'Continue',
+                  expanded: true,
+                  onPressed: onContinue,
                 ),
               ),
             ],
@@ -218,14 +314,17 @@ class _ModelChoice extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                // Wrap, not Row: at large text the name, size and badge
+                // flow onto a second line instead of overflowing.
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(spec.displayName, style: textTheme.titleLarge),
-                    const SizedBox(width: 8),
                     Text('~$sizeMb MB',
                         style: textTheme.bodySmall),
                     if (spec.requiresToken) ...[
-                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),

@@ -131,7 +131,7 @@ class LocalPartyRepository implements PartyRepository {
   Future<Object> computeResult(String partyId) async {
     final party = await getParty(partyId);
     if (party == null) {
-      throw StateError('No party with id "$partyId"');
+      throw StateError('No party with id “$partyId”');
     }
     final ballots = await _ballotsForParty(party);
     switch (party.votingMethod) {

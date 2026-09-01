@@ -30,7 +30,7 @@ class GetOutsideView {
     final category = case_.category ?? 'career';
     final ref = await _repo.findReferenceClass(category);
     if (ref == null) {
-      throw StateError('No reference class for category "$category"');
+      throw StateError('No reference class for category “$category”');
     }
     final profile = await _repo.getUserProfile();
     final result = await _llm.synthesizeOutsideView(case_, ref, profile);

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
@@ -93,10 +94,9 @@ class _LanHostSheetState extends ConsumerState<_LanHostSheet> {
               );
             }
             if (snap.hasError) {
-              return Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text("Couldn't start hosting: ${snap.error}"),
-              );
+              return OhErrorState.fromError(snap.error!,
+                  stackTrace: snap.stackTrace,
+                  title: "Couldn’t start hosting");
             }
             final hosted = snap.data!;
             return Column(

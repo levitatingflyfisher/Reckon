@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,6 +14,8 @@ import '../../predictions/data/prediction_providers.dart';
 import '../../predictions/domain/entities/model_prediction.dart';
 import '../data/reveal_providers.dart';
 import '../domain/entities/reveal_observation.dart';
+import '../../../shared/theme/reckon_tokens.dart';
+import '../../../core/llm/llm_providers.dart';
 
 class RevealScreen extends ConsumerStatefulWidget {
   const RevealScreen({super.key, required this.caseId});
@@ -54,7 +57,7 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
     try {
       final case_ = await ref.read(caseByIdProvider(widget.caseId).future);
       final polls = await ref.read(pollsForCaseProvider(widget.caseId).future);
-      if (case_ == null) throw StateError('Case not found');
+      if (case_ == null) throw StateError('Decision not found');
       final uc = await ref.read(generateRevealProvider.future);
       final obs = await uc.call(
         case_: case_,
@@ -68,11 +71,15 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
         });
       }
     } catch (e) {
+      debugPrint('Reckon: the reveal observation failed: $e');
       if (mounted) {
         setState(() {
           _observation = RevealObservation(
-            text:
-                'Your record is saved. Observation could not be generated: $e',
+            text: ref.read(onDeviceModelSupportedProvider)
+                ? "Your record is saved. Reckon couldn’t write an "
+                    'observation about it this time.'
+                : 'Your record is saved. The observation is written by the '
+                    "on-device model, which this browser can’t run.",
           );
           _loading = false;
         });
@@ -98,113 +105,114 @@ class _RevealScreenState extends ConsumerState<RevealScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('The reveal')),
-      body: pollsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
-        data: (polls) {
-          final case_ = caseAsync.value;
-          return Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Scroll the chart + observation so tall content (large text
-                // scale, long rationale) can't overflow the column behind the
-                // pinned choice chips and action button.
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (polls.isEmpty)
-                          Text(
-                            "No polls were recorded before you decided — there's no time series to reveal.",
-                            style: textTheme.bodyLarge,
-                          )
-                        else
-                          SizedBox(
-                            height: 240,
-                            child: OHCard(
-                              child: _LeanChart(
-                                polls: polls,
-                                onPointTapped: (i) =>
-                                    setState(() => _selectedPoll = i),
-                              ),
-                            ),
-                          ),
-                        if (_selectedPoll != null &&
-                            _selectedPoll! < polls.length) ...[
-                          const SizedBox(height: 12),
-                          OHCard(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Poll ${polls[_selectedPoll!].pollNumber}: lean ${polls[_selectedPoll!].lean}',
-                                  style: textTheme.labelLarge,
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: pollsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load your weigh-ins"),
+          data: (polls) {
+            final case_ = caseAsync.value;
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Scroll the chart + observation so tall content (large text
+                  // scale, long rationale) can't overflow the column behind the
+                  // pinned choice chips and action button.
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (polls.isEmpty)
+                            Text(
+                              "You didn’t weigh in before you decided, so there’s no drift to show.",
+                              style: textTheme.bodyLarge,
+                            )
+                          else
+                            SizedBox(
+                              height: 240,
+                              child: OHCard(
+                                child: _LeanChart(
+                                  polls: polls,
+                                  onPointTapped: (i) =>
+                                      setState(() => _selectedPoll = i),
                                 ),
-                                if (polls[_selectedPoll!].rationale != null)
-                                  Text(polls[_selectedPoll!].rationale!,
-                                      style: textTheme.bodyMedium),
-                              ],
-                            ),
-                          ),
-                        ],
-                        // R1/R4: the duel table renders only after the
-                        // user's own record is complete. "I've decided"
-                        // merely navigates here — while the case is still
-                        // open the user can back out, keep re-polling, and
-                        // re-run the duel, so showing leans now would let
-                        // every later poll be scored as blind when it
-                        // wasn't. The table appears once the decision has
-                        // committed (status decided/resolving/closed).
-                        if (case_ != null && case_.status != CaseStatus.open)
-                          _DuelSection(caseId: widget.caseId, case_: case_),
-                        const SizedBox(height: 24),
-                        if (_loading)
-                          const Center(child: CircularProgressIndicator())
-                        else if (_observation != null)
-                          OHCard(
-                            child: Text(
-                              _observation!.text,
-                              style: textTheme.bodyLarge?.copyWith(
-                                fontFamily: 'Lora',
-                                fontStyle: FontStyle.italic,
                               ),
                             ),
-                          ),
-                      ],
+                          if (_selectedPoll != null &&
+                              _selectedPoll! < polls.length) ...[
+                            const SizedBox(height: 12),
+                            OHCard(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Poll ${polls[_selectedPoll!].pollNumber}: lean ${polls[_selectedPoll!].lean}',
+                                    style: textTheme.labelLarge,
+                                  ),
+                                  if (polls[_selectedPoll!].rationale != null)
+                                    Text(polls[_selectedPoll!].rationale!,
+                                        style: textTheme.bodyMedium),
+                                ],
+                              ),
+                            ),
+                          ],
+                          // R1/R4: the duel table renders only after the
+                          // user's own record is complete. "I've decided"
+                          // merely navigates here — while the case is still
+                          // open the user can back out, keep re-polling, and
+                          // re-run the duel, so showing leans now would let
+                          // every later poll be scored as blind when it
+                          // wasn't. The table appears once the decision has
+                          // committed (status decided/resolving/closed).
+                          if (case_ != null && case_.status != CaseStatus.open)
+                            _DuelSection(caseId: widget.caseId, case_: case_),
+                          const SizedBox(height: 24),
+                          if (_loading)
+                            const Center(child: CircularProgressIndicator())
+                          else if (_observation != null)
+                            OHCard(
+                              child: Text(
+                                _observation!.text,
+                                style: ReckonTypography.serifItalic(textTheme.bodyLarge),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                if (case_ != null) ...[
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ChoiceChip(
-                        label: Text(case_.optionA),
-                        selected: _chosenOption == 'a',
-                        onSelected: (_) => _selectOption('a'),
-                      ),
-                      ChoiceChip(
-                        label: Text(case_.optionB),
-                        selected: _chosenOption == 'b',
-                        onSelected: (_) => _selectOption('b'),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 16),
+                  if (case_ != null) ...[
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        ChoiceChip(
+                          label: Text(case_.optionA),
+                          selected: _chosenOption == 'a',
+                          onSelected: (_) => _selectOption('a'),
+                        ),
+                        ChoiceChip(
+                          label: Text(case_.optionB),
+                          selected: _chosenOption == 'b',
+                          onSelected: (_) => _selectOption('b'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  OHButton(
+                    label: 'Set resolution date',
+                    expanded: true,
+                    onPressed: _commitAndProceed,
+                  ),
                 ],
-                OHButton(
-                  label: 'Set resolution date',
-                  expanded: true,
-                  onPressed: _commitAndProceed,
-                ),
-              ],
-            ),
-          );
-        },
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -232,7 +240,7 @@ class _DuelSection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 24),
-        const SectionHeader(label: 'THE DUEL'),
+        const SectionHeader(label: 'Forecasters'),
         for (final duel in duels)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -322,7 +330,7 @@ class _DuelRowState extends State<_DuelRow> {
           ),
           const SizedBox(height: 4),
           Text(
-            'lean $lean — toward $toward',
+            'lean $lean, toward $toward',
             style: textTheme.bodySmall,
             overflow: TextOverflow.ellipsis,
           ),

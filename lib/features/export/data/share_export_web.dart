@@ -9,7 +9,7 @@ Future<void> shareExport({
   required String text,
 }) async {
   throw UnsupportedError(
-    'Saving an export file isn\'t available in the web version of Reckon yet '
+    'Saving an export file isn’t available in the web version of Reckon yet '
     '— use the Android app to export.',
   );
 }

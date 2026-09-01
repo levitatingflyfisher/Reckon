@@ -66,8 +66,8 @@ void main() {
     await tester.tap(find.text('Join'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining("Couldn't join"), findsNothing);
-    expect(find.text('Join a party'), findsOneWidget); // still on the screen
+    expect(find.textContaining("Couldn’t join"), findsNothing);
+    expect(find.text('Join a group vote'), findsOneWidget); // still on the screen
   });
 
   testWidgets('an invalid link shows an error and stays on the join screen',
@@ -80,8 +80,8 @@ void main() {
     await tester.tap(find.text('Join'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining("Couldn't join"), findsOneWidget);
-    expect(find.text('Join a party'), findsOneWidget); // still here
+    expect(find.textContaining("Couldn’t join"), findsOneWidget);
+    expect(find.text('Join a group vote'), findsOneWidget); // still here
   });
 
   group('joining a group decision', () {

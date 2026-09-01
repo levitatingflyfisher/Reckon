@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -47,13 +48,14 @@ class _ResolutionCheckInScreenState
                 : _reflection.text.trim(),
           );
     } catch (e) {
+      debugPrint('Reckon: saving a check-in failed: $e');
       // The close+scoring transaction rolled back: the case is still
       // resolving, nothing was recorded, and trying again is safe. Say so
       // instead of leaking an unhandled async error.
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Couldn't save the check-in — nothing was "
-                'recorded. Please try again. ($e)')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Couldn’t save the check-in. Nothing was "
+                'recorded, so trying again is safe.')));
       }
       return;
     }
@@ -80,39 +82,55 @@ class _ResolutionCheckInScreenState
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('How does this feel?')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'Looking back on the decision you made, how does it sit with you now?',
-              style: textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 24),
-            Wrap(
-              spacing: 8,
-              children: [-2, -1, 0, 1, 2]
-                  .map((s) => ChoiceChip(
-                        label: Text(_labels[s]!),
-                        selected: _score == s,
-                        onSelected: (_) => setState(() => _score = s),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 24),
-            OHTextField(
-              controller: _reflection,
-              label: 'One sentence (optional)',
-              maxLines: 3,
-            ),
-            const Spacer(),
-            OHButton(
-              label: 'Done',
-              expanded: true,
-              onPressed: _save,
-            ),
-          ],
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Scrolls, with Done pinned below, so the choice and the
+              // button both survive large text on a small phone.
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                    Text(
+                      'Looking back on the decision you made, how does it sit with you now?',
+                      style: textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: 24),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [-2, -1, 0, 1, 2]
+                          .map((s) => ChoiceChip(
+                                label: Text(_labels[s]!),
+                                selected: _score == s,
+                                onSelected: (_) => setState(() => _score = s),
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 24),
+                    OHTextField(
+                      controller: _reflection,
+                      label: 'One sentence (optional)',
+                      maxLines: 3,
+                    ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              OHButton(
+                key: const Key('resolution-done'),
+                label: 'Done',
+                expanded: true,
+                onPressed: _save,
+              ),
+            ],
+          ),
         ),
       ),
     );

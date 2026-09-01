@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
@@ -14,11 +15,28 @@ import '../domain/entities/forecaster.dart';
 /// roster with enable switches, and the add/edit minimal forms. Lives in the
 /// forecasters feature (imported by settings_screen.dart) so the roster UI
 /// stays next to its providers.
-class ForecastersSection extends ConsumerWidget {
+class ForecastersSection extends ConsumerStatefulWidget {
   const ForecastersSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ForecastersSection> createState() =>
+      _ForecastersSectionState();
+}
+
+class _ForecastersSectionState extends ConsumerState<ForecastersSection> {
+  /// Holds the Undo offer after a deliberate delete (fleet delete ruling):
+  /// no timer; it lasts until Undo, dismiss, the next delete, or leaving
+  /// Settings.
+  final _undo = OhUndoController();
+
+  @override
+  void dispose() {
+    _undo.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final roster = ref.watch(forecastersProvider);
 
@@ -29,7 +47,7 @@ class ForecastersSection extends ConsumerWidget {
         const SizedBox(height: 4),
         Text(
           'Rivals for your own judgment. Each one gives a sealed forecast '
-          'when you run the duel on an open decision — and earns a track '
+          'when you ask the forecasters about an open decision, and earns a track '
           'record when you record how it turned out.',
           style: textTheme.bodyMedium,
         ),
@@ -41,23 +59,30 @@ class ForecastersSection extends ConsumerWidget {
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (e, _) => Text('Could not load forecasters: $e',
-              style: textTheme.bodyMedium),
+          error: (e, st) => OhErrorState.fromError(e,
+              stackTrace: st, title: "Couldn’t load forecasters"),
           data: (forecasters) => Column(
             children: [
               for (final f in forecasters)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: _ForecasterTile(forecaster: f),
+                  child: _ForecasterTile(
+                    forecaster: f,
+                    // The section's ref, not the tile's: the tile is gone
+                    // by the time Undo runs.
+                    onEdit: () => _showEditor(context, ref,
+                        existing: f, undo: _undo),
+                  ),
                 ),
             ],
           ),
         ),
+        OhUndoBar(controller: _undo),
         OHButton(
           label: 'Add forecaster',
           style: OHButtonStyle.secondary,
           expanded: true,
-          onPressed: () => _showEditor(context, ref),
+          onPressed: () => _showEditor(context, ref, undo: _undo),
         ),
       ],
     );
@@ -72,7 +97,7 @@ void _invalidateRoster(WidgetRef ref) {
 }
 
 Future<void> _showEditor(BuildContext context, WidgetRef ref,
-    {Forecaster? existing}) async {
+    {Forecaster? existing, required OhUndoController undo}) async {
   final result = await showDialog<_EditorResult>(
     context: context,
     builder: (_) => _ForecasterEditorDialog(existing: existing),
@@ -83,7 +108,19 @@ Future<void> _showEditor(BuildContext context, WidgetRef ref,
     case _SaveForecaster(:final forecaster):
       await repo.upsert(forecaster);
     case _DeleteForecaster(:final id):
+      // Tapping Delete in the form is the decision, so nothing asks again.
+      // The row is captured whole (enabled flag, config, createdAt) and
+      // upserted back on Undo under the same id; its scored predictions
+      // live in ModelPredictions and are never touched by the delete.
+      final removed = existing!;
       await repo.delete(id);
+      undo.show(
+        message: 'Deleted ${removed.displayName}',
+        onUndo: () async {
+          await repo.upsert(removed);
+          _invalidateRoster(ref);
+        },
+      );
   }
   _invalidateRoster(ref);
 }
@@ -98,15 +135,16 @@ String _kindLabel(ForecasterKind kind) => switch (kind) {
     };
 
 class _ForecasterTile extends ConsumerWidget {
-  const _ForecasterTile({required this.forecaster});
+  const _ForecasterTile({required this.forecaster, required this.onEdit});
 
   final Forecaster forecaster;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     return OHCard(
-      onTap: () => _showEditor(context, ref, existing: forecaster),
+      onTap: onEdit,
       child: Row(
         children: [
           Expanded(
@@ -366,7 +404,7 @@ class _AnthropicKeyCard extends ConsumerWidget {
                       children: [
                         Text('Anthropic API key', style: textTheme.labelLarge),
                         Text(
-                          'Stored on this device only — used for Claude '
+                          'Stored on this device only, used for Claude '
                           'forecasters.',
                           style: textTheme.bodySmall,
                         ),
@@ -440,7 +478,7 @@ class _StovePhraseCard extends ConsumerWidget {
                       children: [
                         Text('Household phrase', style: textTheme.labelLarge),
                         Text(
-                          'Stored on this device only — used for stove '
+                          'Stored on this device only, used for stove '
                           'forecasters.',
                           style: textTheme.bodySmall,
                         ),
@@ -461,8 +499,8 @@ class _StovePhraseCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Stove forecasters run on your household\'s own machine. '
-                    'Prompts go encrypted to it and nowhere else — both ends '
+                    'Stove forecasters run on your household’s own machine. '
+                    'Prompts go encrypted to it and nowhere else; both ends '
                     'just share the same household phrase.',
                     style: textTheme.bodyMedium,
                   ),

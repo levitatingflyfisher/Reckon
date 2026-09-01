@@ -65,8 +65,8 @@ enable R8/minify) is a prerequisite for release; see
 
 The PWA is served from this repo's `gh-pages` branch at
 `https://levitatingflyfisher.github.io/Reckon/`. The journal runs on drift-wasm; the
-on-device model does not run on web (the duel via BYOK / OpenAI-compatible forecasters
-is the web build's one AI path).
+on-device model does not run on web: a decision is written down by hand there, and
+the forecasters via BYOK / OpenAI-compatible endpoints are the web build's one AI path.
 
 ```bash
 flutter build web --release --base-href /Reckon/

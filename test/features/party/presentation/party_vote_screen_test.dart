@@ -152,7 +152,9 @@ void main() {
 
     // The failure is named, nothing was stored, and the voter can retry —
     // a silent permanently-dead button would strand the ballot.
-    expect(find.textContaining("Couldn't submit"), findsOneWidget);
+    expect(find.textContaining("Couldn’t send your vote"), findsOneWidget);
+    // Fleet error ruling: the exception itself never reaches the screen.
+    expect(find.textContaining('Exception'), findsNothing);
     expect(repo.ballots[party.id] ?? const [], isEmpty);
     expect(find.text('Submit vote'), findsOneWidget,
         reason: '_submitting must reset so a retry is possible');

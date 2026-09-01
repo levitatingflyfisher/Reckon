@@ -117,7 +117,7 @@ class ModelDownloadService {
       final token = await getHfToken();
       if (token == null || token.isEmpty) {
         throw StateError(
-          'This model requires a HuggingFace token — add one in Settings.',
+          'This model needs a HuggingFace token. Add one in Settings.',
         );
       }
       // Base-option headers ride every request the engine makes (initial,

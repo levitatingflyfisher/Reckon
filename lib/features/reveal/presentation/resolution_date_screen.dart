@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:openhearth_design/openhearth_design.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -67,31 +68,34 @@ class _ResolutionDateScreenState extends ConsumerState<ResolutionDateScreen> {
     final textTheme = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('When should we check back in?')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              "Pick a date when you'll know how this decision feels in your life. It can be weeks, months, or years from now.",
-              style: textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 32),
-            OHButton(
-              label: _date == null
-                  ? 'Pick a date'
-                  : 'Check in on ${DateFormat.yMMMEd().format(_date!)}',
-              style: OHButtonStyle.secondary,
-              expanded: true,
-              onPressed: _pick,
-            ),
-            const Spacer(),
-            OHButton(
-              label: 'Schedule check-in',
-              expanded: true,
-              onPressed: _date == null ? null : _confirm,
-            ),
-          ],
+      body: OhPage(
+        padding: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                "Pick a date when you’ll know how this decision feels in your life. It can be weeks, months, or years from now.",
+                style: textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 32),
+              OHButton(
+                label: _date == null
+                    ? 'Pick a date'
+                    : 'Check in on ${DateFormat.yMMMEd().format(_date!)}',
+                style: OHButtonStyle.secondary,
+                expanded: true,
+                onPressed: _pick,
+              ),
+              const Spacer(),
+              OHButton(
+                label: 'Schedule check-in',
+                expanded: true,
+                onPressed: _date == null ? null : _confirm,
+              ),
+            ],
+          ),
         ),
       ),
     );
