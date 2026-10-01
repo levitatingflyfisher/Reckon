@@ -14,7 +14,7 @@
          dataExtractionRules covers Android 12+; fullBackupContent covers
          pre-12 devices (minSdk 24). -->
     <application
-        android:label="reckon"
+        android:label="Reckon"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:largeHeap="true"
