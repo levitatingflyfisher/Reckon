@@ -57,12 +57,12 @@ class HomeScreen extends ConsumerWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
+                            OhWholeWordsText(
                               'No open decisions yet.',
                               style: textTheme.headlineMedium,
                             ),
                             const SizedBox(height: 12),
-                            Text(
+                            OhWholeWordsText(
                               'Choose New decision to start your first one.',
                               style: textTheme.bodyLarge,
                               textAlign: TextAlign.center,

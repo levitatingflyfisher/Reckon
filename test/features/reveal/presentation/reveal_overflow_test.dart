@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -76,6 +77,68 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  // The lean chart's axis labels used to crowd and clip at 320dp / ×3:
+  // "50" ran into A and B, and the poll numbers and "Poll #" were cut by
+  // slots sized for 1x text.
+  for (final (width, scale) in [(360.0, 1.0), (360.0, 1.3), (320.0, 3.0)]) {
+    testWidgets('lean chart labels fit and do not overlap at '
+        '${width.toInt()}dp / ×$scale', (tester) async {
+      tester.view.physicalSize = Size(width, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          caseByIdProvider.overrideWith((ref, id) async => _case),
+          pollsForCaseProvider.overrideWith((ref, id) async => _polls),
+          generateRevealProvider.overrideWith(
+            (ref) async => GenerateReveal(_FakeLlm(), _FakePredictions()),
+          ),
+        ],
+        child: MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(context)
+                .copyWith(textScaler: TextScaler.linear(scale)),
+            child: child!,
+          ),
+          home: const RevealScreen(caseId: _caseId),
+        ),
+      ));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 2));
+      expect(tester.takeException(), isNull);
+
+      final chart = find.byType(LineChart);
+      expect(chart, findsOneWidget);
+      final bounds = tester.getRect(chart);
+      final labels = find.descendant(of: chart, matching: find.byType(Text));
+      final rects = <String, Rect>{
+        for (final e in labels.evaluate())
+          (e.widget as Text).data!: tester.getRect(find.byWidget(e.widget)),
+      };
+      for (final want in ['A', 'B', '50', '1', '2', '3', 'Poll #', 'Lean']) {
+        expect(rects, contains(want), reason: 'label "$want" missing');
+      }
+      for (final MapEntry(:key, :value) in rects.entries) {
+        expect(bounds.inflate(0.5).contains(value.topLeft) &&
+                bounds.inflate(0.5).contains(value.bottomRight),
+            isTrue,
+            reason: '"$key" spills out of the chart: $value vs $bounds');
+      }
+      final list = rects.entries.toList();
+      for (var i = 0; i < list.length; i++) {
+        for (var j = i + 1; j < list.length; j++) {
+          final overlap =
+              list[i].value.deflate(0.5).overlaps(list[j].value.deflate(0.5));
+          expect(overlap, isFalse,
+              reason: '"${list[i].key}" ${list[i].value} overlaps '
+                  '"${list[j].key}" ${list[j].value}');
+        }
+      }
+    });
+  }
 }
 
 class _FakeLlm implements LlmService {

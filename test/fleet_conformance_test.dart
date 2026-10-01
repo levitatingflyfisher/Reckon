@@ -15,6 +15,8 @@ void main() => runFleetConformance(const FleetAppConfig(
         // points CanvasKit and the engine's fallback fonts at this origin.
         FleetCheck.c13WebSelfHosted,
         ...FleetAppConfig.withBundledFonts,
+        // C7-assetText: C7 over the reference classes and the glossary (assets/*.json), which C7's lib/ sweep never reads.
+        FleetCheck.c7AssetText,
         FleetCheck.c8IconButtons,
         // C10: no raw exception text on screen; failures go through
         // OhErrorState / ohFriendlyErrorMessage (details behind a tap).

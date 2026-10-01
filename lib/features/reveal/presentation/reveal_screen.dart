@@ -358,6 +358,35 @@ class _LeanChart extends StatelessWidget {
         FlSpot(i.toDouble(), polls[i].lean.toDouble()),
     ];
 
+    // Axis labels grow with the reader's text up to 2x (the WCAG floor) and
+    // their slots grow with them, measured, so they never crowd or clip at
+    // large text; the end labels are pulled inside the chart's edges.
+    final labelStyle = textTheme.bodySmall;
+    final scaler =
+        MediaQuery.textScalerOf(context).clamp(maxScaleFactor: 2.0);
+    Size measure(String s) {
+      final tp = TextPainter(
+        text: TextSpan(text: s, style: labelStyle),
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+      )..layout();
+      final size = tp.size;
+      tp.dispose();
+      return size;
+    }
+
+    const gap = 6.0;
+    final labelHeight = measure('0').height;
+    final leftWidth = ['A', '50', 'B']
+        .map((s) => measure(s).width)
+        .reduce((a, b) => a > b ? a : b);
+    Widget label(String text, TitleMeta meta) => SideTitleWidget(
+          axisSide: meta.axisSide,
+          space: gap,
+          fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
+          child: Text(text, style: labelStyle, textScaler: scaler),
+        );
+
     return LineChart(
       LineChartData(
         minY: 0,
@@ -369,31 +398,30 @@ class _LeanChart extends StatelessWidget {
               sideTitles: SideTitles(showTitles: false)),
           topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           bottomTitles: AxisTitles(
-            axisNameWidget: Text('Poll #', style: textTheme.bodySmall),
-            axisNameSize: 18,
+            axisNameWidget:
+                Text('Poll #', style: labelStyle, textScaler: scaler),
+            axisNameSize: labelHeight,
             sideTitles: SideTitles(
               showTitles: true,
               interval: 1,
-              reservedSize: 24,
+              reservedSize: labelHeight + gap,
               getTitlesWidget: (value, meta) {
                 final i = value.toInt();
                 if (i < 0 || i >= polls.length) return const SizedBox.shrink();
-                return Text('${polls[i].pollNumber}',
-                    style: textTheme.bodySmall);
+                return label('${polls[i].pollNumber}', meta);
               },
             ),
           ),
           leftTitles: AxisTitles(
-            axisNameWidget: Text('Lean', style: textTheme.bodySmall),
-            axisNameSize: 18,
+            axisNameWidget: Text('Lean', style: labelStyle, textScaler: scaler),
+            axisNameSize: labelHeight,
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 32,
+              reservedSize: leftWidth + gap,
               interval: 50,
               getTitlesWidget: (value, meta) {
                 final v = value.toInt();
-                final label = v == 0 ? 'A' : (v == 100 ? 'B' : '$v');
-                return Text(label, style: textTheme.bodySmall);
+                return label(v == 0 ? 'A' : (v == 100 ? 'B' : '$v'), meta);
               },
             ),
           ),
