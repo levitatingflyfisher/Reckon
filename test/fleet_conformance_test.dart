@@ -11,6 +11,9 @@ void main() => runFleetConformance(const FleetAppConfig(
       // color of its own fill under ohStyle's ambient iconTheme — invisible
       // on a real phone. Filled icon buttons must go through OhIconButton.
       checks: {
+        // C13: the PWA loads nothing from Google's CDNs. web/flutter_bootstrap.js
+        // points CanvasKit and the engine's fallback fonts at this origin.
+        FleetCheck.c13WebSelfHosted,
         ...FleetAppConfig.withBundledFonts,
         FleetCheck.c8IconButtons,
         // C10: no raw exception text on screen; failures go through
